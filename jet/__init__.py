@@ -3,9 +3,11 @@
 from math import factorial
 from typing import Callable
 
-from torch import Tensor, tensor, zeros_like
+from torch import Tensor, tanh, tensor, zeros_like
 from torch.autograd import grad
 from torch.fx import GraphModule, symbolic_trace
+from torch.nn import Linear, Tanh
+from torch.nn.functional import linear
 
 from jet.operations import (
     MAPPING,
@@ -69,7 +71,40 @@ def _replace_operations_with_taylor(graph: GraphModule) -> GraphModule:
                 )
             node.replace_all_uses_with(new_node)
             graph.graph.erase_node(node)
-        elif node.op not in ["output", "placeholder"]:
+        elif node.op == "call_module":
+            submodule = graph.get_submodule(node.target)
+
+            with graph.graph.inserting_before(node):
+                if isinstance(submodule, Linear):
+                    # Create placeholder nodes for weight and bias
+                    weight_node = graph.graph.create_node(
+                        "get_attr", f"{node.target}.weight"
+                    )
+                    bias_node = (
+                        graph.graph.create_node("get_attr", f"{node.target}.bias")
+                        if submodule.bias is not None
+                        else None
+                    )
+                    # Use these nodes in the function call
+                    new_node = graph.graph.call_function(
+                        MAPPING[linear],
+                        args=node.args,
+                        kwargs={
+                            "weight": weight_node,
+                            "bias": bias_node,
+                            **node.kwargs,
+                        },
+                    )
+                elif isinstance(submodule, Tanh):
+                    new_node = graph.graph.call_function(
+                        MAPPING[tanh], args=node.args, kwargs=node.kwargs
+                    )
+                else:
+                    raise NotImplementedError(f"Unsupported module: {submodule}")
+            node.replace_all_uses_with(new_node)
+            graph.graph.erase_node(node)
+
+        elif node.op not in ["output", "placeholder", "get_attr"]:
             raise NotImplementedError(f"Unsupported node operation: {node.op}")
 
     graph.graph.lint()

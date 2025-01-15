@@ -3,7 +3,9 @@
 from typing import Callable, Dict
 
 import pytest
-from torch import isclose, sin, tensor
+from torch import isclose, manual_seed, rand, sin, tanh, tensor
+from torch.nn import Linear, Sequential, Tanh
+from torch.nn.functional import linear
 
 from jet import jet, rev_jet
 from jet.operations import Primal, PrimalAndCoefficients, Value, ValueAndCoefficients
@@ -26,7 +28,7 @@ def report_nonclose(a, b, rtol=1e-5, atol=1e-8, name: str = "Tensors"):
         print(f"{name} are not close.")
         for idx, (x, y) in enumerate(zip(a.flatten(), b.flatten())):
             if not isclose(x, y, rtol=rtol, atol=atol):
-                print(f"Index {idx}: {x} != {y}")
+                print(f"Index {idx}: {x} != {y} (ratio: {x / y})")
     else:
         print(f"{name} are close.")
     assert close
@@ -50,12 +52,12 @@ CASES = [
         "coefficients": lambda: (tensor([0.2]), tensor([0.3])),
         "id": "2-jet-sin-1d",
     },
-    # 2-jet of the 2d sine function
+    # 2-jet of the 2d sin(sin) function
     {
         "f": lambda x: sin(sin(x)),
         "primal": lambda: tensor([0.1, 0.15]),
         "coefficients": lambda: (tensor([0.2, 0.25]), tensor([0.3, 0.35])),
-        "id": "2-jet-sinsin-2d",
+        "id": "2-jet-sin-sin-2d",
     },
     # 3-jet of the 2d sine function
     {
@@ -104,7 +106,42 @@ CASES = [
             tensor([0.5, 0.52]),
             tensor([0.6, 0.62]),
         ),
-        "id": "5-jet-sinsin-2d",
+        "id": "5-jet-sin-sin-2d",
+    },
+    # 3-jet of the 2d tanh(tanh) function
+    {
+        "f": lambda x: tanh(tanh(x)),
+        "primal": lambda: tensor([-0.1, 0.3]),
+        "coefficients": lambda: (
+            tensor([0.4, 0.01]),
+            tensor([-0.32, -0.04]),
+            tensor([-0.097, 0.73]),
+        ),
+        "id": "3-jet-tanh-tanh-2d",
+    },
+    # 3-jet of the 2d linear(tanh) function
+    {
+        "f": lambda x: linear(
+            tanh(x),
+            tensor([[0.1, -0.2, 0.3], [0.4, 0.5, -0.6]]).double(),
+            tensor([0.12, -0.34]).double(),
+        ),
+        "primal": lambda: tensor([-0.1, -0.02, 0.3]),
+        "coefficients": lambda: (
+            tensor([0.4, -0.25, 0.01]),
+            tensor([-0.32, -0.04, 0.55]),
+            tensor([-0.097, 0.73, 0.12]),
+        ),
+        "id": "3-jet-linear-tanh-3d",
+    },
+    # 3-jet of a tanh-activated two-layer MLP
+    {
+        "f": Sequential(
+            Linear(5, 4, bias=False), Tanh(), Linear(4, 3, bias=True), Tanh()
+        ).double(),
+        "primal": lambda: rand(5),
+        "coefficients": lambda: tuple(rand(5).double() for _ in range(3)),
+        "id": "3-jet-two-layer-tanh-mlp-5d",
     },
 ]
 
@@ -117,6 +154,7 @@ def test_jet(config: Dict[str, Callable]):
         config: Configuration dictionary containing the function, input, and Taylor
             coefficients.
     """
+    manual_seed(0)
     f = config["f"]
     x = config["primal"]()
     vs = config["coefficients"]()
