@@ -1,11 +1,10 @@
 """Implementation of AD primitives in Taylor-mode arithmetic."""
 
-from math import factorial, prod
 from typing import Tuple
 
 from torch import Tensor, cos, sin, zeros_like
 
-from jet.utils import integer_partitions, tensor_prod
+from jet.utils import integer_partitions, multiplicity, tensor_prod
 
 # type annotation for arguments and Taylor coefficients in input and output space
 Primal = Tensor
@@ -36,19 +35,6 @@ def jet_sin(arg: PrimalAndCoefficients) -> ValueAndCoefficients:
 
     vs_out = [zeros_like(sin_x) for _ in vs]
     order = len(vs)
-
-    def multiplicity(sigma: Tuple[int, ...]) -> int:
-        # see the scheme above the 'Variations' section here:
-        # https://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula
-        k = sum(sigma)
-        n_i = {i + 1: sigma.count(i + 1) for i in range(k)}
-        multiplicity = (
-            factorial(k)
-            / prod(factorial(eta) for eta in sigma)
-            / prod(factorial(n) for n in n_i.values())
-        )
-        assert int(multiplicity) == multiplicity
-        return int(multiplicity)
 
     for k in range(order):
         for sigma in integer_partitions(k + 1):
