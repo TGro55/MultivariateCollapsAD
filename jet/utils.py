@@ -8,9 +8,10 @@ from torch.nn import Module
 
 # type annotation for arguments and Taylor coefficients in input and output space
 Primal = Tensor
-PrimalAndCoefficients = Tuple[Primal, Tuple[Primal, ...]]
 Value = Tensor
-ValueAndCoefficients = Tuple[Value, Tuple[Value, ...]]
+# primals and values are stacked together into a joint tensor
+PrimalAndCoefficients = Tensor
+ValueAndCoefficients = Tensor
 
 
 def integer_partitions(n: int, I: int = 1):  # noqa: E741

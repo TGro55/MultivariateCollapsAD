@@ -36,10 +36,12 @@ def report_nonclose(a, b, rtol=1e-5, atol=1e-8, name: str = "Tensors"):
 
 def check_jet(f: Callable[[Primal], Value], arg: PrimalAndCoefficients):
     rev_jet_f = rev_jet(f)
-    rev_jet_out = rev_jet_f(arg)
+    x, vs = arg
+    rev_jet_out = rev_jet_f(x, *vs)
 
-    jet_f = jet(f, verbose=True)
-    jet_out = jet_f(arg)
+    jet_f = jet(f, k=len(vs), verbose=True)
+    jet_out = jet_f(x, *vs)
+    jet_out = (jet_out[0], jet_out[1:])
 
     compare_jet_results(jet_out, rev_jet_out)
 

@@ -1,9 +1,9 @@
 """Taylor-mode automatic differentiation (jets) in PyTorch."""
 
 from math import factorial
-from typing import Callable
+from typing import Callable, Optional, Tuple
 
-from torch import Tensor, tensor, zeros_like
+from torch import Tensor, split, stack, tensor, zeros_like
 from torch.autograd import grad
 from torch.fx import GraphModule, Tracer
 from torch.nn import Linear, Module, Tanh
@@ -41,8 +41,8 @@ class JetTracer(Tracer):
 
 
 def jet(
-    f: Callable[[Primal], Value], verbose: bool = False
-) -> Callable[[PrimalAndCoefficients], ValueAndCoefficients]:
+    f: Callable[[Primal], Value], k: int, verbose: bool = False
+) -> Callable[[Tuple[Primal, ...]], Tuple[Value, ...]]:
     """Overload a function with its Taylor-mode equivalent.
 
     Args:
@@ -65,7 +65,7 @@ def jet(
     if verbose:
         print(f"Traced graph before jet overloading:\n{mod.graph}")
 
-    jet_mod = _replace_operations_with_taylor(mod)
+    jet_mod = _replace_operations_with_taylor(mod, k)
 
     if verbose:
         print(f"Traced graph after jet overloading:\n{jet_mod.graph}")
@@ -73,7 +73,7 @@ def jet(
     return jet_mod
 
 
-def _replace_operations_with_taylor(mod: GraphModule) -> GraphModule:
+def _replace_operations_with_taylor(mod: GraphModule, k) -> GraphModule:
     """Replace operations in the graph with Taylor-mode equivalents.
 
     Args:
@@ -87,14 +87,40 @@ def _replace_operations_with_taylor(mod: GraphModule) -> GraphModule:
             carrying out the overloading.
     """
     graph = mod.graph
+
+    (input_node,) = [node for node in graph.nodes if node.op == "placeholder"]
+
+    with graph.inserting_after(input_node):
+        vs = [graph.placeholder(name=f"v{i}") for i in reversed(range(1, k + 1))][::-1]
+    with graph.inserting_after(vs[-1]):
+        stacked = graph.call_function(stack, args=((next(iter(graph.nodes)), *vs),))
+
     for node in tuple(graph.nodes):
+        if node.op == "call_function" and input_node in node.args and node != stacked:
+            # change the node to use the stacked input instead of the input node
+            with graph.inserting_after(node):
+                where = node.args.index(input_node)
+                new_args = list(node.args)
+                new_args[where] = stacked
+                new_node = graph.call_function(
+                    node.target, args=tuple(new_args), kwargs=node.kwargs
+                )
+            node.replace_all_uses_with(new_node)
+            graph.erase_node(node)
+
+    for idx, node in enumerate(tuple(graph.nodes)):
         if node.op == "call_function":
+            if node == stacked:
+                continue
+
             f = node.target
             if f not in MAPPING.keys():
                 raise NotImplementedError(f"Unsupported node target: {node.target}")
             with graph.inserting_after(node):
                 new_node = graph.call_function(
-                    MAPPING[f], args=node.args, kwargs=node.kwargs
+                    MAPPING[f],
+                    args=((*node.args, tuple(vs)),) if idx == 1 else node.args,
+                    kwargs=node.kwargs,
                 )
             node.replace_all_uses_with(new_node)
             graph.erase_node(node)
@@ -107,25 +133,37 @@ def _replace_operations_with_taylor(mod: GraphModule) -> GraphModule:
         elif node.op not in ["output", "placeholder", "get_attr"]:
             raise NotImplementedError(f"Unsupported node operation: {node.op}")
 
+    # instead of the output, we want to use the split tensor
+    (output_node,) = [node for node in graph.nodes if node.op == "output"]
+    with graph.inserting_after(output_node):
+        split_node = graph.call_function(split, args=(output_node.args[0], 1))
+    output_node.replace_all_uses_with(split_node)
+    graph.erase_node(output_node)
+
+    with graph.inserting_after(split_node):
+        graph.output(split_node)
+
     mod.graph.lint()
     mod.recompile()
+
     return mod
 
 
 def rev_jet(
-    f: Callable[[Primal], Value]
+    f: Callable[[Primal], Value], order: Optional[int] = None
 ) -> Callable[[PrimalAndCoefficients], ValueAndCoefficients]:
     """Implement Taylor-mode arithmetic via nested reverse-mode autodiff.
 
     Args:
         f: Function to overload. Maps a tensor to another tensor.
+        order: Order of the Taylor expansion. Default: `None`.
 
     Returns:
         The overloaded function that computes the function and its Taylor coefficients
         from the input tensor and its Taylor coefficients.
     """
 
-    def jet_f(arg: PrimalAndCoefficients) -> ValueAndCoefficients:
+    def jet_f(x, *vs, order=order) -> ValueAndCoefficients:
         """Compute the function and its Taylor coefficients.
 
         Args:
@@ -134,8 +172,10 @@ def rev_jet(
         Returns:
             Tuple containing the function value and its Taylor coefficients.
         """
-        x, vs = arg
-        order = len(vs)
+        if order is None:
+            order = len(vs)
+        else:
+            assert order == len(vs)
 
         def path(t: Tensor):
             x_t = x + sum(

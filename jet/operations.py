@@ -2,7 +2,8 @@
 
 from typing import Optional
 
-from torch import Tensor, cos, sin, tanh, zeros_like
+from torch import Tensor, cos, sin, stack, tanh, zeros_like
+from torch.nn import Module
 from torch.nn.functional import linear
 
 from jet.utils import (
@@ -13,17 +14,44 @@ from jet.utils import (
     tensor_prod,
 )
 
+# class JetSin(Module):
 
-def jet_sin(arg: PrimalAndCoefficients) -> ValueAndCoefficients:
+#     def forward(self, arg):
+#         (x, vs) = arg
+
+#         # pre-compute derivatives
+#         sin_x = sin(x)
+#         dsin = {0: sin_x, 1: cos(x)}
+
+#         def dn(*vs) -> Tensor:
+#             """Contract the derivative tensor along the vectors."""
+#             n = len(vs)
+#             sign = 1 if n % 4 in [0, 1] else -1
+#             func = dsin[0] if n % 2 == 0 else dsin[1]
+#             return tensor_prod(sign * func, *vs)
+
+#         vs_out = [zeros_like(sin_x) for _ in vs]
+#         order = len(vs)
+
+#         for k in range(order):
+#             for sigma in integer_partitions(k + 1):
+#                 vs_contract = [vs[i - 1] for i in sigma]
+#                 nu = multiplicity(sigma)
+#                 vs_out[k].add_(dn(*vs_contract), alpha=nu)
+
+#         return sin_x, tuple(vs_out)
+
+
+def jet_sin(s: PrimalAndCoefficients) -> ValueAndCoefficients:
     """Taylor-mode arithmetic for the sine function.
 
     Args:
-        arg: Input tensor and its Taylor coefficients.
+        s: The stacked input and Taylor coefficients.
 
     Returns:
-        Tuple containing the value of the sine function and its Taylor coefficients.
+        The stacked output and Taylor coefficients
     """
-    (x, vs) = arg
+    x, vs = s[0], s[1:]
 
     # pre-compute derivatives
     sin_x = sin(x)
@@ -45,20 +73,19 @@ def jet_sin(arg: PrimalAndCoefficients) -> ValueAndCoefficients:
             nu = multiplicity(sigma)
             vs_out[k].add_(dn(*vs_contract), alpha=nu)
 
-    return sin_x, tuple(vs_out)
+    return stack([sin_x, *vs_out])
 
 
-def jet_tanh(arg: PrimalAndCoefficients) -> ValueAndCoefficients:
+def jet_tanh(s: PrimalAndCoefficients) -> ValueAndCoefficients:
     """Taylor-mode arithmetic for the hyperbolic tangent function.
 
     Args:
-        arg: Input tensor and its Taylor coefficients.
+        s: The stacked input and Taylor coefficients.
 
     Returns:
-        Tuple containing the value of the hyperbolic tangent function and its
-        Taylor coefficients.
+        The stacked output and Taylor coefficients.
     """
-    (x, vs) = arg
+    x, vs = s[0], s[1:]
 
     # pre-compute derivatives
     tanh_x = x.tanh()
@@ -88,26 +115,26 @@ def jet_tanh(arg: PrimalAndCoefficients) -> ValueAndCoefficients:
             nu = multiplicity(sigma)
             vs_out[k].add_(dn(*vs_contract), alpha=nu)
 
-    return tanh_x, tuple(vs_out)
+    return stack([tanh_x, *vs_out])
 
 
 def jet_linear(
-    arg: PrimalAndCoefficients, weight: Tensor, bias: Optional[Tensor] = None
+    s: PrimalAndCoefficients, weight: Tensor, bias: Optional[Tensor] = None
 ) -> ValueAndCoefficients:
     """Taylor-mode arithmetic for the linear function.
 
     Args:
-        arg: Input tensor and its Taylor coefficients.
+        s: The stacked input and Taylor coefficients.
 
     Returns:
-        Tuple containing the value of the linear function and its Taylor coefficients.
+        The stacked output and Taylor coefficients.
     """
-    (x, vs) = arg
+    x, vs = s[0], s[1:]
 
     linear_x = linear(x, weight, bias=bias)
     vs_out = tuple(linear(v, weight) for v in vs)
 
-    return linear_x, vs_out
+    return stack([linear_x, *vs_out])
 
 
 MAPPING = {
