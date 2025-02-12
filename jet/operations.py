@@ -6,7 +6,9 @@ from torch import Tensor, cos, sigmoid, sin, tanh, zeros_like
 from torch.nn.functional import linear
 
 from jet.utils import (
+    Primal,
     PrimalAndCoefficients,
+    Value,
     ValueAndCoefficients,
     integer_partitions,
     multiplicity,
@@ -18,10 +20,12 @@ def jet_sin(s: PrimalAndCoefficients, K: int, vmap: bool) -> ValueAndCoefficient
     """Taylor-mode arithmetic for the sine function.
 
     Args:
-        s: The stacked input and Taylor coefficients.
+        s: The primal and its Taylor coefficients.
+        K: The order of the Taylor expansion.
+        vmap: Whether to `vmap` the primal value and its Taylor coefficients.
 
     Returns:
-        The stacked output and Taylor coefficients
+        The value and its Taylor coefficients.
     """
     x, vs = s[0], s[1:]
 
@@ -29,8 +33,15 @@ def jet_sin(s: PrimalAndCoefficients, K: int, vmap: bool) -> ValueAndCoefficient
     sin_x = sin(x)
     dsin = {0: sin_x, 1: cos(x)}
 
-    def dn(*vs) -> Tensor:
-        """Contract the derivative tensor along the vectors."""
+    def dn(*vs: Primal) -> Value:
+        """Contract the derivative tensor along the vectors.
+
+        Args:
+            vs: The vectors to contract the derivative tensor along.
+
+        Returns:
+            The contracted derivative tensor.
+        """
         n = len(vs)
         sign = 1 if n % 4 in [0, 1] else -1
         func = dsin[0] if n % 2 == 0 else dsin[1]
@@ -51,10 +62,15 @@ def jet_tanh(s: PrimalAndCoefficients, K: int, vmap: bool) -> ValueAndCoefficien
     """Taylor-mode arithmetic for the hyperbolic tangent function.
 
     Args:
-        s: The stacked input and Taylor coefficients.
+        s: The primal and its Taylor coefficients.
+        K: The order of the Taylor expansion.
+        vmap: Whether to `vmap` the primal value and its Taylor coefficients.
 
     Returns:
-        The stacked output and Taylor coefficients.
+        The value and its Taylor coefficients.
+
+    Raises:
+        NotImplementedError: If the order of the Taylor expansion is greater than 3.
     """
     x, vs = s[0], s[1:]
 
@@ -73,8 +89,15 @@ def jet_tanh(s: PrimalAndCoefficients, K: int, vmap: bool) -> ValueAndCoefficien
             f"Tanh only supports derivatives up to third order. Got {K}."
         )
 
-    def dn(*vs) -> Tensor:
-        """Contract the derivative tensor along the vectors."""
+    def dn(*vs: Primal) -> Value:
+        """Contract the derivative tensor along the vectors.
+
+        Args:
+            vs: The vectors to contract the derivative tensor along.
+
+        Returns:
+            The contracted derivative tensor.
+        """
         return tensor_prod(dtanh[len(vs)], *vs)
 
     vs_out = [zeros_like(tanh_x) for _ in range(K)]
@@ -92,10 +115,15 @@ def jet_sigmoid(s: PrimalAndCoefficients, K: int, vmap: bool) -> ValueAndCoeffic
     """Taylor-mode arithmetic for the sigmoid function.
 
     Args:
-        s: The stacked input and Taylor coefficients.
+        s: The primal and its Taylor coefficients.
+        K: The order of the Taylor expansion.
+        vmap: Whether to `vmap` the primal value and its Taylor coefficients.
 
     Returns:
-        The stacked output and Taylor coefficients.
+        The value and its Taylor coefficients.
+
+    Raises:
+        NotImplementedError: If the order of the Taylor expansion is greater than 2.
     """
     x, vs = s[0], s[1:]
 
@@ -111,8 +139,15 @@ def jet_sigmoid(s: PrimalAndCoefficients, K: int, vmap: bool) -> ValueAndCoeffic
             f"Sigmoid only supports derivatives up to second order. Got {K}."
         )
 
-    def dn(*vs) -> Tensor:
-        """Contract the derivative tensor along the vectors."""
+    def dn(*vs: Primal) -> Value:
+        """Contract the derivative tensor along the vectors.
+
+        Args:
+            vs: The vectors to contract the derivative tensor along.
+
+        Returns:
+            The contracted derivative tensor.
+        """
         return tensor_prod(dsigmoid[len(vs)], *vs)
 
     vs_out = [zeros_like(sigmoid_x) for _ in range(K)]
@@ -136,10 +171,14 @@ def jet_linear(
     """Taylor-mode arithmetic for the linear function.
 
     Args:
-        s: The stacked input and Taylor coefficients.
+        s: The primal and its Taylor coefficients.
+        weight: The weight matrix.
+        bias: The (optional) bias vector.
+        K: The order of the Taylor expansion.
+        vmap: Whether to `vmap` the primal value and its Taylor coefficients.
 
     Returns:
-        The stacked output and Taylor coefficients.
+        The value and its Taylor coefficients.
     """
     x, vs = s[0], s[1:]
 

@@ -9,9 +9,9 @@ from torch.nn import Module
 # type annotation for arguments and Taylor coefficients in input and output space
 Primal = Tensor
 Value = Tensor
-# primals and values are stacked together into a joint tensor
-PrimalAndCoefficients = Tensor
-ValueAndCoefficients = Tensor
+# primals and values form a tuple
+PrimalAndCoefficients = Tuple[Primal, ...]
+ValueAndCoefficients = Tuple[Value, ...]
 
 
 def integer_partitions(n: int, I: int = 1):  # noqa: E741
@@ -21,6 +21,10 @@ def integer_partitions(n: int, I: int = 1):  # noqa: E741
 
     Args:
         n: Positive integer.
+        I: Minimum value of the partition's first entry. Default: `1`.
+
+    Yields:
+        Tuple of integers representing the integer partition.
     """
     yield (n,)
     for i in range(I, n // 2 + 1):

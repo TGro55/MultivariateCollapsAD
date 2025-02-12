@@ -3,7 +3,7 @@
 from typing import Callable, Dict
 
 import pytest
-from torch import isclose, manual_seed, rand, sin, tanh, tensor
+from torch import Tensor, isclose, manual_seed, rand, sin, tanh, tensor
 from torch.nn import Linear, Sequential, Tanh
 from torch.nn.functional import linear
 
@@ -21,8 +21,18 @@ def compare_jet_results(out1: ValueAndCoefficients, out2: ValueAndCoefficients):
         report_nonclose(s1, s2, name=f"Coefficients {i+1}")
 
 
-def report_nonclose(a, b, rtol=1e-5, atol=1e-8, name: str = "Tensors"):
-    """Report non-closeness of two tensors."""
+def report_nonclose(
+    a: Tensor, b: Tensor, rtol: float = 1e-5, atol: float = 1e-8, name: str = "Tensors"
+):
+    """Report non-closeness of two tensors.
+
+    Args:
+        a: First tensor.
+        b: Second tensor.
+        rtol: Relative tolerance. Default: `1e-5`.
+        atol: Absolute tolerance. Default: `1e-8`.
+        name: Name of the tensors. Default: `"Tensors"`.
+    """
     close = a.allclose(b, rtol=rtol, atol=atol)
     if not close:
         print(f"{name} are not close.")

@@ -1,9 +1,9 @@
 """Taylor-mode automatic differentiation (jets) in PyTorch."""
 
 from math import factorial
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
-from torch import Tensor, split, stack, tensor, zeros_like
+from torch import Tensor, tensor, zeros_like
 from torch.autograd import grad
 from torch.fx import GraphModule, Tracer
 from torch.nn import Linear, Module, Sigmoid, Tanh
@@ -44,15 +44,14 @@ def jet(
     f: Callable[[Primal], Value],
     k: int,
     vmap: bool = False,
-    collapse: bool = False,
     verbose: bool = False,
-) -> Callable[[Tuple[Primal, ...]], Tuple[Value, ...]]:
+) -> Callable[[PrimalAndCoefficients], ValueAndCoefficients]:
     """Overload a function with its Taylor-mode equivalent.
 
     Args:
         f: Function to overload. Maps a tensor to another tensor.
         k: The order of the Taylor expansion.
-        collapse: Whether to `vmap` and collapse the highest coefficient.
+        vmap: Whether to `vmap` the primal value and its Taylor coefficients.
             Default: `False`.
         verbose: Whether to print the traced graphs before and after overloading.
             Default: `False`.
@@ -61,7 +60,6 @@ def jet(
         The overloaded function that computes the function and its Taylor coefficients
         from the input tensor and its Taylor coefficients.
     """
-    assert not collapse
     # Wrap the function in a module if it is not already a module.
     # We want to always produce an executable `torch.fx.GraphModule`.
     if not isinstance(f, Module):
@@ -73,7 +71,7 @@ def jet(
     if verbose:
         print(f"Traced graph before jet overloading:\n{mod.graph}")
 
-    jet_mod = _replace_operations_with_taylor(mod, k, vmap=vmap, collapse=collapse)
+    jet_mod = _replace_operations_with_taylor(mod, k, vmap=vmap)
 
     if verbose:
         print(f"Traced graph after jet overloading:\n{jet_mod.graph}")
@@ -82,14 +80,14 @@ def jet(
 
 
 def _replace_operations_with_taylor(
-    mod: GraphModule, k: int, vmap: bool, collapse: bool
+    mod: GraphModule, k: int, vmap: bool
 ) -> GraphModule:
     """Replace operations in the graph with Taylor-mode equivalents.
 
     Args:
         mod: Traced PyTorch computation graph module.
         k: The order of the Taylor expansion.
-        collapse: Whether to `vmap` and collapse the highest coefficient.
+        vmap: Whether to `vmap` the primal value and its Taylor coefficients.
 
     Returns:
         The overloaded computation graph module with Taylor arithmetic.
@@ -98,7 +96,6 @@ def _replace_operations_with_taylor(
         NotImplementedError: If an unsupported operation or node is encountered while
             carrying out the overloading.
     """
-    assert not collapse
     graph = mod.graph
 
     # find the input node and insert nodes for the Taylor coefficients
@@ -151,7 +148,7 @@ def _replace_operations_with_taylor(
 def rev_jet(
     f: Callable[[Primal], Value], order: Optional[int] = None
 ) -> Callable[[PrimalAndCoefficients], ValueAndCoefficients]:
-    """Implement Taylor-mode arithmetic via nested reverse-mode autodiff.
+    """Implement Taylor-mode via nested reverse-mode autodiff.
 
     Args:
         f: Function to overload. Maps a tensor to another tensor.
@@ -162,11 +159,16 @@ def rev_jet(
         from the input tensor and its Taylor coefficients.
     """
 
-    def jet_f(x, *vs, order=order) -> ValueAndCoefficients:
+    def jet_f(
+        x: Primal, *vs: Primal, order: Optional[int] = order
+    ) -> ValueAndCoefficients:
         """Compute the function and its Taylor coefficients.
 
         Args:
-            arg: Tuple containing the input tensor and its Taylor coefficients.
+            x: Input tensor.
+            *vs: Taylor coefficients.
+            order: Order of the Taylor expansion. If `None`, the order is the number of
+                Taylor coefficients.
 
         Returns:
             Tuple containing the function value and its Taylor coefficients.
