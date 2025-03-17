@@ -267,6 +267,25 @@ In this scheme, the second-order coefficients are \emph{first summed, then propa
 In fact, this scheme in \cref{eq:laplacian-efficient} corresponds to the \emph{forward Laplacian} framework from \citet{li2023forward}.
 However, we recovered it from a different starting point: by using Taylor mode in combination with sum propagations.
 
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lcc|cc}
+        \toprule
+        \multirow{2}{*}{Operation} & \multicolumn{2}{c|}{Taylor arithmetic (TA)} & \multicolumn{2}{c}{Laplacian arithmetic (LA)} \\
+        & Multiplications & Additions & Multiplications & Additions \\
+        \midrule
+        $\cos$  & $4D$  & $D$   & $3D + 1$  & $D + 1$ \\
+        $\sin$  & $4D$  & $D$   & $3D + 1$  & $D + 1$ \\
+        $\exp$  & $3D$  & $D$   & $2D + 1$  & $D + 1$ \\
+        \midrule
+        $\text{mult}$ & $5D$  & $3D$  & $3D + 2$  & $D + 2$ \\
+        $\text{add}$  & $0$   & $2D$  & $D (0?)$  & $1$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Number of multiplications and additions for atomic operations in Taylor Arithmetic (TA) and Laplacian Arithmetic (LA).}
+    \label{tab:arithmetics}
+\end{table}
+
 \paragraph{Weighted sums of second-order derivatives.}
 We can generalize the scheme in \cref{eq:laplacian-efficient} to computing differential operators of the form $\sum_{i,j} C_{i,j} \nicefrac{\partial^2f}{\partial \evx_i \evx_j}$ with a symmetric coefficient matrix $\mC \in \sR^{D\times D}$. For simplicity, let's first assume that $\mC$ is positive semi-definite, which means we can express it as $\mC = \sum_{d=1}^{\rank(\mC)} \vv_d \vv_d^\top$ with real-valued $\vv_d \in \sR^D$, and therefore
 \begin{align}\label{eq:weighted-laplacian}
@@ -276,10 +295,20 @@ We can generalize the scheme in \cref{eq:laplacian-efficient} to computing diffe
 \end{align}
 This can be computed using \cref{eq:laplacian-naive}, and the simplified version in \cref{eq:laplacian-efficient}, by setting $\vx_{1,d} = \vv_d, \vx_{2,d} = \vzero$.
 Also here, the second-order coefficients can be collapsed, and instead of pushing forward $1 + 2 \rank(\mC)$ vectors, we are left with $2 + \rank(\mC)$ vectors.
-If $\mC$ is in-definite, then some $\vv_d$ will be purely complex, \ie have non-zero imaginary but zero real part, and some will be purely real.
+
+If $\mC$ is in-definite, then some $\vv_d$ will be purely complex, \ie have non-zero imaginary but zero real part, and some will be purely real (alternatively, we can stick to real-valued arithmetic, but incorporate a minus sign for the vectors associated with negative eigenvalues of $\mC$; it is currently unclear if we even need this: there might not be relevant use cases for $\mC$ indefinite).
 We can either compute the differential operator in complex-valued arithmetic, or split the positive and negative parts of the spectrum into two separate collapsed jets.
 
-\subsection{Using Linearity in Randomization Taylor Mode}
+\paragraph{Partially collapsed Taylor mode.}
+A use case for such partially collapsed jets is in \cite{hu2023hutchinson}, which uses randomized Taylor mode (see \cref{subsec:randomized-taylor-mode}) to estimate the Laplacian.
+In their application, the randomized Laplacian feeds into square loss.
+While the Laplacian estimator itself is unbiased, squaring it in the loss function introduces a bias. 
+Obtaining an unbiased estimator of the loss requires computing two randomized Laplacians using different sets of random vectors. 
+We could handle this partial collapse and its propagation up the computation graph with our graph simplifications.
+However, \cite{hu2023hutchinson} do not use this unbiased version in practice. 
+They argue it has too much variance.
+
+\subsection{Using Linearity in Randomization Taylor Mode}\label{subsec:randomized-taylor-mode}
 \citep{shi2024stochastic} introduce randomization into Taylor mode, similar to stochastic backpropagation~\cite{oktay2021randomized}.
 This lowers the computational cost when $D$ is prohibitively large for exact evaluation of differential operators.
 Take the weighted Laplacian from \Cref{eq:weighted-laplacian} and assume we have access to random vectors $\rvv$ with and $\E[\vv \vv^{\top}] = \mC$.
@@ -312,6 +341,46 @@ Then we can draw $S \ll D$ random vectors $\vv_1, \vv_2, \dots, \vv_S \overset{\
 Again, we see that the second-order coefficients can be collapsed when setting $\vx_{1,d} = \vv_d, \vx_{2,d} = \vzero$ in \cref{eq:laplacian-naive,eq:laplacian-efficient}.
 
 \subsection{Using Linearity in Higher-Order Operators}
+\paragraph{Traces of higher-order derivative tensors}
+We can view the Laplacian as trace of the Hessian (the tensor of second-order derivatives).
+A natural generalization to higher-order derivatives would be the tensor trace operator
+\begin{align}\label{eq:trace-differential-operator}
+    \Tr( \partial^K f(\vx) )
+    \coloneqq
+    \sum_{d=1}^D
+    \frac{\partial^K f(\vx)}{\partial \evx_d^K}
+    =
+    \sum_{d=1}^D
+    \partial^K f(\vx) [\ve_d, \ve_d, \dots, \ve_d]
+\end{align}
+which reduces to the Laplacian for $K=2$.
+To compute this operator naively with Taylor mode, we have to propagate $1 + D K$ coefficients, then sum the coefficients of order $K$.
+This sum can be pulled inside the forward propagation, similar to the forward Laplacian, resulting in $1 + D (K - 1) + 1$ coefficients.
+While the improvements of this trick diminish as $K$ grows, the savings can still be significant for $K = 3, 4$.
+At the moment, I do not know a relevant application for operators of the form \cref{eq:trace-differential-operator}.
+
+\paragraph{Biharmonic operator} The biharmonic operator is a fourth-order differential operator that is interesting for some practitioners.
+It is defined as
+\begin{align}
+    \Delta^2 f(\vx)
+    \coloneqq
+    \sum_{i=1}^D \sum_{j=1}^D
+    \frac{\partial^4 f(\vx)}{\partial \evx_i^2 \partial \evx_j^2}
+    =
+    \partial^4 f(\vx) [\ve_i, \ve_i, \ve_j, \ve_j]
+\end{align}
+\citet{hu2023hutchinson} propose to approximate it in an unbiased fashion via
+\begin{align}
+    \Delta^2 f(\vx)
+    \coloneqq
+    \frac{1}{3}
+    \E_{\rvv \sim \gN(\vzero, \mI)} \left[
+    \partial^4 f(\vx) [\rvv, \rvv, \rvv, \rvv]
+    \right]
+    \qquad 
+\end{align}
+If we want to estimate this quantity using multiple samples, we can again pull the summation (from averaging over examples) into the Taylor mode propagation, resulting in collapsed Taylor mode.
+I think we can improve their results from Table 3 in terms of memory and run time.
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "../main"
