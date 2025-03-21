@@ -60,8 +60,7 @@ int main() {
       v2 = x[1]*x[1]*x[1]*x[1];
       v3 = x[2]*x[2]*x[2]*x[2];
       v4 = v1*v2;
-      //y[0] = v4*v3;
-      y[0] = v3;
+      y[0] = v4*v3;
       y[0] >>= yp[0];
     trace_off();
 
@@ -152,12 +151,18 @@ int main() {
      // init direction fourth order derivatives
      x0ts[0][0] = 1.0;
      x1ts[1][0] = 1.0; 
-     x2ts[3][0] = 1.0;
+     x2ts[2][0] = 1.0;
+     x0ts[3][0] = 1.0;
+     x1ts[3][0] = 1.0;
+     x0ts[4][0] = 1.0;
+     x2ts[4][0] = 1.0;
+     x1ts[5][0] = 1.0;
+     x2ts[5][0] = 1.0;
 
      // v_1 =  x[0]*x[0]*x[0]*x[0];
      v1ps =  xp[0]*xp[0]*xp[0]*xp[0];
      temps = 1.0/xp[0]; 
-     for  (i = 0; i < 3; i++) {
+     for  (i = 0; i < p; i++) {
        //v_1
        v1ts[i][0] = temps*(4*v1ps*x0ts[i][0]);
        v1ts[i][1] = temps*(4*(v1ts[i][0]*x0ts[i][0]+v1ps*2*x0ts[i][1])-x0ts[i][0]*v1ts[i][0])/2.0;
@@ -168,7 +173,7 @@ int main() {
      // v_2 =  x[1]*x[1]*x[1]*x[1];
      v2ps =  xp[1]*xp[1]*xp[1]*xp[1];
      temps = 1.0/xp[1]; 
-     for  (i = 0; i < 3; i++) {
+     for  (i = 0; i < p; i++) {
        //v_2
        v2ts[i][0] = temps*(4*v2ps*x1ts[i][0]);
        v2ts[i][1] = temps*(4*(v2ts[i][0]*x1ts[i][0]+v2ps*2*x1ts[i][1])-x1ts[i][0]*v2ts[i][0])/2.0;
@@ -176,26 +181,37 @@ int main() {
        v2ts[i][3] = temps*(4*(v2ts[i][2]*x1ts[i][0]+v2ts[i][1]*2*x1ts[i][1]+v2ts[i][0]*3*x1ts[i][2]+v2ps*4*x1ts[i][3])-x1ts[i][2]*v2ts[i][0]-2*x1ts[i][1]*v2ts[i][1]-3*x1ts[i][0]*v2ts[i][2])/4.0;
      }
 	 
-     for  (i = 0; i < 3; i++) {
-       cout << i << " " << v2ts[i][0] << " " << v2ts[i][1] << " " << v2ts[i][2] << " " << v2ts[i][3]<< "\n";
-     }  
-     cout << "\n";
-
 
      // v_3 =  x[2]*x[2]*x[2]*x[2];
      v3ps =  xp[2]*xp[2]*xp[2]*xp[2];
      temps = 1.0/xp[2]; 
-     for  (i = 0; i < 3; i++) {
+     for  (i = 0; i < p; i++) {
        //v_3
        v3ts[i][0] = temps*(4*v3ps*x2ts[i][0]);
-       cout << temps << " " << " " << v3ps << " " << x2ts[i][0] <<" " << v3ts[i][0] <<"\n";
        v3ts[i][1] = temps*(4*(v3ts[i][0]*x2ts[i][0]+v3ps*2*x2ts[i][1])-x2ts[i][0]*v3ts[i][0])/2.0;
        v3ts[i][2] = temps*(4*(v3ts[i][1]*x2ts[i][0]+v3ts[i][0]*x2ts[i][1]+v3ps*2*x2ts[i][2])-x2ts[i][1]*v3ts[i][0]-2*x2ts[i][0]*v3ts[i][1])/3.0;
        v3ts[i][3] = temps*(4*(v3ts[i][2]*x2ts[i][0]+v3ts[i][1]*2*x2ts[i][1]+v3ts[i][0]*3*x2ts[i][2]+v3ps*4*x2ts[i][3])-x2ts[i][2]*v3ts[i][0]-2*x2ts[i][1]*v3ts[i][1]-3*x2ts[i][0]*v3ts[i][2])/4.0;
      }
 
-     for  (i = 0; i < 3; i++) {
-       cout << i << " " << v3ts[i][0] << " " << v3ts[i][1] << " " << v3ts[i][2] << " " << v3ts[i][3]<< "\n";
+
+     v4ps = v1ps*v2ps;
+     for  (i = 0; i < p; i++) {
+       v4ts[i][0] = v1ps*v2ts[i][0]+v1ts[i][0]*v2ps;
+       v4ts[i][1] = v1ps*v2ts[i][1]+v1ts[i][0]*v2ts[i][0]+v1ts[i][1]*v2ps;
+       v4ts[i][2] = v1ps*v2ts[i][2] + v1ts[i][0]*v2ts[i][1] + v1ts[i][1]*v2ts[i][0] + v1ts[i][2]*v2ps ;
+       v4ts[i][3] = v1ps*v2ts[i][3] + v1ts[i][0]*v2ts[i][2] + v1ts[i][1]*v2ts[i][1] + v1ts[i][2]*v2ts[i][0]  + v1ts[i][3]*v2ps ;
+     }
+    
+     y[0] = v4ps*v3ps;
+     for  (i = 0; i < p; i++) {
+       yts[i][0] = v4ps*v3ts[i][0]+v4ts[i][0]*v3ps;
+       yts[i][1] = v4ps*v3ts[i][1]+v4ts[i][0]*v3ts[i][0]+v4ts[i][1]*v3ps;
+       yts[i][2] = v4ps*v3ts[i][2] + v4ts[i][0]*v3ts[i][1] + v4ts[i][1]*v3ts[i][0] + v4ts[i][2]*v3ps ;
+       yts[i][3] = v4ps*v3ts[i][3] + v4ts[i][0]*v3ts[i][2] + v4ts[i][1]*v3ts[i][1] + v4ts[i][2]*v3ts[i][0]  + v4ts[i][3]*v3ps ;
+     }
+
+     for  (i = 0; i < p; i++) {
+       cout << i << " " << yts[i][0] << " " << yts[i][1] << " " << yts[i][2] << " " << yts[i][3]<< "\n";
      }  
      cout << "\n";
 	 
