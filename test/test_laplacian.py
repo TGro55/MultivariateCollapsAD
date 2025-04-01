@@ -1,31 +1,16 @@
 from functools import partial
-from test.utils import VMAP_IDS, VMAPS, Sin
-from typing import Callable
+from test.test___init__ import CASES_COMPACT, CASES_COMPACT_IDS, setup_case
+from typing import Any, Callable, Dict
 
 from pytest import mark
-from torch import Tensor, manual_seed, rand, zeros, zeros_like
+from torch import Tensor, manual_seed, zeros_like
 from torch.autograd.functional import hessian
-from torch.fx import symbolic_trace
-from torch.nn import Linear, Sequential, Sigmoid, Tanh
+from torch.linalg import norm
 
-from jet import jet
-from jet.laplacian import Laplacian
+from jet.laplacian import Laplacian, RandomizedLaplacian
 
-
-def laplacian_jet_loop(f, x):
-    jet_f = jet(f, 2, verbose=True)
-    lap = 0
-
-    v2 = zeros_like(x)
-
-    for i in range(x.numel()):
-        v1 = zeros_like(x).flatten()
-        v1[i] = 1.0
-        v1 = v1.reshape(x.shape)
-        _, _, d2i = jet_f(x, v1, v2)
-        lap += d2i
-
-    return lap
+DISTRIBUTIONS = ["normal", "rademacher"]
+DISTRIBUTION_IDS = [f"distribution={d}" for d in DISTRIBUTIONS]
 
 
 def laplacian(f: Callable[[Tensor], Tensor], x: Tensor) -> Tensor:
@@ -52,72 +37,62 @@ def laplacian(f: Callable[[Tensor], Tensor], x: Tensor) -> Tensor:
     return lap.reshape_as(out)
 
 
-def test_laplacian():
-    """Compare Laplacian implementations."""
-    manual_seed(0)
-    mlp = Sequential(
-        Linear(5, 4, bias=False),
-        Tanh(),
-        Linear(4, 3, bias=True),
-        Sin(),
-        Linear(3, 1, bias=True),
-        Sigmoid(),
-    )
-    x = rand(5)
-
-    # reference: Using PyTorch
-    lap_rev = laplacian(mlp, x)
-
-    # Using a jet to for-loop over the diagonal elements
-    lap_jet_loop = laplacian_jet_loop(mlp, x)
-    assert lap_rev.allclose(lap_jet_loop)
-    print("Functorch and jet (loop) Laplacians match.")
-
-    # Using a manually-vmapped jet that is traceable
-    # NOTE: This module is trace-able, therefore we can symbolically simplify it.
-    _, _, lap_mod = Laplacian(mlp, x, is_batched=False)(x)
-    assert lap_rev.allclose(lap_mod)
-    print("Functorch and module-vmapped traceable Laplacian module match.")
-
-
-@mark.parametrize("vmap", VMAPS, ids=VMAP_IDS)
-def test_symbolic_trace_jet(vmap: bool):
-    """Test whether the function produced by jet can be traced.
+@mark.parametrize("config", CASES_COMPACT, ids=CASES_COMPACT_IDS)
+def test_Laplacian(config: Dict[str, Any]):
+    """Compare Laplacian implementations.
 
     Args:
-        vmap: Whether to use vmap.
+        config: Configuration dictionary of the test case.
     """
-    mlp = Sequential(
-        Linear(5, 4, bias=False),
-        Tanh(),
-        Linear(4, 3, bias=True),
-        Sin(),
-        Linear(3, 1, bias=True),
-        Sigmoid(),
-    )
-    # generate the jet's compute graph
-    jet_f = jet(mlp, 2, vmap=vmap)
+    f, x, _, is_batched = setup_case(config, taylor_coefficients=False)
 
-    # try tracing it
-    print("Compute graph of jet function:")
-    mod = symbolic_trace(jet_f)
-    print(mod.graph)
+    # reference: Using PyTorch
+    lap_rev = laplacian(f, x)
+
+    # Using a manually-vmapped jet
+    _, _, lap_mod = Laplacian(f, x, is_batched)(x)
+    assert lap_rev.allclose(lap_mod), "Functorch and jet Laplacians do not match."
 
 
-def test_symbolic_trace_Laplacian():
-    """Test whether the Laplacian module is trace-able."""
-    mlp = Sequential(
-        Linear(5, 4, bias=False),
-        Tanh(),
-        Linear(4, 3, bias=True),
-        Sin(),
-        Linear(3, 1, bias=True),
-        Sigmoid(),
-    )
-    x_dummy = zeros(5)
-    lap = Laplacian(mlp, x_dummy, is_batched=False)
+@mark.parametrize("distribution", DISTRIBUTIONS, ids=DISTRIBUTION_IDS)
+@mark.parametrize("config", CASES_COMPACT, ids=CASES_COMPACT_IDS)
+def test_RandomizedLaplacian(
+    config: Dict[str, Any],
+    distribution: str,
+    max_num_chunks: int = 500,
+    chunk_size: int = 4_096,
+    target_rel_error: float = 2e-3,
+):
+    """Test convergence of the Laplacian's Monte-Carlo estimator.
 
-    # try tracing the Laplacian module
-    print("Compute graph of manually Laplacian module:")
-    mod = symbolic_trace(lap)
-    print(mod.graph)
+    Args:
+        config: Configuration dictionary of the test case.
+        distribution: The distribution from which to draw random vectors.
+        max_num_chunks: Maximum number of chunks to accumulate. Default: `500`.
+        chunk_size: Number of samples per chunk. Default: `4_096`.
+        target_rel_error: Target relative error for convergence. Default: `2e-3`.
+    """
+    f, x, _, is_batched = setup_case(config, taylor_coefficients=False)
+
+    # reference: Using PyTorch
+    lap_rev = laplacian(f, x)
+
+    # accumulate the MC-Laplacian over multiple chunks
+    lap_mod = 0.0
+    converged = False
+
+    for i in range(max_num_chunks):
+        manual_seed(i)
+        _, _, lap_i = RandomizedLaplacian(f, x, is_batched, chunk_size, distribution)(x)
+        # update the Monte-Carlo estimator with the current chunk
+        lap_mod = (lap_mod * i + lap_i.detach()) / (i + 1.0)
+
+        rel_error = (norm(lap_mod - lap_rev) / norm(lap_rev)).item()
+        print(f"Relative error at {(i+1) * chunk_size} samples: {rel_error:.3e}.")
+
+        # check for convergence
+        if rel_error < target_rel_error:
+            converged = True
+            break
+
+    assert converged, f"Monte-Carlo Laplacian ({distribution}) did not converge."
