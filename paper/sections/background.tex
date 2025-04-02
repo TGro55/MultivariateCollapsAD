@@ -169,7 +169,7 @@ Taylor mode from the previous sub-section serves as backbone for computing many 
 The fundamental problem is to figure out how to set the jet degrees $K$ and the Taylor coefficients $x_k$.
 
 As an example, let's consider computing the Laplacian of a function $f: \sR^D \to \sR$,
-\begin{align}
+\begin{align}\label{eq:laplacian}
   \Delta f(\vx)
   =
   \sum_{d=1}^D \frac{\partial^2f(\vx)}{\partial x_d^2}
@@ -289,6 +289,12 @@ However, we recovered it from a different starting point: by using Taylor mode i
 
 
 \paragraph{Weighted sums of second-order derivatives.}
+We can generalize the scheme \cref{eq:laplacian-efficient} to weighted sums of second-order derivatives, more precisely to PDE operators of the form 
+\begin{equation*}
+    \Tr (\msigma \msigma^\top \partial^2 f),
+\end{equation*}
+where $\msigma\in\mathbb R^{D\times D}$ is a matrix or even a matrix valued function. These operators in Fokker-Planck equations, where the matrix $\msigma$ plays the role of a diffusivity, in Hamiltonian-Jacobi Bellmann equations and, choosing $\msigma = \mI$ they reduce to the Laplace operator. In all cases one is interested in high 
+
 We can generalize the scheme in \cref{eq:laplacian-efficient} to computing differential operators of the form $\sum_{i,j} C_{i,j} \nicefrac{\partial^2f}{\partial \evx_i \evx_j}$ with a symmetric coefficient matrix $\mC \in \sR^{D\times D}$. For simplicity, let's first assume that $\mC$ is positive semi-definite, which means we can express it as $\mC = \sum_{d=1}^{\rank(\mC)} \vv_d \vv_d^\top$ with real-valued $\vv_d \in \sR^D$, and therefore
 \begin{align}\label{eq:weighted-laplacian}
   \sum_{i,j} C_{i,j} \frac{\partial^2f}{\partial x_i \partial x_j}
@@ -363,7 +369,52 @@ This sum can be pulled inside the forward propagation, similar to the forward La
 While the improvements of this trick diminish as $K$ grows, the savings can still be significant for $K = 3, 4$.
 At the moment, I do not know a relevant application for operators of the form \cref{eq:trace-differential-operator}.
 
-\paragraph{Biharmonic operator} The biharmonic operator is a fourth-order differential operator that is interesting for some practitioners.
+\paragraph{An attempt to generalize what we did so far.}
+Let's try to summarize what we did so far.
+Our goal was to compute a differential operator.
+This differential operator resulted from a dot product in the following sense. Given a coefficient tensor $\tC \in (\sR^D)^{\otimes K}$ and the $K$-th order derivative tensor $\partial^K f(\vx) \in (\sR^D)^{\otimes K}$, our differential operator was of the form
+\begin{align}\label{eq:derivative-tensor-scalar-product}
+    \left\langle
+    \tC, \partial^K f(\vx)
+    \right\rangle
+    \coloneqq
+    \sum_{d_1}
+    \sum_{d_2}
+    \dots
+    \sum_{d_K}
+    [\tC]_{d_1, d_2, \dots, d_K}
+    [\partial^K f(\vx)]_{d_1, d_2, \dots, d_K}
+\end{align}
+where $[\partial^K f(\vx)]_{d_1, d_2, \dots, d_K} = \partial^K f(\vx)[\ve_{d_1}, \ve_{d_2}, \dots, \ve_{d_K}]$.
+Let's show that this formulation indeed contains everything we discussed so far:
+\begin{itemize}
+    \item For the Laplacian (\Cref{eq:laplacian}), we have
+    $K = 2$ and $\tC$ a rank-2 tensor with $[\tC]_{i,j} = \delta_{i,j}$, or simply $\tC = \mI$.
+    In other words, we take the dot product of the second-order derivative tensor with the identity matrix.
+
+    \item For the weighted sum of second-order derivatives (\Cref{eq:weighted-laplacian}), we had $K=2$ and $\tC = \mC$.
+
+    \item For the generalized trace operator (\Cref{eq:trace-differential-operator}), we have $K$ arbitrary and $\tC$ such that $[\tC]_{d_1, d_2, \dots, d_K} = \delta_{d_1, d_2, \dots, d_K}$.
+\end{itemize}
+
+Note that the differential operator in \Cref{eq:derivative-tensor-scalar-product} requires computing $\partial^K f(\vx)[\ve_{d_1}, \ve_{d_2}, \dots, \ve_{d_K}]$ in general.
+If we want to use $K$-th order Taylor mode, we have to re-write the computation, because it can only compute
+$\partial^K f(\vx)[\vv, \vv, \dots, \vv]$.
+(The other alternative would be to increase the order of the Taylor mode, but then I don't know how to apply the collapsing trick.)
+Here is how we achieved this for the examples above:
+\begin{itemize}
+    \item For the Laplacian, we wrote $\mC = \mI = \sum_{d} \ve_d \otimes \ve_d = \sum_d (\ve_d)^{\otimes 2}$ (I am slightly abusing notation here and mean that the Kronecker product is a tensor outer product, \ie applying it between two vectors (rank-1 tensors) yields a matrix (rank-2 tensor).)
+    
+    \item For the weighted sum of second-order derivatives, we assumed $\tC = \mC$ is PSD and wrote $\mC = \sum_d \vv_d \otimes \vv_d = \sum_d (\vv_d)^{\otimes 2}$
+
+    \item For the generalized trace operator, we decomposed $\tC = \sum_d \ve_d \otimes \ve_d \otimes \dots \otimes \ve_d = \sum_d (\ve_d)^{\otimes K}$.
+\end{itemize}
+The crucial part here is that whenever we can factorize the coefficient tensor $\tC$ into a sum of rank-1 tensor products, then we can use Taylor-mode to efficiently compute each term, while collapsing the sum.
+This, of course, limits us to coefficient tensors that can be written as $\tC = \sum_d (\vv_d)^{\otimes K}$.
+
+
+\paragraph{Biharmonic Operator}
+The Biharmonic Operator is a fourth-order differential operator that is interesting for some practitioners.
 It is defined as
 \begin{align}
     \Delta^2 f(\vx)
@@ -387,174 +438,122 @@ It is defined as
 If we want to estimate this quantity using multiple samples, we can again pull the summation (from averaging over examples) into the Taylor mode propagation, resulting in collapsed Taylor mode.
 I think we can improve their results from Table 3 in terms of memory and run time.
 
-\paragraph{Using Linearity --- Biharmonic Operator}
 
-When writing out the Biharmonic operator, applied to $g \circ h$ we see several terms which occur only as sums:
- \begin{align}
-&\sum_{i=1}^d \sum_{j=1}^d 
-\partial^4 g(h(x))
-[h_i^2(x) h_j(x)^2] \\
-&+ 
-\partial^3 g(h(x))\left[
-\sum_{i=1}^d\left(
-h_i(x)^2 
-\mathemph{\sum_{j=1}^d  h_{jj}(x)}
-\right) 
-+
-4 \sum_{i=1}^d \sum_{j=1}^d \left(
-h_i(x) h_j(x) h_{ij}(x)
-\right)
-+
-\sum_{j=1}^d \left(
-\mathemph{\sum_{i=1}^d  h_{ii}(x)} h_j(x)^2
-\right) 
-\right] \\
-&+
-\partial^2 g(h(x)) \left[
-\sum_{i=1}^d \sum_{j=1}^d \left(
-2 h_{ij}(x)^2 
-\right) 
-+
-2 \sum_{i=1}^d \left(
-h_i(x) \mathemph{\sum_{j=1}^d  h_{ijj}(x)}
-\right) 
-+
-2 \sum_{j=1}^d \left(
-\mathemph{\sum_{i=1}^d  h_{iij}(x)} h_j(x) 
-\right) 
-+
-\mathemph{\sum_{i=1}^d h_{ii}(x) \sum_{j=1}^d  h_{jj}(x)}
-\right] \\
-&+ 
-\partial g(h(x)) \mathemph{\sum_{i=1}^d \sum_{j=1}^d h_{iijj}(x)}
-\Big].
-\end{align}
-\todo{Do we assume continuity of all derivatives? Required for equivalence of third order sum} Leveraging the fact that there are equivalent sums $\sum_j h_{jj} = \sum_i h_{ii}$ and $\sum_j h_{ijj} = \sum_i h_{iij}$ as well as sums like $\displaystyle \sum_{i=1}^d  \sum_{j=1}^d \partial^3 \vh [
-        \vx_i, \vx_i, \vx_{jj}]$ are the same as $\displaystyle \sum_{i=1}^d  \sum_{j=1}^d \partial^3 \vh [\vx_{ii},
-        \vx_j, \vx_j]$
-        everything is combined in the following efficient propagation scheme
+\paragraph{Felix's approach to computing the biharmonic operator.}
+In the paragraph above, we learned that if we can write our coefficient tensor as $\tC = \sum_d (\vv_d)^{\otimes K}$, then we can use $K$-th order Taylor mode to efficiently compute it, while collapsing the sum.
+Let's look at the biharmonic operator now.
+It reads $\Delta^2 f(\vx) =\sum_{i=1}^D \sum_{j=1}^D \partial^4 f(\vx) [\ve_i, \ve_i, \ve_j, \ve_j]$. 
+Let's write down the coefficient tensor for the biharmonic.
+It is $\tC = \sum_d \sum_{d'} (\ve_d)^{\otimes 2} (\ve_{d'})^{\otimes 2}$.
+What do we see? This coefficient cannot be written in our desired form; it is slightly more general: We have a sum, but instead of a 4-th tensor power of the same vector, we get the product of two 2-nd tensor powers (note that in the most general case we have four different vectors). Since we now have to collapse the fourth derivative tensor along \emph{different} dimensions, we cannot use 4-th order Taylor mode to compute it!
 
-\begin{align}\label{eq:biharm-efficient}
-  \begin{split}
-    \begin{pmatrix*}
-      \vx_0
-      \\
-      \{\vx_{i} \}
-      \\
-      \{\vx_{ij} \}
-      \\
-      \mathemph{\displaystyle\sum_{i=1}^D \vx_{ii}}  
-      \\
-      \mathemph{\displaystyle\sum_{i=1}^D \vx_{iij}}
-      \\
-      \mathemph{\displaystyle\sum_{i=1}^D \sum_{j=1}^D  \vx_{iijj}}
-    \end{pmatrix*}
-    &\overset{\text{(\ref{eq:taylor-mode-scalar})}}{\to}
-      \begin{pmatrix*}[l]
-        \vh_0 =  \vh(\vx_0)
-        \\
-        \{\vh_{i}\} = \{\partial \vh[\vx_{i}]\}
-        \\
-        \mathemph{\displaystyle \sum_{i=1}^D \vh_{ii}} = \displaystyle\sum_{i=1}^D \partial^2 \vh[
-        \vx_{i}, \vx_{i}]
-        + \partial \vh[\mathemph{\displaystyle\sum_{i=1}^D\vx_{ii}}]
-        \\
-        \mathemph{\displaystyle \sum_{i=1}^D \vh_{iij}} = 
-        \displaystyle\sum_{i=1}^D \left(
-        \partial^3 \vh[
-        \vx_{i}, \vx_{i}, \vx_{j}] 
-        + 
-        2 \partial^2 \vh[
-        \vx_{i, j}, \vx_{i}] \right)
-        + 
-        \partial^2 \vh[
-        \vx_{j}, \mathemph{\displaystyle\sum_{i = 1}^d\vx_{ii}}]
-        + 
-        \partial \vh[
-        \mathemph{\displaystyle\sum_{i=1}^D\vx_{iij}}]
-        \\
-        \mathemph{\displaystyle\sum_{i=1}^d \sum_{j=1}^d \vh_{iijj}} = 
-        \displaystyle\sum_{i=1}^d \sum_{j=1}^d
-        \partial^4 \vh
-        [\vx_i, \vx_i, \vx_j, \vx_j] 
-        + 
-        2 \displaystyle \sum_{j=1}^d \partial^3 \vh [
-        \vx_j, \vx_j, \mathemph{\displaystyle \sum_{i=1}^d \vx_{ii}} ]
-        \\
-        +
-        4 \displaystyle \sum_{i=1}^d \sum_{j=1}^d \partial^3 \vh [
-        \vx_i, \vx_j, \vx_{ij}]
-        +
-        \displaystyle 2\sum_{i=1}^d \sum_{j=1}^d \partial^2 \vh [
-         \vx_{ij}, \vx_{ij}]
-        +
-        \displaystyle 4\sum_{j=1}^d \partial^2 \vh [
-        \vx_j, \mathemph{\sum_{i=1}^d  \vx_{iij}}]
-        \\
-        +
-        \displaystyle \partial^2 \vh [
-        \mathemph{\sum_{i=1}^d \vx_{ii}, \sum_{i=1}^d \vx_{ii}}]
-        + 
-        \partial \vh [\mathemph{\sum_{i=1}^d \sum_{j=1}^d \vx_{iijj}}]
-        \Big]
-      \end{pmatrix*}
-    \\
-    &\overset{\text{(\ref{eq:taylor-mode-scalar})}}{\to}
-\begin{pmatrix*}[l]
-        \vg_0 =  \vg(\vh_0)
-        \\
-        \{\vg_{i}\} = \{\partial \vg[\vh_{i}]\}
-        \\
-        \mathemph{\displaystyle \sum_{i=1}^D \vg_{ii}} = \displaystyle\sum_{i=1}^D \partial^2 \vg[
-        \vh_{i}, \vh_{i}]
-        + \partial \vg[\mathemph{\displaystyle\sum_{i=1}^D\vh_{ii}}]
-        \\
-        \mathemph{\displaystyle \sum_{i=1}^D \vg_{iij}} = 
-        \displaystyle\sum_{i=1}^D \left(
-        \partial^3 \vg[
-        \vh_{i}, \vh_{i}, \vh_{j}] 
-        + 
-        2 \partial^2 \vg[
-        \vh_{ij}, \vh_{i}] \right)
-        + 
-        \partial^2 \vg[
-        \vh_{j}, \mathemph{\displaystyle\sum_{i=1}^d\vh_{ii}}]
-        + 
-        \partial \vg[
-        \mathemph{\displaystyle\sum_{i=1}^D\vh_{iij}}]
-        \\
-        \mathemph{\displaystyle\sum_{i=1}^d \sum_{j=1}^d \vg_{iijj}} = 
-        \displaystyle\sum_{i=1}^d \sum_{j=1}^d
-        \partial^4 \vg
-        [\vh_i, \vh_i, \vh_j, \vh_j] 
-        + 
-        2 \displaystyle \sum_{j=1}^d \partial^3 \vg [
-        \vh_j, \vh_j, \mathemph{\displaystyle \sum_{i=1}^d \vh_{ii}} ]
-        \\
-        +
-        4 \displaystyle \sum_{i=1}^d \sum_{j=1}^d \partial^3 \vg [
-        \vh_i, \vh_j, \vh_{ij}]
-        +
-        \displaystyle 2\sum_{i=1}^d \sum_{j=1}^d \partial^2 \vg [
-         \vh_{ij}, \vh_{ij}]
-        +
-        \displaystyle 4\sum_{j=1}^d \partial^2 \vg [
-        \vh_j, \mathemph{\sum_{i=1}^d  \vh_{iij}}]
-        \\
-        +
-        \displaystyle \partial^2 \vg [
-        \mathemph{\sum_{i=1}^d \vh_{ii}, \sum_{i=1}^d \vh_{ii}}]
-        + 
-        \partial \vg [\mathemph{\sum_{i=1}^d \sum_{j=1}^d \vh_{iijj}}]
-        \Big]
-      \end{pmatrix*}
-    \\
-    \\
-    &\overset{\text{slice}}{\to} \mathemph{\sum_{i=1}^D \sum_{i=1}^D \{ \vg_{iijj} \}}
-      \overset{\{\frac{d}{d t} \vx = I_D, \frac{d^2}{d t^2} \vx = 0, \frac{d^3}{d t^3} \vx = 0, \frac{d^4}{d t^4} \vx = 0\}}{=}
-      \Delta^ 2f(\vx_0)
-  \end{split}
+Since we cannot use 4-th order Taylor mode, let's increase $K$ to $>4$ and look for terms of the form $\partial^4 f(\vx) [\bullet, \bullet, \blacktriangle, \blacktriangle]$.
+After starring at the Faa di Bruno cheatsheet (\Cref{sec:faa-di-bruno-cheatsheet}) for a bit, we can see that these terms show up in the $K=6$-th order Taylor mode.
+Let's write down how the 6-th derivative looks like if we set the Taylor coefficients to $\vx_3 = \vx_4 = \vx_5 = \vx_6 = \vzero$.
+The output of Taylor mode is then
+\begin{subequations}
+\begin{align}\label{eq:felix-biharmonic-jet1}
+    \vf_6
+    =
+    \partial^{6} f[\vx_1, \vx_1, \vx_1, \vx_1, \vx_1, \vx_1]
+    +
+    15 \partial^5 f[\vx_1, \vx_1, \vx_1, \vx_1, \vx_2]
+    +
+    {\color{blue}
+    45 \partial^4 f[\vx_1, \vx_1, \vx_2, \vx_2]
+    }
+    +
+    15 \partial^3 f[\vx_2, \vx_2, \vx_2]
 \end{align}
+Notice the \textcolor{blue}{blue term}, which has the same structure as the summands we want to compute for the biharmonic.
+Now we have to find a way to kill the other terms.
+We can kill the $\partial^5$ and $\partial^3$ term by noting that they contain $\vx_2$ an odd number of times.
+We can use this to evaluate the negative of those terms by evaluating the Taylor mode from \Cref{eq:felix-biharmonic-jet1}, but using $-\vx_2$ instead of $\vx_2$.
+This gives
+\begin{align}\label{eq:felix-biharmonic-jet2}
+    \vf_6
+    =
+    \partial^{6} f[\vx_1, \vx_1, \vx_1, \vx_1, \vx_1, \vx_1]
+    -
+    15 \partial^5 f[\vx_1, \vx_1, \vx_1, \vx_1, \vx_2]
+    +
+    {\color{blue}
+    45 \partial^4 f[\vx_1, \vx_1, \vx_2, \vx_2]
+    }
+    -
+    15 \partial^3 f[\vx_2, \vx_2, \vx_2]
+\end{align}
+To kill the $\partial^6$ term, we evaluate the same jet as in \Cref{eq:felix-biharmonic-jet1}, but set $\vx_2 = \vzero$. This gives
+\begin{align}\label{eq:felix-biharmonic-jet3}
+    \vf_6
+    =
+    \partial^{6} f[\vx_1, \vx_1, \vx_1, \vx_1, \vx_1, \vx_1]
+\end{align}
+Now, let's put things together.
+Let's evaluate  \Cref{eq:felix-biharmonic-jet1} $+$ \Cref{eq:felix-biharmonic-jet2} $- 2 $ \Cref{eq:felix-biharmonic-jet3}, which gives
+\begin{align}
+    {\color{blue}
+    90 \partial^4 f[\vx_1, \vx_1, \vx_2, \vx_2]
+    }
+\end{align}
+\end{subequations}
+Cool! \textbf{We now found a way to compute one summand of the biharmonic operator by computing three $6$-jets and then linearly combining their outputs.}
+(NOTE: I think this is somewhat similar to Chapter 13.3 in Andrea's book). These jets only differ in how we set the second-order Taylor coefficient: $+1 \vx_2, -1 \vx_2, 0 \vx_2$.
+We should see plenty of cancellations from the $\pm \vx_2$ in the compute graph.
+It might be a headache to write the simplifications that take care of this.
+
+Let's do a quick analysis of this approach: For each jet, we have to forward-propagate $1 + 6$ vectors.
+That's $3 + 18$ vectors in total.
+With a fully-naive approach, we can now compute the biharmonic by repeating this procedure $D^2$ times (once per element). 
+That would be $21 D^2$ vectors in total.
+
+However, we may hope to reduce this by removing some redundancies and collapsing sums.
+
+First, note that all three jets share the same $\vx_0$.
+Hence, we actually need $1 + 18$ rather than $3 + 18$ vectors for one element of the biharmonic; and we can also share this computation over all summands.
+This gets us down to $1 + 18 D^2$ vectors total.
+
+Second, note that we can pull the sum from the biharmonic inside each of the three jets.
+This brings us down from $1 + 18$ to $1 + 3 + 15$ where only the $15$ scales with $D^2$.
+Overall, collapsing the sum brings us down to $1 + 3 + 15D^2$.
+
+I think there is more to collapse, but for that we need to write out all sums.
+I believe we could get something that looks very similar to what Tim wrote down below.
+
+
+\paragraph{Leveraging TTC formula}
+A different technique to reconstruct mixed-partials from jets was already proposed by Griewank et al in 1999 in \cite{griewank_evaluating_1999}. The authors summarized there method in the following formula
+\begin{equation}
+    \frac{\partial^k}{\partial z^k} f(x + Sz)\Big|_{z = 0} = \sum_{\underset{l \in M^p}{|l| = |k|}} \gamma_{kl} f^{|k|}(x; Sl),
+\end{equation}
+where $M^p$ is a multi-index set with $p$ entries, $k, l \in M^p$ and $S \in \mathbb{R}^{n \times p}$. The coefficient $\gamma_{kl}$ is given as
+\begin{equation}
+    \gamma_{kl} = \sum_{0 < m \leq k} (-1)^{|k - m|} 
+    \left(
+    \begin{matrix}
+        k \\
+        m
+    \end{matrix}
+    \right) 
+    \left( 
+    \begin{matrix}
+        |k|\frac{m}{|m|} \\
+        l
+    \end{matrix} 
+    \right)  
+    \left( 
+    \frac{|m|}{4}
+    \right)^{|k|}
+\end{equation}
+and $f^{|k|}(x; Sl)$ defines the $|k|$-th univariate Taylor coefficient in direction $Sj$ at $x \in \mathbb{R}^n$.
+
+In case of the Biharmonic Operator, the constants are $k = (2, 2)$, $p = 2$ and for every term, $S_{ij} = (e_i e_i)$, 
+\paragraph{Biharmonic operator --- Revisited}
+Up to now, the derivative computation method is based on the propagation of univariate Taylor polynomials. Although the propagated coefficients of these polynomials contain all the required derivative information, the direct access to arbitrary mixed-partial derivatives by propagating certain directions is not possible. This fact led to rather complicated schemes in the case of the Biharmonic Operator. In contrast, multi-variate Taylor polynomial propagation allows a fine-grained access to all partial derivatives, which usually results in a higher memory consumption in comparison to the univariate approach. For a comparison of both approaches see e.g., \cite{griewank_evaluating_1999}. However, in the following, we show that fined-grained access to mixed-partials is beneficial to derive efficient propagation schemes for the Biharmonic Operator. 
+
+During this paragraph, the notation $g^{i}$ is used to denote the derivative with respect to $g$'s $i$-th input, $g^{ij}$ the derivative of $g$ with respect to the $i$-th and the $j$-th component, and so on. In \cref{eq:biharm-multi} the multivariate chain-rule (\cite{hardy2006combinatorics}) is leveraged to investigate the multivariate propagation pattern. There various additional simplification possible, which result in the multivariate propagation scheme \cref{eq:biharm-efficient}. This scheme has the cost of propagating $3 + 2D + D^2$ vectors.
+
+
 \paragraph{Using Linearity --- General Differential Operators}
 
 Let a general differential operator be given as 
@@ -587,6 +586,7 @@ The first term is $(D_i g) \circ h$. The latter is the term that corresponds to 
     &+ \sum_{i=1}^{N_i} \sum_{\underset{\sigma \neq \sigma_{atomic}}{\underset{\sigma \neq \sigma_{trivial}}{\sigma \in \partitioning(K^j)}}} \nu(\sigma) \partial^{|\sigma|} g(h) \prod_{s \in \sigma} \frac{\partial^{|s|} h}{\prod_{l \in s} \partial x_l}  .
 \end{align}
 
+The generalization can be taken a step further by considering the additional optimizations that were possible in the Biharmonic Operator example: Whenever the maximal derivative order $k_i^j$ in an index $x_i$ is reached, all further computations, which are based on this partial derivative are summable over $i$. 
 
 
 

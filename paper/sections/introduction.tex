@@ -16,6 +16,19 @@ Our contributions are the following:
     \item Ideally, we find specially structured differential operators for which our trick is especially suited, and classify them.
     One example is the trace of derivative tensors of arbitrary order, although this seems to be an operator that is not practically relevant.
 \end{enumerate}
+
+Next tasks:
+\begin{enumerate}
+    \item @Felix: Run experiments with randomized Laplacian to demonstrate compatibility with randomization.
+    
+    \item @Felix: Run experiments with the weighted  sum of second-order derivatives with $\mC$ PSD to demonstrate we can go beyond the `classical' forward Laplacian
+    
+    \item @Felix: Extend the graph simplifications to work with weighted sum of second-order derivatives where $\mC$ is indefinite.
+    For this, we need to compute two collapsed 2-jets which share some computation (both use the same value on which the function is evaluated. They can therefore share this computation, as well as the derivatives).
+    This will require some form of rudimentary common sub-expression elimination.
+
+    \item @Felix [vague]: Think about an example where 
+\end{enumerate}
 \newpage
 
 \begin{figure}[t]
