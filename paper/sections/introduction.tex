@@ -20,6 +20,9 @@ Our contributions are the following:
 Next tasks:
 \begin{enumerate}
     \item @Felix: Run experiments with the weighted  sum of second-order derivatives with $\mC$ PSD to demonstrate we can go beyond the `classical' forward Laplacian
+
+    \item @Felix: Look into computing the trace of third order derivatives.
+    It will be interesting to check how first-order AD performs here.
     
     \item @Felix: Extend the graph simplifications to work with weighted sum of second-order derivatives where $\mC$ is indefinite.
     For this, we need to compute two collapsed 2-jets which share some computation (both use the same value on which the function is evaluated. They can therefore share this computation, as well as the derivatives).
