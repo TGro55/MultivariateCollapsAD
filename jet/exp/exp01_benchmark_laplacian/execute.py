@@ -3,6 +3,7 @@
 from argparse import ArgumentParser, Namespace
 from functools import partial
 from os import makedirs, path
+from time import perf_counter
 from typing import Callable, Union
 
 from einops import einsum
@@ -11,6 +12,7 @@ from torch.func import hessian, jacrev, jvp, vmap
 from torch.fx import symbolic_trace
 from torch.nn import Linear, Sequential, Tanh
 
+from jet.bilaplacian import Bilaplacian
 from jet.exp.utils import measure_peak_memory, measure_time, to_string
 from jet.laplacian import Laplacian, RandomizedLaplacian
 from jet.simplify import simplify
@@ -38,6 +40,8 @@ SUPPORTED_ARCHITECTURES = {
 
 # Define supported strategies
 SUPPORTED_STRATEGIES = ["hessian_trace", "jet_naive", "jet_simplified"]
+# Verify other implementations against the result of this baseline
+BASELINE = "hessian_trace"
 
 
 def laplacian_function(
@@ -51,7 +55,6 @@ def laplacian_function(
         is_batched: Whether the input is a batched tensor.
         strategy: Which strategy will be used by the returned function to compute
             the Laplacian. The following strategies are supported:
-
             - `'hessian_trace'`: The Laplacian is computed by tracing the Hessian.
               The Hessian is computed via forward-over-reverse mode autodiff.
             - `'jet_naive'`: The Laplacian is computed using jets. The computation graph
@@ -194,6 +197,69 @@ def randomized_laplacian_function(
         )
 
 
+def bilaplacian_function(
+    f: Callable[[Tensor], Tensor], X: Tensor, is_batched: bool, strategy: str
+) -> Callable[[], Tensor]:
+    """Construct a function to compute the Bi-Laplacian using different strategies.
+
+    Args:
+        f: The function to compute the Bi-Laplacian of. Processes an un-batched tensor.
+        X: The input tensor at which to compute the Bi-Laplacian.
+        is_batched: Whether the input is a batched tensor.
+        strategy: Which strategy will be used by the returned function to compute
+            the Bi-Laplacian. The following strategies are supported:
+            - `'hessian_trace'`: The Bi-Laplacian is computed by computing the tensor
+              of fourth-order derivatives, then summing the necessary entries. The
+              derivative tensor is computed as Hessian of the Hessian with PyTorch.
+            - `'jet_naive'`: The Bi-Laplacian is computed using jets. The computation
+                graph is simplified by propagating replication nodes.
+
+    Returns:
+        A function that computes the Bi-Laplacian of the function f at the input
+        tensor X. The function is expected to be called with no arguments.
+
+    Raises:
+        ValueError: If the strategy is not supported.
+    """
+    if strategy == "hessian_trace":
+        d4f = hessian(hessian(f))
+
+        # trace it using einsum to support functions with non-scalar outputs
+        num_summed_dims = X.ndim - 1 if is_batched else X.ndim
+        dims1 = " ".join([f"i{i}" for i in range(num_summed_dims)])
+        dims2 = " ".join([f"j{j}" for j in range(num_summed_dims)])
+        # if x is a vector, this is just '... i i j j -> ...' where '...' corresponds
+        # to the shape of f(x)
+        equation = f"... {dims1} {dims1} {dims2} {dims2} -> ..."
+
+        def bilaplacian(x: Tensor) -> Tensor:
+            """Compute the Bi-Laplacian of f on an un-batched input x.
+
+            Args:
+                x: The input tensor.
+
+            Returns:
+                The Laplacian of f at x. Has the same shape as f(x).
+            """
+            return einsum(d4f(x), equation)
+
+        if is_batched:
+            bilaplacian = vmap(bilaplacian)
+
+        return lambda: bilaplacian(X)
+
+    elif strategy in {"jet_naive", "jet_simplified"}:
+        bilaplacian = Bilaplacian(f, X, is_batched)
+        pull_sum_vmapped = strategy == "jet_simplified"
+        bilaplacian = simplify(
+            symbolic_trace(bilaplacian), pull_sum_vmapped=pull_sum_vmapped
+        )
+        return lambda: bilaplacian(X)
+
+    else:
+        raise ValueError(f"Unsupported strategy: {strategy}.")
+
+
 def setup_architecture(architecture: str, dim: int) -> Callable[[Tensor], Tensor]:
     """Set up a neural network architecture based on the specified configuration.
 
@@ -237,6 +303,58 @@ def check_mutually_required(args: Namespace):
         )
 
 
+def get_function_and_description(
+    operator: str,
+    strategy: str,
+    distribution: Union[str, None],
+    num_samples: Union[int, None],
+    net: Callable[[Tensor], Tensor],
+    X: Tensor,
+    is_batched: bool,
+) -> tuple[Callable[[], Tensor], str]:
+    """Determine the function and its description based on the operator and strategy.
+
+    Args:
+        operator: The operator to be used, either 'laplacian' or 'bilaplacian'.
+        strategy: The strategy to be used for computation.
+        distribution: The distribution type, if any.
+        num_samples: The number of samples, if any.
+        net: The neural network model.
+        X: The input tensor.
+        is_batched: A flag indicating if the input is batched.
+
+    Returns:
+        A tuple containing the function to compute the operator and a description
+        string.
+
+    Raises:
+        ValueError: If an unsupported operator is specified.
+        NotImplementedError: If a randomized Bi-Laplacian is requested.
+    """
+    if operator == "laplacian":
+        if distribution is None and num_samples is None:
+            func = laplacian_function(net, X, is_batched, strategy)
+            description = f"{strategy}"
+        else:
+            func = randomized_laplacian_function(
+                net, X, is_batched, strategy, distribution, num_samples
+            )
+            description = (
+                f"{strategy}, distribution={distribution}, "
+                + f"num_samples={num_samples}"
+            )
+    elif operator == "bilaplacian":
+        if distribution is None and num_samples is None:
+            func = bilaplacian_function(net, X, is_batched, strategy)
+            description = f"{strategy}"
+        else:
+            raise NotImplementedError("Randomized Bi-Laplacian not implemented.")
+    else:
+        raise ValueError(f"Unsupported operator: {operator}.")
+
+    return func, description
+
+
 if __name__ == "__main__":
     parser = ArgumentParser("Parse arguments of measurement.")
     parser.add_argument(
@@ -255,6 +373,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--num_samples", required=False, type=int)
     parser.add_argument("--device", type=str, choices={"cpu", "cuda"}, required=True)
+    parser.add_argument(
+        "--operator", type=str, choices={"laplacian", "bilaplacian"}, required=True
+    )
     args = parser.parse_args()
 
     check_mutually_required(args)
@@ -266,26 +387,56 @@ if __name__ == "__main__":
     X = rand(args.batch_size, args.dim).double().to(dev)
     is_batched = True
 
-    if args.distribution is None and args.num_samples is None:
-        func = laplacian_function(net, X, is_batched, args.strategy)
-        description = f"{args.strategy}"
-    else:
-        func = randomized_laplacian_function(
-            net, X, is_batched, args.strategy, args.distribution, args.num_samples
-        )
-        description = (
-            f"{args.strategy}, distribution={args.distribution}, "
-            + f"num_samples={args.num_samples}"
-        )
+    manual_seed(1)  # this allows making the randomized methods deterministic
+    start = perf_counter()
+    func, description = get_function_and_description(
+        args.operator,
+        args.strategy,
+        args.distribution,
+        args.num_samples,
+        net,
+        X,
+        is_batched,
+    )
+    print(f"Setting up function took: {perf_counter() - start:.3f} s.")
+
     is_cuda = args.device == "cuda"
 
+    op = args.operator.capitalize()
     # carry out the measurements
     with no_grad():
         mem_no = measure_peak_memory(
-            func, f"Laplacian non-differentiable ({description})", is_cuda
+            func, f"{op} non-differentiable ({description})", is_cuda
         )
-    mem = measure_peak_memory(func, f"Laplacian ({description})", is_cuda)
-    mu, sigma, best = measure_time(func, f"Laplacian ({description})", is_cuda)
+    mem = measure_peak_memory(func, f"{op} ({description})", is_cuda)
+    mu, sigma, best = measure_time(func, f"{op} ({description})", is_cuda)
+
+    # sanity check: make sure that the results correspond to the baseline implementation
+    if args.strategy != BASELINE:
+        print("Checking correctness against baseline.")
+        with no_grad():
+            result = func()
+
+        manual_seed(1)  # make sure that the baseline is deterministic
+        baseline_func, _ = get_function_and_description(
+            args.operator,
+            BASELINE,
+            args.distribution,
+            args.num_samples,
+            net,
+            X,
+            is_batched,
+        )
+        with no_grad():
+            baseline_result = baseline_func()
+
+        assert (
+            baseline_result.shape == result.shape
+        ), f"Shapes do not match: {baseline_result.shape} != {result.shape}."
+        assert baseline_result.allclose(
+            result
+        ), f"Results do not match: {result} != {baseline_result}."
+        print("Results match.")
 
     # write them to a file
     data = ", ".join([str(val) for val in [mem_no, mem, mu, sigma, best]])

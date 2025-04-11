@@ -34,6 +34,7 @@ def measure(
     gather_every: int = 10,
     distributions: Optional[List[str]] = None,
     nums_samples: Optional[List[int]] = None,
+    operator: str = "laplacian",
 ):
     """Run benchmark measurements for all combinations of input parameters.
 
@@ -51,6 +52,7 @@ def measure(
             that the exact Laplacian will be benchmarked. Default is `None`.
         nums_samples: List of numbers of samples for the randomized Laplacian. `None`
             means that the exact Laplacian will be benchmarked. Default is `None`.
+        operator: The differential operator to benchmark. Default is `'laplacian'`.
     """
     _distributions = [None] if distributions is None else distributions
     _nums_samples = [None] if nums_samples is None else nums_samples
@@ -84,6 +86,7 @@ def measure(
             "device": device,
             "distribution": distribution,
             "num_samples": num_samples,
+            "operator": operator,
         }
 
         # maybe skip the computation
@@ -100,7 +103,7 @@ def measure(
 
         if not skip:
             cmd = ["python", SCRIPT] + [
-                f"--{key}={value}" for key, value in kwargs.items()
+                f"--{key}={value}" for key, value in kwargs.items() if value is not None
             ]
             run_verbose(cmd)
 
@@ -115,6 +118,7 @@ def measure(
                 devices,
                 _distributions,
                 _nums_samples,
+                operator,
                 allow_missing=not is_last,
             )
             filename = savepath(name)
@@ -130,6 +134,7 @@ def gather_data(
     devices: List[str],
     distributions: List[Optional[str]],
     nums_samples: List[Optional[int]],
+    operator: str,
     allow_missing: bool = False,
 ) -> DataFrame:
     """Create a data frame that collects all the results into a single table.
@@ -142,6 +147,7 @@ def gather_data(
         devices: List of devices the experiments were run on.
         distributions: List of distributions for the randomized Laplacian.
         nums_samples: List of numbers of samples for the randomized Laplacian.
+        operator: The differential operator that was benchmarked.
         allow_missing: Whether to allow missing result files. Default is False.
 
     Returns:
@@ -177,7 +183,9 @@ def gather_data(
             "distribution": [distribution],
             "num_samples": [num_samples],
         }
-        filename = savepath_raw(**{key: value[0] for key, value in result.items()})
+        filename = savepath_raw(
+            **{key: value[0] for key, value in result.items()}, operator=operator
+        )
 
         if not path.exists(filename) and allow_missing:
             print(f"Skipping missing file {filename}.")
@@ -185,7 +193,7 @@ def gather_data(
 
         with open(filename, "r") as f:
             content = "\n".join(f.readlines())
-            peakmem_no, peakmem, best, mu, sigma = [
+            peakmem_no, peakmem, mu, sigma, best = [
                 float(n) for n in content.split(", ")
             ]
             result["peakmem non-differentiable [GiB]"] = peakmem_no
@@ -214,17 +222,18 @@ def savepath(name: str) -> str:
 
 
 EXPERIMENTS = [
-    # Experiment 1:  Use the largest MLP from dangel2024kroneckerfactored with 10 and 50
+    # Experiment 1:  Use the largest MLP from dangel2024kroneckerfactored with 50
     #                in features; vary the batch size.
     (  # Experiment name, must be unique
         "dangel2024kroneckerfactored_vary_batch_size",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
-            "dims": [10, 50],
-            "batch_sizes": linspace(1, 2048, 25).int().unique().tolist(),
+            "dims": [50],
+            "batch_sizes": linspace(1, 2048, 10).int().unique().tolist(),
             "strategies": SUPPORTED_STRATEGIES,
             "devices": ["cuda"],
+            "operator": "laplacian",
         },
         # what to plot: x-axis is batch_sizes and each strategy is plotted in a curve
         ("batch_size", "strategy"),
@@ -240,11 +249,28 @@ EXPERIMENTS = [
             "batch_sizes": [2048],
             "strategies": SUPPORTED_STRATEGIES,
             "devices": ["cuda"],
+            "operator": "laplacian",
             "distributions": ["normal"],
-            "nums_samples": linspace(1, 50, 25).int().unique().tolist(),
+            "nums_samples": linspace(1, 50, 10).int().unique().tolist(),
         },
         # what to plot: x-axis is nums_samples and each strategy is plotted in a curve
         ("num_samples", "strategy"),
+    ),
+    # Experiment 3:  Use the largest MLP from dangel2024kroneckerfactored and vary the
+    #                in features, computing the Bi-Laplacian.
+    (  # Experiment name, must be unique
+        "dangel2024kroneckerfactored_bilaplacian_vary_dim",
+        # Experiment parameters
+        {
+            "architectures": ["tanh_mlp_768_768_512_512_1"],
+            "dims": linspace(1, 10, 10).int().unique().tolist(),
+            "batch_sizes": [16],
+            "strategies": SUPPORTED_STRATEGIES,
+            "devices": ["cuda"],
+            "operator": "bilaplacian",
+        },
+        # what to plot: x-axis is dims and each strategy is plotted in a curve
+        ("dim", "strategy"),
     ),
 ]
 

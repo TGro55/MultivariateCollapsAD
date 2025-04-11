@@ -4,7 +4,7 @@ import operator
 from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from torch import Tensor, add, cos, cosh, div, einsum, mul
 from torch import pow as torch_pow
@@ -32,6 +32,7 @@ class RewriteReplicate:
         self.mod = mod
         self.graph = mod.graph
         self.verbose = verbose
+        self.last_pattern_pos = 0
 
     @staticmethod
     def is_replicate(arg: Any) -> bool:
@@ -78,12 +79,19 @@ class RewriteReplicate:
             Whether a pattern was found and rewritten.
         """
         rewritten = False
+
         if pattern := self.find_pattern():
             self.replace_pattern(pattern)
             rewritten = True
+
+        if not rewritten:
+            rewritten = self.fuse_replicates_with_einsum()
+            if rewritten:
+                self.last_pattern_pos = 0
+
         return rewritten
 
-    def find_pattern(self) -> Optional[Tuple[List[Node], Node]]:
+    def find_pattern(self) -> Optional[Tuple[List[Node], Node]]:  # noqa: C901
         """Find a pattern that can be simplified.
 
         Returns:
@@ -91,7 +99,9 @@ class RewriteReplicate:
             A pattern consists of two parts: a list of nodes that can be swapped with
             the node returned as second part.
         """
-        for node in self.graph.nodes:
+        for pos, node in enumerate(
+            list(self.graph.nodes)[self.last_pattern_pos :], start=self.last_pattern_pos
+        ):
             if node.op != "call_function":
                 continue
 
@@ -146,22 +156,73 @@ class RewriteReplicate:
             ):
                 pattern = [parents, node]
 
-            # operations that consume multiple replicate tensors, e.g.
-            # `x_rep1 = replicate(x1)`, `x_rep2 = replicate(x2)` and
-            # `x_rep3 = replicate(x3)`. Then
+            # operations that consume multiple replicate tensors, and produce a tensor
+            # that can be expressed as a replicate, e.g. let `x_rep1 = replicate(x1)`,
+            # `x_rep2 = replicate(x2)` and `x_rep3 = replicate(x3)`. Then
             # `einsum("...,...,...->...", x_rep1, x_rep2, x_rep3)`
             # -> `replicate(einsum("...,...,...->...", x1, x2, x3))`
-            elif (
-                node.target == einsum
-                # NOTE This assumption is overly simplistic but sufficient for now
-                and node.args[0]
-                == f"{','.join((node.args[0].count(',') + 1) * ['...'])}->..."
-                and all(self.is_replicate(arg) for arg in node.all_input_nodes)
-            ):
-                pattern = [list(node.all_input_nodes), node]
+            elif node.target == einsum:
+                # check if there are replicate nodes
+                equation, operands = node.args[0], node.args[1:]
+                replicate_pos = defaultdict(list)
+                for pos, op in enumerate(operands):
+                    if self.is_replicate(op):
+                        replicate_pos[op].append(pos)
+
+                if not replicate_pos:
+                    continue
+
+                # check if all replicate nodes have the same leading letter
+                lhs, rhs = equation.split("->")
+                lhs = lhs.split(",")
+                leading_letters = {
+                    lh[0]
+                    for pos, lh in enumerate(lhs)
+                    if pos in sum(list(replicate_pos.values()), [])
+                }
+                if len(leading_letters) != 1:
+                    continue
+
+                (rep_letter,) = leading_letters
+
+                # check that this leading letter is the first of the output
+                if rep_letter != rhs[0]:
+                    continue
+
+                # make sure it is not introduced by other non-replicate ops
+                introduced_by_others = any(
+                    rep_letter in lh
+                    for pos, lh in enumerate(lhs)
+                    if pos not in sum(list(replicate_pos.values()), [])
+                )
+
+                if introduced_by_others:
+                    continue
+
+                # maybe introduce a new letter
+                if rep_letter == ".":
+                    # get the letters that are used in the other operands
+                    other_letters = set("".join(lhs))
+                    # get a new letter that is not used in the other operands
+                    (rep_letter,) = get_letters(1, blocked=other_letters)
+                    lhs = [lh.replace("...", f"{rep_letter}...") for lh in lhs]
+                    rhs = rhs.replace("...", f"{rep_letter}...")
+
+                # We can omit the replicated index. The node rewrite is performed
+                # elsewhere, we only have to update the equation
+                lhs = [lh.replace(rep_letter, "") for lh in lhs]
+                rhs = rhs.replace(rep_letter, "")
+                new_equation = f"{','.join(lhs)}->{rhs}"
+                self.maybe_print(
+                    f"Changing {node} with {operands} from {equation}"
+                    + f" into {new_equation}."
+                )
+                node.update_arg(0, new_equation)
+                pattern = [list(replicate_pos.keys()), node]
 
             if pattern is not None:
                 self.maybe_print(f"Can swap {pattern[0]} and {pattern[1]}")
+                self.last_pattern_pos = max(0, pos - 1)
                 return pattern
 
     def maybe_erase(self, node: Node) -> bool:
@@ -219,7 +280,7 @@ class RewriteReplicate:
         if self.verbose:
             print(message)
 
-    def fuse_replicates_with_einsum(self) -> bool:
+    def fuse_replicates_with_einsum(self) -> bool:  # noqa: C901
         """Attempt to fuse replicate nodes that act as inputs to einsum.
 
         E.g. consider einsum('...,...->...', replicate(x), y). This can be simplified
@@ -229,36 +290,72 @@ class RewriteReplicate:
             Whether replicate nodes were fused with einsum nodes.
         """
         fused = False
-        for node in self.graph.nodes:
-            if (
-                node.op == "call_function"
-                and node.target == einsum
-                # NOTE This assumption is overly simplistic but sufficient for now
-                and node.args[0]
-                == f"{','.join((node.args[0].count(',') + 1) * ['...'])}->..."
-                and any(self.is_replicate(arg) for arg in node.all_input_nodes)
-            ):
-                old_args = node.args
-                # modify the operands
-                positions = [
-                    i for i, arg in enumerate(node.args[1:]) if self.is_replicate(arg)
-                ]
-                for rep in list(node.all_input_nodes):
-                    if self.is_replicate(rep):
-                        (parent,) = self.parents(rep)
-                        node.replace_input_with(rep, parent)
-                        # try removing the old replicate nodes
-                        self.maybe_erase(rep)
+        for ein_node in list(self.graph.nodes):
+            if ein_node.op != "call_function" or ein_node.target != einsum:
+                continue
 
-                # modify the einsum equation
-                new_lhs = [
-                    "..." if i in positions else "a..."
-                    for i in range(len(node.args[1:]))
+            equation, operands = ein_node.args[0], ein_node.args[1:]
+
+            # check whether there are any replicate nodes in the operands and what
+            # their positions are
+            replicate_pos = defaultdict(list)
+            for pos, op in enumerate(operands):
+                if self.is_replicate(op):
+                    replicate_pos[op].append(pos)
+
+            if not replicate_pos:
+                continue
+
+            lhs, rhs = equation.split("->")
+            lhs = lhs.split(",")
+
+            # for each replicate op, determine if we can omit the replicating index
+            for rep_op, positions in replicate_pos.items():
+                # figure out what is the replicated letter
+                (rep_letter,) = {lhs[pos][0] for pos in positions}
+
+                # maybe introduce a new letter
+                if rep_letter == ".":
+                    # get the letters that are used in the other operands
+                    other_letters = set("".join(lhs))
+                    # get a new letter that is not used in the other operands
+                    (rep_letter,) = get_letters(1, blocked=other_letters)
+                    lhs = [lh.replace("...", f"{rep_letter}...") for lh in lhs]
+                    rhs = rhs.replace("...", f"{rep_letter}...")
+
+                # check if we can leave out the replicated index
+                can_omit = False
+                if rep_letter not in rhs:
+                    can_omit = True
+                else:
+                    # check that the letter is introduced by another operand
+                    can_omit = any(
+                        rep_letter in lh
+                        for pos, lh in enumerate(lhs)
+                        if pos not in positions
+                    )
+
+                if not can_omit:
+                    continue
+
+                # update the operands
+                (op,) = self.parents(rep_op)
+                ein_node.replace_input_with(rep_op, op)
+                # try removing the old replicate nodes
+                self.maybe_erase(rep_op)
+
+                # update the equation
+                lhs = [
+                    lh if pos not in positions else lh[1:] for pos, lh in enumerate(lhs)
                 ]
-                new_equation = f"{','.join(new_lhs)}->a..."
-                node.args = (new_equation, *node.args[1:])
-                self.maybe_print(f"Fusing {node}: {old_args} into {node.args}")
+                new_equation = f"{','.join(lhs)}->{rhs}"
+                ein_node.update_arg(0, new_equation)
+
                 fused = True
+                self.maybe_print(
+                    f"Fusing {ein_node}: {equation} {operands} into "
+                    + f"{ein_node.args[0]} {ein_node.args[1:]}"
+                )
 
         return fused
 
@@ -404,8 +501,8 @@ class RewriteSumVmapped(RewriteReplicate):
     def raise_sum_vmapped_outside_einsum(self) -> bool:
         """Hoist out `sum_vmapped` nodes from a einsum operations.
 
-        For instance einsum('a...,a...->...', x, y) can be simplified into
-        einsum('...,...->...', sum_vmapped(x), sum_vmapped(y)).
+        For instance einsum('a...,...->...', x, y) can be simplified into
+        einsum('...,...->...', sum_vmapped(x), y).
 
         Returns:
             Whether a `sum_vmapped` was raised outside an `einsum` node.
@@ -490,12 +587,16 @@ class RewriteSumVmapped(RewriteReplicate):
         return fused
 
 
-def common_subexpression_elimination(graph: Graph, verbose: bool = False) -> bool:
+def common_subexpression_elimination(
+    graph: Graph, verbose: bool = False, restrict_ops: Optional[Set[str]] = None
+) -> bool:
     """Replace duplicate subexpressions with a single node.
 
     Args:
         graph: The graph to be optimized.
         verbose: Whether to print debug information. Default: `False`.
+        restrict_ops: A set of operations to restrict the optimization to.
+            Default: `None`.
 
     Returns:
         Whether a subexpression was replaced.
@@ -506,6 +607,9 @@ def common_subexpression_elimination(graph: Graph, verbose: bool = False) -> boo
     num_replacements = 0
 
     for node in list(graph.nodes):
+        if restrict_ops is not None and node.op not in restrict_ops:
+            continue
+
         node_hash = (node.op, node.target, node.args, node.kwargs)
         if node_hash in nodes:
             # replace the node
@@ -626,61 +730,61 @@ def simplify(  # noqa: C901
     if verbose:
         print(f"Traced graph before simplification:\n{mod.graph}")
 
-    # collect all simplification strategies into a list
-    strategies = []
-
     replicate_rewriter = RewriteReplicate(mod, verbose=verbose)
     sum_vmapped_rewriter = RewriteSumVmapped(mod, verbose=verbose)
 
-    if remove_unused:
-        strategies.append(("remove_unused", replicate_rewriter.remove_unused_nodes))
-
-    if eliminate_common_subexpressions:
-        apply_cse = partial(
+    strategies = {
+        "remove_unused": replicate_rewriter.remove_unused_nodes,
+        "common_subexpression_elimination_get_attr": partial(
+            common_subexpression_elimination,
+            mod.graph,
+            verbose=verbose,
+            restrict_ops={"get_attr"},
+        ),
+        "common_subexpression_elimination": partial(
             common_subexpression_elimination, mod.graph, verbose=verbose
-        )
-        strategies.append(("common_subexpression_elimination", apply_cse))
+        ),
+        "push_replicate": replicate_rewriter.rewrite_pattern,
+        "pull_sum_vmapped": sum_vmapped_rewriter.rewrite_pattern,
+        "raise_sum_vmapped_outside_einsum": sum_vmapped_rewriter.raise_sum_vmapped_outside_einsum,  # noqa: B950
+        "fuse_with_tensor_constant": sum_vmapped_rewriter.fuse_vmapped_sum_with_tensor_constants,  # noqa: B950
+    }
 
+    # round 1 of simplifications: remove redundancies in the graph
+    round_one = []
+    if remove_unused:
+        round_one.append("remove_unused")
+    if eliminate_common_subexpressions:
+        round_one.append("common_subexpression_elimination_get_attr")
+    _exhaust_incrementally({s: strategies[s] for s in round_one}, mod, test_x, verbose)
+
+    # round 2 of simplifications: push forward replicate nodes
+    round_two = []
     if push_replicate:
-        strategies.extend(
-            (
-                ("push_replicate", replicate_rewriter.rewrite_pattern),
-                (
-                    "fuse_replicates_with_einsum",
-                    replicate_rewriter.fuse_replicates_with_einsum,
-                ),
-            )
-        )
+        round_two.append("push_replicate")
+    _exhaust_incrementally({s: strategies[s] for s in round_two}, mod, test_x, verbose)
 
+    # round 3 of simplifications: pull sum_vmapped nodes up
+    round_three = []
     if pull_sum_vmapped:
-        strategies.extend(
-            (
-                ("pull_sum_vmapped", sum_vmapped_rewriter.rewrite_pattern),
-                (
-                    "raise_sum_vmapped_outside_einsum",
-                    sum_vmapped_rewriter.raise_sum_vmapped_outside_einsum,
-                ),
-                (
-                    "fuse_with_tensor_constant",
-                    sum_vmapped_rewriter.fuse_vmapped_sum_with_tensor_constants,
-                ),
-            )
+        round_three.extend(
+            [
+                "pull_sum_vmapped",
+                "raise_sum_vmapped_outside_einsum",
+                "fuse_with_tensor_constant",
+            ]
         )
+    _exhaust_incrementally(
+        {s: strategies[s] for s in round_three}, mod, test_x, verbose
+    )
 
-    # cycle through the strategies, continue until no strategy performs a change
-    do_simplify = True
-    while do_simplify:
-        simplified = False
-        for name, apply_strategy in strategies:
-            with check_unaltered(mod, test_x):
-                simplified = apply_strategy()
-                if verbose:
-                    print(f"Applying strategy {name}: {simplified}")
-
-            if simplified:
-                break
-
-        do_simplify = simplified
+    # round 4 of simplifications: remove redundancies in the graph and clean up
+    round_four = []
+    if eliminate_common_subexpressions:
+        round_four.append("common_subexpression_elimination")
+    if remove_unused:
+        round_four.append("remove_unused")
+    _exhaust_incrementally({s: strategies[s] for s in round_four}, mod, test_x, verbose)
 
     mod.graph.lint()
     mod.recompile()
@@ -694,3 +798,42 @@ def simplify(  # noqa: C901
         print(f"Number of nodes after simplification: {nodes_after}.")
 
     return mod
+
+
+def _exhaust_incrementally(
+    strategies: Dict[str, Callable[[], None]],
+    mod: GraphModule,
+    test_x: Optional[Tensor],
+    verbose: bool,
+):
+    """Apply one round of simplifications.
+
+    Loop through the simplification strategies until one is successful, then start
+    from the beginning until we complete one round where none of the strategies is
+    successful.
+
+    Args:
+        strategies: A dictionary of strategies to be applied.
+        mod: The module to be simplified.
+        test_x: Input tensor to the module that will be verified after each
+            simplification to make sure it does not change the correctness.
+            This is expensive and should be considered for debugging purposes only.
+            If `None`, the verification step will be skipped. Default: `None`.
+        verbose: Whether to print debug information. Default: `False`.
+    """
+    if not strategies:
+        return
+
+    do_simplify = True
+    while do_simplify:
+        simplified = False
+        for name, apply_strategy in strategies.items():
+            with check_unaltered(mod, test_x):
+                simplified = apply_strategy()
+                if verbose:
+                    print(f"Applying strategy {name}: {simplified}")
+
+            if simplified:
+                break
+
+        do_simplify = simplified
