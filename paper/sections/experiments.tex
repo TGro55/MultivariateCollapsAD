@@ -26,6 +26,38 @@
   \caption{\textbf{Collapsed Taylor mode improves standard Taylor mode in time and memory.}}
   \label{fig:benchmark}
 \end{figure*}
+
+\begin{figure}[t]
+  \centering
+\includegraphics*{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_50_name_dangel2024kroneckerfactored_vary_batch_size.pdf}
+\caption{ \textbf{Computing the Laplacian with collapsed Taylor mode is faster \emph{and} uses less memory than nested first-order AD; naive Taylor mode is competitive in time but uses more memory.}
+  We compare different strategies for computing Laplacians for a $50\to 768 \to 768 \to 512 \to 512 \to 1$ MLP with tanh activations for varying batch sizes on an NVIDIA A40 GPU.
+  Solid markers correspond to computing differentiable Laplacians (\eg used in PINNs), opaque markers compute a non-differentiable Laplacian (\eg used in VMC).
+  Averaged over all batch sizes, \emph{our collapsed Taylor mode uses only 80\% memory of nested first-order AD (70\% in the non-differentiable setting), and 50\% of time}.
+  In contrast, naive Taylor mode uses 120\% memory of nested first-order AD (70\% in the non-differentiable setting) and 95\% of time.
+}
+  \label{fig:benchmark-laplacians}
+\end{figure}
+
+\begin{figure}
+  \centering
+\includegraphics*{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_2048_device_cuda_dim_50_distribution_normal_name_dangel2024kroneckerfactored_vary_num_samples.pdf}
+\caption{\textbf{Collapsed Taylor mode is compatible with randomization.}
+  We show the performance evaluation of the randomized Laplacian with identical setup \Cref{fig:benchmark-laplacians}, but we fix the batch size to be $2048$ and vary the number of samples $S$ used by the Monte-Carlo estimator.
+  We find the same relative speedups and memory reductions of collapsing Taylor mode than for the exact Laplacian (as expected since all expressions for the computational demands look the same, but with $S$ replacing $D$).
+  Also compare to \Cref{fig:benchmark-laplacians} and note how for $N=2048$ we can obtain a noisy estimate of the Laplacian at much lower cost when $S < D$.
+}\label{fig:benchmark-randomized-laplacians}
+\end{figure}
+
+\begin{figure}
+  \centering
+\includegraphics*{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_16_device_cuda_name_dangel2024kroneckerfactored_bilaplacian_vary_dim.pdf}
+\caption{\textbf{Collapsed Taylor mode applied to the Bi-Laplacian.}
+  The net is the same as in \Cref{fig:benchmark-laplacians}, but we fix the batch size to be $16$ and vary the net's input dimension.
+  Note that nesting first-order AD scales worse.
+}\label{fig:benchmark-randomized-laplacians}
+\end{figure}
+
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "../main"
