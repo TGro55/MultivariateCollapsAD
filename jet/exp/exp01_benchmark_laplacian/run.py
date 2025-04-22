@@ -307,6 +307,27 @@ EXPERIMENTS = [
         # what to plot: x-axis is nums_samples and each strategy is plotted in a curve
         ("num_samples", "strategy"),
     ),
+    # Experiment 6:  Use the largest MLP from dangel2024kroneckerfactored and with
+    #                5 in features, vary the MC samples computing the randomized
+    #                Bi-Laplacian.
+    (  # Experiment name, must be unique
+        "dangel2024kroneckerfactored_bilaplacian_vary_num_samples",
+        # Experiment parameters
+        {
+            "architectures": ["tanh_mlp_768_768_512_512_1"],
+            "dims": [5],
+            "batch_sizes": [256],
+            "strategies": SUPPORTED_STRATEGIES,
+            "devices": ["cuda"],
+            "operator": "bilaplacian",
+            "distributions": ["normal"],
+            # exact takes 6 D**2 - 3D + 6 = 141, randomized takes 2 + 3S, so choosing
+            # S <= 46 because for S=47 we can compute the Bi-Laplacian exactly
+            "nums_samples": linspace(1, 46, 10).int().unique().tolist(),
+        },
+        # what to plot: x-axis is nums_samples and each strategy is plotted in a curve
+        ("num_samples", "strategy"),
+    ),
 ]
 
 if __name__ == "__main__":
