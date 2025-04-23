@@ -5,7 +5,6 @@ from os import makedirs, path
 from typing import Dict, Union
 
 from matplotlib import pyplot as plt
-from numpy import polyfit
 from pandas import DataFrame, read_csv
 from tueplots import bundles
 
@@ -121,58 +120,16 @@ def plot_metric(
             )
 
 
-def report_relative_performance(df: DataFrame, x: str, lines: str, ref_line: str):
-    """Report the relative performance between different lines.
-
-    Fits a linear function to each line and reports the differences in slope.
-
-    Args:
-        df: The DataFrame containing only the relevant data to analyze.
-        x: The column of the values used as x-axis.
-        lines: The column of the values used to distinguish lines in the plot.
-        ref_line: The reference line to compare against.
-    """
-    metrics = ["best [s]", "peakmem [GiB]", "peakmem non-differentiable [GiB]"]
-    line_vals = df[lines].unique().tolist()
-
-    # fit a linear function to each line
-    offsets_and_slopes = {m: {val: {}} for m in metrics for val in line_vals}
-
-    for line in line_vals:
-        sub_df = df[df[lines] == line]
-        xs = sub_df[x].tolist()
-
-        for metric in metrics:
-            ys = sub_df[metric].tolist()
-
-            # use ms instead of s and MiB instead of GiB
-            if "[s]" in metric:
-                ys = [y * 1000 for y in ys]
-            if "[GiB]" in metric:
-                ys = [y * 2**10 for y in ys]
-
-            c1, c0 = polyfit(xs, ys, deg=1)
-            offsets_and_slopes[metric][line] = (c1, c0)
-
-    for metric in metrics:
-        # use ms instead of s and MiB instead of GiB
-        metric_adapted = metric.replace("[s]", "[ms]").replace("[GiB]", "[MiB]")
-        print(f"Linear fit of {metric_adapted} w.r.t. x={x}:")
-        c1_ref, _ = offsets_and_slopes[metric][ref_line]
-        for line in line_vals:
-            c1, c0 = offsets_and_slopes[metric][line]
-            print(f"\t{line}:\t{c0:.5f} + {c1:.5f} * x ({c1 / c1_ref:.3f}x relative)")
-
+MEASUREMENT_COLUMNS = [
+    "peakmem non-differentiable [GiB]",
+    "peakmem [GiB]",
+    "mean [s]",
+    "std [s]",
+    "best [s]",
+]
 
 if __name__ == "__main__":
     METRICS = ["time", "peak_memory"]
-    MEASUREMENT_COLUMNS = [
-        "peakmem non-differentiable [GiB]",
-        "peakmem [GiB]",
-        "mean [s]",
-        "std [s]",
-        "best [s]",
-    ]
 
     for name, _, (x, lines) in EXPERIMENTS:
         df = read_csv(savepath_gathered(name))
@@ -205,5 +162,3 @@ if __name__ == "__main__":
                 print(f"Saving plot for experiment {name} to {filename}.")
                 fig.savefig(filename, bbox_inches="tight")
                 plt.close(fig)
-
-            report_relative_performance(df_fix, x, lines, ref_line="hessian_trace")
