@@ -225,7 +225,7 @@ EXPERIMENTS = [
     # Experiment 1:  Use the largest MLP from dangel2024kroneckerfactored with 50
     #                in features; vary the batch size.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_vary_batch_size",
+        "laplacian_vary_batch_size",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
@@ -241,7 +241,7 @@ EXPERIMENTS = [
     # Experiment 2:  Use the largest MLP from dangel2024kroneckerfactored with 50 in
     #                features, vary the batch size.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_vary_num_samples",
+        "laplacian_vary_num_samples",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
@@ -259,7 +259,7 @@ EXPERIMENTS = [
     # Experiment 3:  Use the largest MLP from dangel2024kroneckerfactored and vary the
     #                in features, computing the Bi-Laplacian.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_bilaplacian_vary_dim",
+        "bilaplacian_vary_dim",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
@@ -275,7 +275,7 @@ EXPERIMENTS = [
     # Experiment 4:  Use the largest MLP from dangel2024kroneckerfactored with 50
     #                in features; vary the batch size, computing the weighted Laplacian.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_weighted_laplacian_vary_batch_size",
+        "weighted_laplacian_vary_batch_size",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
@@ -292,7 +292,7 @@ EXPERIMENTS = [
     #                50 in features, vary the MC samples computing the randomized
     #                weighted Laplacian.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_weighted_laplacian_vary_num_samples",
+        "weighted_laplacian_vary_num_samples",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
@@ -311,7 +311,7 @@ EXPERIMENTS = [
     #                5 in features, vary the MC samples computing the randomized
     #                Bi-Laplacian.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_bilaplacian_vary_num_samples",
+        "bilaplacian_vary_num_samples",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],
@@ -331,7 +331,7 @@ EXPERIMENTS = [
     # Experiment 7:  Use the largest MLP from dangel2024kroneckerfactored with 5
     #                in features; vary the batch size, computing the Bi-Laplacian.
     (  # Experiment name, must be unique
-        "dangel2024kroneckerfactored_bilaplacian_vary_batch_size",
+        "bilaplacian_vary_batch_size",
         # Experiment parameters
         {
             "architectures": ["tanh_mlp_768_768_512_512_1"],

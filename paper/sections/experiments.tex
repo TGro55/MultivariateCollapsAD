@@ -10,14 +10,14 @@
     & \textbf{Bi-harmonic $(D=5)$}
     \\
     \textbf{Exact}
-    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_50_name_dangel2024kroneckerfactored_vary_batch_size.pdf}
-    &  \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_50_name_dangel2024kroneckerfactored_weighted_laplacian_vary_batch_size.pdf}
-    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_5_name_dangel2024kroneckerfactored_bilaplacian_vary_batch_size.pdf}
+    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_50_name_laplacian_vary_batch_size.pdf}
+    &  \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_50_name_weighted_laplacian_vary_batch_size.pdf}
+    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_5_name_bilaplacian_vary_batch_size.pdf}
     \\
     \textbf{Stochastic}
-    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_2048_device_cuda_dim_50_distribution_normal_name_dangel2024kroneckerfactored_vary_num_samples.pdf}
-    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_2048_device_cuda_dim_50_distribution_normal_name_dangel2024kroneckerfactored_weighted_laplacian_vary_num_samples.pdf}
-    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_256_device_cuda_dim_5_distribution_normal_name_dangel2024kroneckerfactored_bilaplacian_vary_num_samples.pdf}
+    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_2048_device_cuda_dim_50_distribution_normal_name_laplacian_vary_num_samples.pdf}
+    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_2048_device_cuda_dim_50_distribution_normal_name_weighted_laplacian_vary_num_samples.pdf}
+    & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_256_device_cuda_dim_5_distribution_normal_name_bilaplacian_vary_num_samples.pdf}
   \end{tabular}
 
   \caption{\textbf{\textcolor{tab:green}{Collapsed Taylor mode} is faster than \textcolor{tab:orange}{standard Taylor mode} and \textcolor{tab:blue}{nested first-order automatic differentiaion} while using less or the same memory, \textcolor{black!50!white}{opaque} memory consumptions are for non-differentiable computations.}
@@ -173,7 +173,7 @@
 
 \begin{figure}
   \centering
-  \includegraphics*{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_16_device_cuda_name_dangel2024kroneckerfactored_bilaplacian_vary_dim.pdf}
+  \includegraphics*{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_16_device_cuda_name_bilaplacian_vary_dim.pdf}
   \caption{\textbf{Collapsed Taylor mode applied to the Bi-Laplacian.}
     The net is the same as before, but we fix the batch size to be $16$ and vary the net's input dimension.
     Note that nesting first-order AD scales worse.
