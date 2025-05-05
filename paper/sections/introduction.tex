@@ -16,8 +16,9 @@ For instance, the PINN formulation of Kolmogorov-type equations—including the 
 
 \paragraph{Compuational Challenges} As illustrated in Figure \ref{fig:benchmark} and Figure \ref{fig:benchmark-randomized-laplacians}, the computation of input derivatives can be a significant computational bottleneck in terms of both memory and runtime, particularly for high-dimensional or high-order operators. This limitation may restrict the scalability of recent approaches and hinder broader applicability. To address this challenge, we advocate for more efficient and automated use of advanced automatic differentiation techniques. In particular, we propose to generalize recent graph simplification strategies—such as the forward Laplacian scheme—by systematically exploiting the linearity of differential operators leveraging Taylor-mode automatic differentiation. This has the potential to both reduce resource consumption and broaden the range of feasible applications in VMC, PINNs, and related areas.
 
-\todo{Our graphical abstract (Figure 1) is very similar to Fig.1 in \cite{li2023forward}. We can leave it as is, I just want us to be aware of it. \AW{I completely agree and would favor a different figure, also the notation is not clear at this point, I would give a }}
+\begin{wrapfigure}[35]{r}{0.6\linewidth}
 \input{figures/visual_abstract.tex}
+\end{wrapfigure}
 
 
 Our contributions comprise the following topics:
