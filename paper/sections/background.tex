@@ -1,4 +1,4 @@
-%\todo{Check if all bold notations are correct}
+
 \todo{We need mention differential operators here, \AW{I would introduce the differential operators at the end of this section. I think that for readers not familar with the Taylor mode, the example in the current form is very usefull}}
 To motivate our approach, consider the one-dimensional case $f: \mathbb{R} \to \mathbb{R}$. When the input variable $x$ is interpreted as a univariate Taylor polynomial 
 of degree $K$, i.e., $x(t) = \sum_{k=1}^K \frac{t^k}{k!} x_k$ and $f$ is smooth enough, one can also evaluate higher order derivatives of the path $f(x(t))$ that yield a corresponding Taylor polynomial of $f$, i.e., $\sum_{k=0}^K \frac{t^k}{k!} f_k$  with $f_k := \left. \frac{d^k}{dt^k} f(x(t)) \right|_{t=0}$. Using the chain rule, one obtains for the simple example considered here and $K=3$ the coefficients 
@@ -235,9 +235,7 @@ To explain our approach systematically, we will use the following Taylor-mode AD
    % \end{split}
 \end{align*}
 This procedure explains how to compute the coefficients that occur in the $K$-jets of nodes in the computational graph of $\vf$'s decomposition, and how the result relates to the input $K$-jet.
-%\todo{bring in somehow the differential operator to motivate the propagation of sums for which we need linearity in the last summand}
-%Instead of considering the $K$-Jet of a function $\vf$ the goal is to find efficient propagation schemes for a differential operator of $\vf$.
-%\todo{update this paragraph}
+
 As can be seen for all $K$-jets, the $K$-th coefficient is computed as the sum of weighted inner products over all derivative degrees $|\sigma|$ and the tensor product of corresponding input coefficients. This tensor product is highly nonlinear in general. However, in the following section, we propose a new approach that takes advantage of a linear structure in the input coefficients to be propagated through the computational graph. This linear structure is often exposed by differential operators
 that may include also mixed-partial derivatives. Being part of a higher-order derivative tensor, they are not directly computable using a single $K$-jet. Hence, we leverage the work of Griewank et al. \cite{griewank_evaluating_1999}. They derived a technique to compute the whole $K$-th derivative tensor with a minimal number of $K$-jets propagated through the computational graph by choosing the coefficients of the $K$-jets appropriately. \AW{Here now the picture and explanation}. 
 
