@@ -64,11 +64,17 @@
 \clearpage
 \appendix
 
+% Label appendix equations as (A1), (B10) etc.
+\renewcommand\theequation{\thesection\arabic{equation}}
+\renewcommand\thefigure{\thesection\arabic{figure}}
+\renewcommand\thetable{\thesection\arabic{table}}
+
+\section{Visual Tour: From Function to Collapsed Taylor Mode}\label{sec:appendix-visual-tour}
+\input{figures/interface_overview}
+\clearpage
+
 \section{Linearity for Taylor-mode AD}
 \input{sections/appendix_linearity_for_taylor}
-
-\section{Visual Explanation of Graph Simplifications}\label{sec:appendix-simplifications}
-\input{sections/appendix_simplifications}
 
 \section{Fa\`a Di Bruno Formula Cheat Sheet}\label{sec:faa-di-bruno-cheatsheet}
 \input{sections/faa_di_bruno}

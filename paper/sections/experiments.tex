@@ -49,7 +49,7 @@ They argue it has too much variance.
     & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_256_device_cuda_dim_5_distribution_normal_name_bilaplacian_vary_num_samples.pdf}
   \end{tabular}
 
-  \caption{\textbf{\textcolor{tab:green}{Collapsed Taylor mode} is faster than \textcolor{tab:orange}{standard Taylor mode} and \textcolor{tab:blue}{nested first-order automatic differentiaion} while using less or the same memory, \textcolor{black!50!white}{opaque} memory consumptions are for non-differentiable computations.}
+  \caption{\textbf{\textcolor{tab-green}{Collapsed Taylor mode} is faster than \textcolor{tab-orange}{standard Taylor mode} and \textcolor{tab-blue}{nested first-order automatic differentiaion} while using less or the same memory, \textcolor{black!50!white}{opaque} memory consumptions are for non-differentiable computations.}
     Results are on GPU and we use a $D \to 768 \to 768 \to 512 \to 512 \to 1$ MLP with tanh activations with $D=50$ for the Laplacians and $D=5$ for the Bi-harmonic operator.
     The exact computation varies the batch size, and the approximate computation fixes $N=2048$ for the Laplacians, and $N=256$ for the Bi-Laplacian, and varies the number of Monte-Carlo samples such that $S < D$ for the Laplacians, and $2 + 3S < 6D^2 - 3D + 6$ for the Bi-Laplacian (we can compute exactly otherwise).
     For each approach, we fit a line to the data and report the slope in \Cref{tab:benchmark}  to quantify the relative speedup and memory reduction.
@@ -93,55 +93,55 @@ They argue it has too much variance.
       \midrule
       \multirow{9}{*}{\textbf{Exact}}
       & \multirow{3}{*}{Time [ms]}
-      & \textcolor{tab:blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested first-order}
       & \input{\datapathLaplacianExact/hessian_trace_best.txt}
       & \input{\datapathWeightedLaplacianExact/hessian_trace_best.txt}
       & \input{\datapathBilaplacianExact/hessian_trace_best.txt}
       \\
       &
-      & \textcolor{tab:orange}{Standard Taylor}
+      & \textcolor{tab-orange}{Standard Taylor}
       & \input{\datapathLaplacianExact/jet_naive_best.txt}
       & \input{\datapathWeightedLaplacianExact/jet_naive_best.txt}
       & \input{\datapathBilaplacianExact/jet_naive_best.txt}
       \\
       &
-      & \textcolor{tab:green}{Collapsed (ours)}
+      & \textcolor{tab-green}{Collapsed (ours)}
       & \textbf{\input{\datapathLaplacianExact/jet_simplified_best.txt}}
       & \textbf{\input{\datapathWeightedLaplacianExact/jet_simplified_best.txt}}
       & \textbf{\input{\datapathBilaplacianExact/jet_simplified_best.txt}}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB] \\ (differentiable)}}
-      & \textcolor{tab:blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested first-order}
       & \input{\datapathLaplacianExact/hessian_trace_peakmem.txt}
       & \input{\datapathWeightedLaplacianExact/hessian_trace_peakmem.txt}
       & \textbf{\input{\datapathBilaplacianExact/hessian_trace_peakmem.txt}}
       \\
       &
-      & \textcolor{tab:orange}{Standard Taylor}
+      & \textcolor{tab-orange}{Standard Taylor}
       & \input{\datapathLaplacianExact/jet_naive_peakmem.txt}
       & \input{\datapathWeightedLaplacianExact/jet_naive_peakmem.txt}
       & \input{\datapathBilaplacianExact/jet_naive_peakmem.txt}
       \\
       &
-      & \textcolor{tab:green}{Collapsed (ours)}
+      & \textcolor{tab-green}{Collapsed (ours)}
       & \textbf{\input{\datapathLaplacianExact/jet_simplified_peakmem.txt}}
       & \textbf{\input{\datapathWeightedLaplacianExact/jet_simplified_peakmem.txt}}
       & \input{\datapathBilaplacianExact/jet_simplified_peakmem.txt}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB] \\ (non-diff.)}}
-      & \textcolor{tab:blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested first-order}
       & \input{\datapathLaplacianExact/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathWeightedLaplacianExact/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathBilaplacianExact/hessian_trace_peakmem_nondifferentiable.txt}
       \\
       &
-      & \textcolor{tab:orange}{Standard Taylor}
+      & \textcolor{tab-orange}{Standard Taylor}
       & \textbf{\input{\datapathLaplacianExact/jet_naive_peakmem_nondifferentiable.txt}}
       & \textbf{\input{\datapathWeightedLaplacianExact/jet_naive_peakmem_nondifferentiable.txt}}
       & \input{\datapathBilaplacianExact/jet_naive_peakmem_nondifferentiable.txt}
       \\
       &
-      & \textcolor{tab:green}{Collapsed (ours)}
+      & \textcolor{tab-green}{Collapsed (ours)}
       & \textbf{\input{\datapathLaplacianExact/jet_simplified_peakmem_nondifferentiable.txt}}
       & \textbf{\input{\datapathWeightedLaplacianExact/jet_simplified_peakmem_nondifferentiable.txt}}
       & \textbf{\input{\datapathBilaplacianExact/jet_simplified_peakmem_nondifferentiable.txt}}
@@ -149,55 +149,55 @@ They argue it has too much variance.
       \midrule
       \multirow{9}{*}{\textbf{Stochastic}}
       & \multirow{3}{*}{Time [ms]}
-      & \textcolor{tab:blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested first-order}
       & \input{\datapathLaplacianStochastic/hessian_trace_best.txt}
       & \input{\datapathWeightedLaplacianStochastic/hessian_trace_best.txt}
       & \input{\datapathBilaplacianStochastic/hessian_trace_best.txt}
       \\
       &
-      & \textcolor{tab:orange}{Standard Taylor}
+      & \textcolor{tab-orange}{Standard Taylor}
       & \input{\datapathLaplacianStochastic/jet_naive_best.txt}
       & \input{\datapathWeightedLaplacianStochastic/jet_naive_best.txt}
       & \input{\datapathBilaplacianStochastic/jet_naive_best.txt}
       \\
       &
-      & \textcolor{tab:green}{Collapsed (ours)}
+      & \textcolor{tab-green}{Collapsed (ours)}
       & \textbf{\input{\datapathLaplacianStochastic/jet_simplified_best.txt}}
       & \textbf{\input{\datapathWeightedLaplacianStochastic/jet_simplified_best.txt}}
       & \textbf{\input{\datapathBilaplacianStochastic/jet_simplified_best.txt}}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB]\\(differentiable)}}
-      & \textcolor{tab:blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested first-order}
       & \input{\datapathLaplacianStochastic/hessian_trace_peakmem.txt}
       & \input{\datapathWeightedLaplacianStochastic/hessian_trace_peakmem.txt}
       & \input{\datapathBilaplacianStochastic/hessian_trace_peakmem.txt}
       \\
       &
-      & \textcolor{tab:orange}{Standard Taylor}
+      & \textcolor{tab-orange}{Standard Taylor}
       & \input{\datapathLaplacianStochastic/jet_naive_peakmem.txt}
       & \input{\datapathWeightedLaplacianStochastic/jet_naive_peakmem.txt}
       & \input{\datapathBilaplacianStochastic/jet_naive_peakmem.txt}
       \\
       &
-      & \textcolor{tab:green}{Collapsed (ours)}
+      & \textcolor{tab-green}{Collapsed (ours)}
       & \textbf{\input{\datapathLaplacianStochastic/jet_simplified_peakmem.txt}}
       & \textbf{\input{\datapathWeightedLaplacianStochastic/jet_simplified_peakmem.txt}}
       & \textbf{\input{\datapathBilaplacianStochastic/jet_simplified_peakmem.txt}}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB]\\(non-diff.)}}
-      & \textcolor{tab:blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested first-order}
       & \input{\datapathLaplacianStochastic/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathWeightedLaplacianStochastic/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathBilaplacianStochastic/hessian_trace_peakmem_nondifferentiable.txt}
       \\
       &
-      & \textcolor{tab:orange}{Standard Taylor}
+      & \textcolor{tab-orange}{Standard Taylor}
       & \textbf{\input{\datapathLaplacianStochastic/jet_naive_peakmem_nondifferentiable.txt}}
       & \textbf{\input{\datapathWeightedLaplacianStochastic/jet_naive_peakmem_nondifferentiable.txt}}
       & \input{\datapathBilaplacianStochastic/jet_naive_peakmem_nondifferentiable.txt}
       \\
       &
-      & \textcolor{tab:green}{Collapsed (ours)}
+      & \textcolor{tab-green}{Collapsed (ours)}
       & \textbf{\input{\datapathLaplacianStochastic/jet_simplified_peakmem_nondifferentiable.txt}}
       & \textbf{\input{\datapathWeightedLaplacianStochastic/jet_simplified_peakmem_nondifferentiable.txt}}
       & \textbf{\input{\datapathBilaplacianStochastic/jet_simplified_peakmem_nondifferentiable.txt}}

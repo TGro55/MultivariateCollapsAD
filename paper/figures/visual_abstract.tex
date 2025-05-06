@@ -27,6 +27,9 @@
 \newsavebox{\visualAbstract}
 \savebox{\visualAbstract}{
   \begin{tikzpicture}
+    % ===================================================================
+    % DRAW VECTORS OF DERIVATIVES 0, 1, ..., K
+    % ===================================================================
     \matrix [%
     matrix of nodes,%
     ampersand replacement=\&,% to use inside a savebox
@@ -80,7 +83,9 @@
     \node at (taylor-5-2) {\vdots};
     \node at (taylor-5-3) {\vdots};
 
-    % draw dependencies
+    % ===================================================================
+    % DRAW DEPENDENCY ARROWS
+    % ===================================================================
     \pgfmathsetmacro{\K}{5}
     \pgfmathsetmacro{\L}{2}
 
@@ -95,10 +100,16 @@
       }
     }
 
+    % ===================================================================
+    % DRAW ARROW INDICATING DIRECTION OF PROPAGATION
+    % ===================================================================
     \coordinate (arrowStart) at ($(taylor-1-1.north)+(0,3.5ex)$);
     \coordinate (arrowEnd) at ($(taylor-1-3.north east)+(0,3.5ex)$);
     \draw[-Stealth, line width=2pt, black] (arrowStart) to node [midway, fill=white, align=center] {\textbf{Taylor forward} \\ \textbf{propagation}} (arrowEnd);
 
+    % ===================================================================
+    % DRAW DERIVATIVE DEGREE LABELS
+    % ===================================================================
     \node [minimum width=8ex, align=center, left=1.5ex of taylor-1-1] (zero) {0};
     \node [minimum width=8ex, align=center, left=1.5ex of taylor-3-1] {1};
     \node [minimum width=8ex, align=center, left=1.5ex of taylor-5-1] {$\vdots$};
@@ -108,6 +119,9 @@
 
     \node [align=center] (coefficientLabel) at ($(zero)+(0, 5.5ex)$) {\textbf{Derivative}\\\textbf{degree}};
 
+    % ===================================================================
+    % DRAW THE RED BOX HIGHLIGHTING THE HIGHEST COMPONENT
+    % ===================================================================
     \draw[rounded corners, line width=2pt, purple!50!red] (taylor-9-1.north west) rectangle (taylor-10-3.south east);
     \draw[white, fill=white] ($(taylor-10-3.south east)+(-0.3ex, 2ex)$) rectangle ($(taylor-10-3.south east)+(0.3ex, 11.25ex)$);
 
