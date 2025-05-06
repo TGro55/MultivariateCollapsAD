@@ -4,7 +4,6 @@ This requires the application of partial differential operators to the neural ne
 Unlike the setting of network training with first-order methods, these input derivatives are often high-order PDE operators, requiring second derivatives or even higher.
 Efficient automatic differentiation of such operators must therefore go beyond mere backpropagation, a realization that motivated this and previous work and is illustrated in Figure \ref{fig:benchmark}.
 
-
 \paragraph{Variational Monte Carlo} A prominent example is variational Monte Carlo (VMC), where neural quantum states must satisfy Schrödinger's equation \cite{carleo2017solving, pfau2020ab, hermann2020deep}.
 This involves the computation of the input Laplacian to capture the kinetic energy contribution to the Hamiltonian.
 In many settings, this Laplacian need not be differentiable with respect to the network weights \cite{li2023forward}.
@@ -16,25 +15,45 @@ For instance, the PINN formulation of Kolmogorov-type equations—including the 
 
 \paragraph{Compuational Challenges} As illustrated in Figure \ref{fig:benchmark} and Figure \ref{fig:benchmark-randomized-laplacians}, the computation of input derivatives can be a significant computational bottleneck in terms of both memory and runtime, particularly for high-dimensional or high-order operators. This limitation may restrict the scalability of recent approaches and hinder broader applicability. To address this challenge, we advocate for more efficient and automated use of advanced automatic differentiation techniques. In particular, we propose to generalize recent graph simplification strategies—such as the forward Laplacian scheme—by systematically exploiting the linearity of differential operators leveraging Taylor-mode automatic differentiation. This has the potential to both reduce resource consumption and broaden the range of feasible applications in VMC, PINNs, and related areas.
 
-\begin{wrapfigure}[35]{r}{0.6\linewidth}
-\input{figures/visual_abstract.tex}
-\end{wrapfigure}
+\begin{figure*}[!t]
+  \centering
+  \begin{minipage}[b]{0.42\linewidth}
+    \centering
+    \input{figures/vanilla_taylor_not_enough.tex}
 
+    \caption{\textbf{$\blacktriangle$ Vanilla Taylor mode is not enough to beat nested 1\textsuperscript{st}-order AD.}
+      Illustrated for computing the Laplacian of a $\mathrm{tanh}$-activated $50 \!\to\! 768 \!\to\! 768 \!\to\! 512 \!\to\! 512 \!\to\! 1$
+      MLP with JAX (+ \texttt{jit}) on GPU (details in \Cref{sec:jax-benchmark}).
+      We show how to automatically obtain the specialized forward Laplacian through simple graph transformations of vanilla Taylor mode based on linearity, which could be done by the \texttt{jit} compiler.
+    }
+
+    \vspace{0.25ex}
+    \caption{\textbf{$\blacktriangleright$ Our collapsed Taylor mode directly propagates the sum of highest degree coefficients.}
+      Visualized for propagating four $K$-jets through a $\sR^5 \!\to\! \sR^3 \!\to\! \sR$ function ($K=2$ yields the forward Laplacian).
+      \Cref{sec:introduction} introduces the notation.}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.57\linewidth}
+    \centering
+    \input{figures/visual_abstract.tex}
+  \end{minipage}
+\end{figure*}
 
 Our contributions comprise the following topics:
 \begin{enumerate}
-    \item We describe the `collapsed' Taylor mode where the highest Taylor coefficients during the forward propagation are propagated as a weighted sum of said derivatives.
-    This approach has first been used in the `forward Laplacian framework \cite{li2023forward}, which, however, does not rely on Taylor mode.
-    Our collapsed Taylor mode improves on it in two ways.
-    First, it is based on standard Taylor mode that then allows simple graph rewrites based on linearity.
-    Second, it generalizes to other differential operators and can also be applied to recently proposed randomization techniques for Taylor mode.
+\item We describe the `collapsed' Taylor mode where the highest Taylor coefficients during the forward propagation are propagated as a weighted sum of said derivatives.
+  This approach has first been used in the `forward Laplacian framework \cite{li2023forward}, which, however, does not rely on Taylor mode.
+  Our collapsed Taylor mode improves on it in two ways.
+  First, it is based on standard Taylor mode that then allows simple graph rewrites based on linearity.
+  Second, it generalizes to other differential operators and can also be applied to recently proposed randomization techniques for Taylor mode.
 
-    \item This leads to a conceptually clean separation of concepts, allowing for a simple implementation that can handle all scenarios and does not require manual implementations for each differential operator.
-    To demonstrate this, we build a Taylor mode library for PyTorch and equip it with the necessary graph simplifications using the \texttt{torch.fx} library, and show how collapsed Taylor mode accelerates the computation of various differential operators.
+\item This leads to a conceptually clean separation of concepts, allowing for a simple implementation that can handle all scenarios and does not require manual implementations for each differential operator.
+  To demonstrate this, we build a Taylor mode library for PyTorch and equip it with the necessary graph simplifications using the \texttt{torch.fx} library, and show how collapsed Taylor mode accelerates the computation of various differential operators.
 
-    \item Ideally, we find specially structured differential operators for which our approach is especially suited and classify them.
-    One example is the trace of derivative tensors of arbitrary order, although this seems to be an operator that is not practically relevant.
+\item Ideally, we find specially structured differential operators for which our approach is especially suited and classify them.
+  One example is the trace of derivative tensors of arbitrary order, although this seems to be an operator that is not practically relevant.
 \end{enumerate}
+
 
 %%% Local Variables:
 %%% mode: LaTeX

@@ -49,6 +49,39 @@ They argue it has too much variance.
     & \includegraphics{../jet/exp/exp01_benchmark_laplacian/figures/architecture_tanh_mlp_768_768_512_512_1_batch_size_256_device_cuda_dim_5_distribution_normal_name_bilaplacian_vary_num_samples.pdf}
   \end{tabular}
 
+  \newsavebox{\benchmarkLegend}
+  \savebox{\benchmarkLegend}{
+    \begin{tikzpicture}[font=\small]
+      \matrix [%
+      matrix of nodes,%
+      ampersand replacement=\&,% to use inside a savebox
+      nodes={anchor=west, align=left, inner sep=1pt},%
+      column sep=1ex,%
+      row sep=0ex,%
+      ] (legend)
+      {
+        \& \draw[tab-blue] plot[mark=*] coordinates {(0,0)};
+        \& Nested first-order AD\phantom{y}\quad
+        \& \draw[tab-orange] plot[mark=triangle*, rotate=270] coordinates {(0,0)};
+        \& Standard Taylor mode\quad
+        \& \draw[tab-green] plot[mark=triangle*, rotate=90] coordinates {(0,0)};
+        \& Collapsed Taylor mode (ours)
+        \\
+        \& \node[anchor=center]{\tikz\draw[thick] (0, 0) to ++(2.5ex, 0);};
+        \& Differentiable
+        \& \node[anchor=center, opacity=0.5]{\tikz\draw[thick, dashed] (0, 0) to ++(2.5ex, 0);};
+        \& Non-differentiable
+        \& \node[anchor=center, opacity=0.0]{\tikz\draw[thick] (0, 0) to ++(2.5ex, 0);};
+        \\
+      };
+
+      \draw[gray, rounded corners] (current bounding box.north west) rectangle (current bounding box.south east);
+    \end{tikzpicture}
+  }
+  \begin{tikzpicture}
+    \node {\usebox{\benchmarkLegend}};
+  \end{tikzpicture}
+
   \caption{\textbf{\textcolor{tab-green}{Collapsed Taylor mode} is faster than \textcolor{tab-orange}{standard Taylor mode} and \textcolor{tab-blue}{nested first-order automatic differentiaion} while using less or the same memory, \textcolor{black!50!white}{opaque} memory consumptions are for non-differentiable computations.}
     Results are on GPU and we use a $D \to 768 \to 768 \to 512 \to 512 \to 1$ MLP with tanh activations with $D=50$ for the Laplacians and $D=5$ for the Bi-harmonic operator.
     The exact computation varies the batch size, and the approximate computation fixes $N=2048$ for the Laplacians, and $N=256$ for the Bi-Laplacian, and varies the number of Monte-Carlo samples such that $S < D$ for the Laplacians, and $2 + 3S < 6D^2 - 3D + 6$ for the Bi-Laplacian (we can compute exactly otherwise).
