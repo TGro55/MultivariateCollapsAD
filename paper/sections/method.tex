@@ -187,18 +187,9 @@ To summarize, we have been able to express a general differential operator given
 
 \paragraph{Biharmonic Operator} A prominent differential operator with mixed-partials is represented by the Biharmonic Operator. \todo{cite} Below, we derive the formula to compute the operator using collapsed Taylor-mode.
 Our approach first applies \cref{eq:ttc_general} to the Biharmonic Operator \cref{eq:biharm}. The parameters are selected to $K = 4, P = 2, N_1 = N_2 = D, \vp=(2, 2)$ and the directions to the unit vectors $\vv_{n_1} = \ve_{n_1}$ and $\vv_{n_2} = \ve_{n_2}$. The result is shown in the appendix \cref{eq:ttc_for_biharm} and the coefficients are listed in \cref{tab:ttc_biharm_coeffs}.
-\begin{table}[]
-    \centering
-    \begin{tabular}{|c|c|c|}
-        \toprule
-         $\gamma_{(2, 2) (4, 0)}$ & $\gamma_{(2, 2) (3, 1)}$ & $\gamma_{(2, 2) (2, 2)}$ \\
-        \midrule
-         $\frac{13}{192}$ &  -$\frac{1}{3}$ & $\frac{5}{8}$  \\
-        \bottomrule
-    \end{tabular}
-    \caption{Coefficients to compute the Biharmonic Operator by \cref{eq:ttc_for_biharm}.}
-    \label{tab:ttc_biharm_coeffs}
-\end{table}
+
+\input{figures/ttc_bilaplacian}
+
 As mentioned before, the coefficients $\gamma_{\vp \vq}$ capture the symmetric structure of the differential operator. A close look into the definition \cref{eq:ttc_coeff} shows the equality of the coefficients for $\vq = (4,0)$ with $\vq = (0, 4)$ and $\vq = (3, 1)$ with $\vq = (1, 3)$. Exploiting those symmetries, the formula boils down to \cref{eq:ttc_for_biharm_2}. Furthermore, the second and third sums contain the jets of the first sum. This is exploited in \cref{eq:ttc_for_biharm3}.
 The last term can be further simplified by leveraging the symmetry of the direction $2 \ve_i + 2 \ve_j$. This simplification leads to the following final efficient jet-based formula for the Biharmonic Operator :
 \begin{equation} \label{eq:ttc_for_biharm_final}
