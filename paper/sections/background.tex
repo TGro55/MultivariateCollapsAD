@@ -39,8 +39,7 @@ with components given by
     = (\vv_1)_{d_1} \cdot \ldots \cdot (\vv_K)_{d_K}
     \quad \text{for } d_1, \dots, d_K \in \{1, \dots, D\}.
 \end{equation}
-To occasionally simplify the notation we will use $\vv_k^{\otimes K} = \otimes_{k=1}^K \vv_k$.
-There will be extensive use of the inner product
+To simplify the notation we use $(\vv)^{\otimes K} = \otimes_{k=1}^K \vv$ and frequently also the inner product
 \begin{align}\label{eq:derivative-tensor-scalar-product}
     \left\langle
     \tA, \tB
@@ -83,16 +82,16 @@ Also in the more general vector-valued case, the evaluation of $\vf$'s $K$-jet a
       }};
     \draw [-Latex] (topleft.south) to node [midway, left] {$J^K$} (bottomleft.north);
 
-    \draw [-Latex, \colorTM] (bottomleft.east) to node [midway, above, tab-orange] {\textcolor{\colorTM}{Taylor mode}
+    \draw [-Latex, \colorTM] (bottomleft.east) to node [midway, above, tab-orange] {\textcolor{\colorTM}{Taylor-mode AD}
     } (bottomright.west);
   \end{tikzpicture}
 \end{center}
-\caption{The Taylor-mode of AD: From the $K$-jet of the input to the $K$-jet of the output}
+\caption{The Taylor-mode AD: From the $K$-jet of the input to the $K$-jet of the output}
 \label{fig:utp}
 \end{figure}
 
 Next, we have to consider the calculation of the derivative values $\vf_k$. As is common for AD, the computation of $\vf_k$
-known as the Taylor-mode of AD relies on a decomposition of $\vf$ into elemental functions for which the derivative rules are known and the application of the chain rule. In the simplest case, $\vf$ might be given as the decomposition $\vf = \vg \circ \vh$ of two elemental functions $\vg$ and $\vh$. Having defined $J^K\vx$, Taylor-mode AD calculates the $K$-jet of $\vf$ by successively evaluating all $\vf_k$ through the chain rule using Faà di Bruno's formula mentioned above. For $\vf = \vg \circ \vh$ using the notation introduced above, this formula reads 
+known as the Taylor-mode AD relies on a decomposition of $\vf$ into elemental functions for which the derivative rules are known and the application of the chain rule. In the simplest case, $\vf$ might be given as the decomposition $\vf = \vg \circ \vh$ of two elemental functions $\vg$ and $\vh$. Having defined $J^K\vx$, Taylor-mode AD calculates the $K$-jet of $\vf$ by successively evaluating all $\vf_k$ through the chain rule using Faà di Bruno's formula mentioned above. For $\vf = \vg \circ \vh$ using the notation introduced above, this formula reads 
 \begin{align}
 \label{eq:faa-di-bruno}
   \vf_k = \vg_k
@@ -243,8 +242,7 @@ This procedure explains how to compute the coefficients that occur in the $K$-je
 
 
 As can be seen for all $K$-jets, the $K$-th coefficient is computed as the sum of weighted inner products over all derivative degrees $|\sigma|$ and the tensor product of corresponding input coefficients. This tensor product is highly nonlinear in general. However, in the following section, we propose a new approach that takes advantage of a linear structure in the input coefficients to be propagated through the computational graph. This linear structure is often exposed by differential operators
-that may include also mixed-partial derivatives. Being part of a higher-order derivative tensor, they are not directly computable using a single $K$-jet. Hence, we leverage the work of Griewank et al. \cite{griewank_evaluating_1999}. They derived a technique to compute the whole $K$-th derivative tensor with a minimal number of $K$-jets propagated through the computational graph by choosing the coefficients of the $K$-jets appropriately. \AW{Here now the picture and explanation}. 
-
+that may include also mixed-partial derivatives. Being part of a higher-order derivative tensor, they are not directly computable using a single $K$-jet. Hence, we leverage the work of Griewank et al. \cite{griewank_evaluating_1999}. They derived a technique to compute the whole $K$-th derivative tensor with a minimal number of $K$-jets propagated through the computational graph by choosing the coefficients of the $K$-jets appropriately. 
 
 
 %%% Local Variables:
