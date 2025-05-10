@@ -1,68 +1,62 @@
-\begin{figure}[!t]
-  \centering
-  \begin{minipage}{0.52\linewidth}
-    \centering
+\begin{tikzpicture}
+  \tikzset{transparentfill/.style={fill=white, fill opacity=0.7}}
+  \begin{axis}[
+    axis lines=middle,
+    axis line style={-Stealth, thick},
+    xmin=0, xmax=5.25,
+    ymin=0, ymax=5.25,
+    xtick={0,1,2,3,4},
+    ytick={0,1,2,3,4},
+    grid=major,
+    xlabel={Differentiate \wrt $x_i$},
+    ylabel={Differentiate \wrt $x_j$},
+    enlargelimits=false,
+    tick style={black},
+    tick align=outside,
+    tick label style={font=\small},
+    width=0.4\textwidth,
+    height=0.4\textwidth,
+    xlabel style={at={(axis description cs:0.5,-0.15)},anchor=north, font=\small},
+    ylabel style={at={(axis description cs:-0.15,0.5)},anchor=south, rotate=90, font=\small},
+    clip=false, %  no clipping if something is outside the axis
+    ]
 
-    \captionof{table}{Coefficients to compute the Biharmonic Operator by \cref{eq:ttc_for_biharm}.}
-    \label{tab:ttc_biharm_coeffs}
-    \begin{tabular}{|c|c|c|}
-      \toprule
-      $\gamma_{(2, 2) (4, 0)}$ & $\gamma_{(2, 2) (3, 1)}$ & $\gamma_{(2, 2) (2, 2)}$ \\
-      \midrule
-     $\frac{13}{192}$ &  -$\frac{1}{3}$ & $\frac{5}{8}$  \\
-      \bottomrule
-    \end{tabular}
-  \end{minipage}
-  \hfill
-  \begin{minipage}{0.44\linewidth}
-    \centering
-    \begin{tikzpicture}
-      \begin{axis}[
-        axis lines=middle,
-        axis line style={-Stealth, thick},
-        xmin=0, xmax=5,
-        ymin=0, ymax=5,
-        xtick={0,1,2,3,4},
-        ytick={0,1,2,3,4},
-        grid=major,
-        xlabel={Differentiate \wrt $x_i$},
-        ylabel={Differentiate \wrt $x_j$},
-        enlargelimits=false,
-        tick style={black},
-        tick align=outside,
-        tick label style={font=\small},
-        width=5cm,
-        height=5cm,
-        xlabel style={at={(axis description cs:0.5,-0.15)},anchor=north, font=\small},
-        ylabel style={at={(axis description cs:-0.15,0.5)},anchor=south, rotate=90, font=\small},
-        clip=false, %  no clipping if something is outside the axis
-        ]
+    % Loop to draw circles at (x, y) such that x + y = 4
+    \foreach \x in {0,1,2,3,4} {
+      \pgfmathsetmacro{\y}{4 - \x}
+      \addplot[
+      only marks,
+      mark=*,
+      mark size=2.5pt,
+      black
+      ] coordinates {(\x,\y)};
+    }
 
-        % Loop to draw circles at (x, y) such that x + y = 4
-        \foreach \x in {0,1,2,3,4} {
-          \pgfmathsetmacro{\y}{4 - \x}
-          \addplot[
-          only marks,
-          mark=*,
-          mark size=2.5pt,
-          black
-          ] coordinates {(\x,\y)};
-        }
+    % Draw arrow from origin to (x, y)
+    % NOTE Could not figure out how to do this inside the loop, so
+    % doing it manually
+    \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:0,4);
+    \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:1,3);
+    \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:2,2);
+    \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:3,1);
+    \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:4,0);
 
-        % Draw arrow from origin to (x, y)
-        % NOTE Could not figure out how to do this inside the loop, so
-        % doing it manually
-        \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:0,4);
-        \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:1,3);
-        \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:2,2);
-        \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:3,1);
-        \draw[-Stealth, red, ultra thick] (axis cs:0,0) -- (axis cs:4,0);
-      \end{axis}
-    \end{tikzpicture}
+    % Draw the labels for the q coordinates
+    \node[anchor=north, yshift=-2pt] at (axis cs:5.25,0) {$q_1$};
+    \node[anchor=east, xshift=-2pt] at (axis cs:0,5.25) {$q_2$};
 
-    \caption{Directions along which to evaluate a 4-jet to obtain the partial derivative $\nicefrac{\partial^4}{\partial^2 x_i \partial^2 x_j}$. They correspond to the border of a parallelepiped.}
-  \end{minipage}
-\end{figure}
+    % Draw the gamma values
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:0,4) {$\gamma_{{\vp, (4,0)}} = \nicefrac{13}{192} $};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:1,3) {$\gamma_{{\vp, (1,3)}} = -\nicefrac{1}{3} $};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:2,2) {$\gamma_{{\vp, (2,2)}} = \nicefrac{5}{8} $};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:3,1) {$\gamma_{{\vp, (3,1)}}$};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:4,0) {$\gamma_{{\vp, (4,0)}}$};
+  \end{axis}
+
+  % Draw the values of p
+  \node[anchor=north east, transparentfill] at (current bounding box.north east) {$\vp = (2, 2)$};
+\end{tikzpicture}
+% \end{minipage}
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "../main"
