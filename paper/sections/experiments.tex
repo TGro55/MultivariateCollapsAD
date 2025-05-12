@@ -29,6 +29,11 @@ For all implementations, we measure (i) run time, and peak memory when computing
 The run time measurements commence with 10 warm-up runs, followed by 50 repetitions, and we report the smallest run time as best approximation to run time.
 The peak memory allocation does not fluctuate, hence we determine it in a single run.
 
+
+\todo{Integrate this.}
+In many settings, this Laplacian need not be differentiable with respect to the network weights \cite{li2023forward}.
+However, recent developments in optimization have also revived the use of differentiable Laplacians \cite{webber2022rayleigh, toulouse2007optimization}.
+
 \input{tables/torch_ratios}
 
 \paragraph{Experimental results.}

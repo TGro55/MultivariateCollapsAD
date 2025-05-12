@@ -29,15 +29,7 @@ To compute \cref{eq:sum-k-directional}, one has to use as $n$-th $K$-jet $\vx_{0
 Without further optimizations, the standard Taylor-mode AD propagates $1 + KN$ vectors through every node of the computational graph, where the length of the vectors depend on the individual node.
 Subsequently, one has to sum up the corresponding highest derivatives to obtain \cref{eq:sum-k-directional}.
 This is illustrated in the appendix, see \cref{eq:sum-taylor-mode-naive}, for our simple example.
-The approach we propose here is based on the observation that there is a special element in the set of integer partitions $\partitioning(K)$, namely the trivial partition $\tilde{\sigma}= \{K\}$ corresponding to the term
-\begin{equation}
-  \nu(\tilde{\sigma}) \left<
-    \partial \vg(\vh_0),
-    \vh_{K, n}
-  \right>,
-\end{equation}
-of the Faà di Bruno formula. Using the definitions of \cite{hardy2006combinatorics}, one obtains $\nu(\tilde{\sigma}) = 1$
-yielding
+The approach we propose here is based on the observation that there is a special element in the set of integer partitions $\partitioning(K)$, namely the trivial partition $\tilde{\sigma}= \{K\}$ corresponding to the term $ \nu(\tilde{\sigma}) \left< \partial \vg(\vh_0), \vh_{K, n} \right>$ of the Faà di Bruno formula with $\nu(\tilde{\sigma}) = 1$.
 \begin{equation}\label{eq:faa-di-bruno-expanded}
   \textstyle % Comment out this line if we have enough space
   \vf_{K, n}

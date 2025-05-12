@@ -1,30 +1,29 @@
-Recently, neural networks have increasingly been used to represent potentially high-dimensional probability densities or functions constrained by physical laws \cite{carleo2017solving, pfau2020ab, hermann2020deep, karniadakis2021physics, raissi2019physics, hu2023hutchinson, sun2020global}.
-The physics is typically encoded in the form of partial differential equations (PDEs), and the neural network representation must therefore satisfy such equations.
-This requires the application of partial differential operators to the neural network representation, which need to be computed with respect to the input rather than the trainable weights.
-Unlike the setting of network training with first-order methods, these input derivatives are often high-order PDE operators, requiring second derivatives or even higher.
-Since nested automatic differentiation (AD) is expensive, efficient differentiation of such operators must therefore go beyond mere backpropagation, a realization that motivated this fact and previous work is illustrated in Figure \ref{fig:benchmark}.
+Using neural networks to learn (potentially high-dimensional) functions constrained by physical laws is a popular trend in scientific machine learning \cite{carleo2017solving, pfau2020ab, hermann2020deep, karniadakis2021physics, raissi2019physics, hu2023hutchinson, sun2020global}.
+Typically, the Physics is encoded through partial differential equations (PDEs) the neural net must satisfy.
+The associated loss functions require evaluating differential operators \wrt the network's input, rather than weights, which contain higher-order derivatives.
+Typically, evaluating the differential operator is a bottleneck.
 
-\paragraph{Variational Monte Carlo} A prominent example is variational Monte Carlo (VMC), where neural quantum states must satisfy Schrödinger's equation \cite{carleo2017solving, pfau2020ab, hermann2020deep}.
-This involves the computation of the input Laplacian to capture the kinetic energy contribution to the Hamiltonian.
-In many settings, this Laplacian need not be differentiable with respect to the network weights \cite{li2023forward}.
-However, recent developments in optimization have also revived the use of differentiable Laplacians \cite{webber2022rayleigh, toulouse2007optimization}.
-
-\paragraph{Physics-Informed Neural Networks} A more general framework arises in physics-informed neural networks (PINNs), which cast PDE problems as optimization tasks by minimizing the residuals of the governing equations \cite{raissi2019physics, karniadakis2021physics}.
+\paragraph{Differential operators in the wild.} Two important fields of application are variational Monte-Carlo (VMC) and Physics-informed neural networks (PINNs).
+VMC employs neural networks as ansatz for the Schr\"odinger equation \cite{carleo2017solving, pfau2020ab, hermann2020deep} and demands computing the net's Laplacian (the Hessian trace) to capture the kinetic energy in the Hamiltonian.
+PINNs also use a neural net ansatz to learn a PDE solution and cast the problem as optimization tasks by minimizing the residuals of the governing equations \cite{raissi2019physics, karniadakis2021physics}.
 This approach necessitates differentiable application of potentially high-order PDE operators.
 For instance, the PINN formulation of Kolmogorov-type equations—including the Fokker-Planck, Black-Scholes, and Hamilton-Jacobi-Bellman equations—requires the evaluation of weighted second-order input derivatives in high-dimensional spatial domains \cite{hu2023hutchinson, sun2024dynamical}.
+The Bi-Laplacian is often used for plate equations and contains fourth-order derivatives \todo{Improve sentence, add ref}.
 
-\todo{T: Add something about Biharmonic or other higher-order operators}
+\paragraph{Is backpropagation all we need?}
+Although it is known---at least on paper---that nesting first-order automatic differentiation (AD) to compute high-order derivatives scales poorly, this approach is common practise.
+The AD community has developed a more favourable alternative to nested backpropagation that promises faster computation of higher-order derivatives: \emph{Taylor-mode AD}~\cite[or simply \emph{Taylor-mode},][\S13]{griewank2008evaluating}.
+\citet{bettencourt2019taylor} introduced Taylor-mode to the machine learning community in \citeyear{bettencourt2019taylor} and provided an implementation in JAX \cite{bradbury2018jax}.
+However, we observe empirically that vanilla Taylor-mode is often not enough to beat nested backpropagation: We took a 5-layer $\tanh$ activated MLP (such nets are commonly used as PINNs) and evaluated its Laplacian using JAX's Taylor mode and compared its performance to computing, then tracing, the Hessian via Hessian-vector products \cite{pearlmutter1994fast,dagreou2024how}.
+On this example, we found that \emph{vanilla Taylor mode is 50\% slower than nested backpropagation}.
+This calls into question the relevance of Taylor mode for computing differential operators that ML practitioners are interested in.
 
-\todo{T: What about discussing recent approaches, like forward-laplace, Hutchison trace and stochastic ad?}
-
-\paragraph{Computational Challenges} As illustrated in Figure \ref{fig:benchmark} and Figure \ref{fig:benchmark-randomized-laplacians}, the computation of input derivatives can be a significant computational bottleneck in terms of both memory and runtime, particularly for high-dimensional or high-order operators.
-This limitation may restrict the scalability of recent approaches and hinder broader applicability.
-To address this challenge, we advocate for more efficient and automated use of advanced AD.
-In particular, we propose to generalize recent graph simplification strategies—such as the forward Laplacian scheme—by systematically exploiting the linearity of differential operators leveraging Taylor-mode AD.
-This generalization enables us to apply efficient propagation schemes to a wide range of operators.
-This has the potential to both reduce resource consumption and broaden the range of feasible applications in VMC, PINNs, and related areas.
-
-While recent work has pointed out a connection between Taylor-mode and the Forward-Laplacian, it remains unclear how to leverage this connection.
+\paragraph{No.}
+Although it looks like, at first sight, backpropagation is all we need, recent works have successfully demonstrated the potential of Taylor mode and forward propagation schemes.
+For the Laplacian, \citet{li2023forward} developed a special forward propagation framework called the \emph{forward Laplacian} (later generalized to weighted Laplacians \cite{li2024dof}).
+Coming back to our example from above, we can see that JAX's forward Laplacian \cite{gao2023folx} outperforms nested backpropagation and is roughly twice as fast.
+To stochastically approximate differential operators over extremely high-dimensional domains, \citet{shi2024stochastic} proposed using Taylor mode with carefully chosen randomly sampled directions.
+While recent work pointed out a connection between Taylor-mode and the forward Laplacian \cite{dangel2024kroneckerfactored}, it remains unclear what disentangles them, and if efficient forward schemes can also be derived for other differential operators.
 Our work changes this.
 We make the following contributions:
 

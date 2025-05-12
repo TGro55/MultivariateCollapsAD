@@ -13,15 +13,15 @@
   \def\datapathWeightedLaplacianStochastic{../jet/exp/exp01_benchmark_laplacian/performance/architecture_tanh_mlp_768_768_512_512_1_batch_size_2048_device_cuda_dim_50_distribution_normal_name_weighted_laplacian_vary_num_samples}
   \def\datapathBilaplacianExact{../jet/exp/exp01_benchmark_laplacian/performance/architecture_tanh_mlp_768_768_512_512_1_device_cuda_dim_5_name_bilaplacian_vary_batch_size}
   \def\datapathBilaplacianStochastic{../jet/exp/exp01_benchmark_laplacian/performance/architecture_tanh_mlp_768_768_512_512_1_batch_size_256_device_cuda_dim_5_distribution_normal_name_bilaplacian_vary_num_samples}
-  \resizebox{\linewidth}{!}{%
-    % configuration options for the \num command
-    \sisetup{%
-      % scientific-notation=true,%
-      round-mode=figures,%
-      round-precision=2,%
-      detect-weight, % for bolding to work
-      tight-spacing=true, % less space around \cdot
-    }
+  % configuration options for the \num command
+  \sisetup{%
+    % scientific-notation=true,%
+    round-mode=figures,%
+    round-precision=2,%
+    detect-weight, % for bolding to work
+    tight-spacing=true, % less space around \cdot
+  }
+  \begin{small}
     \begin{tabular}{ccc|cccc}
       \toprule
       \textbf{Mode}
@@ -34,7 +34,7 @@
       \midrule
       \multirow{9}{*}{\textbf{Exact}}
       & \multirow{3}{*}{Time [ms]}
-      & \textcolor{tab-blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested 1\textsuperscript{st}-order}
       & \input{\datapathLaplacianExact/hessian_trace_best.txt}
       & \input{\datapathWeightedLaplacianExact/hessian_trace_best.txt}
       & \input{\datapathBilaplacianExact/hessian_trace_best.txt}
@@ -52,7 +52,7 @@
       & \textbf{\input{\datapathBilaplacianExact/jet_simplified_best.txt}}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB] \\ (differentiable)}}
-      & \textcolor{tab-blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested 1\textsuperscript{st}-order}
       & \input{\datapathLaplacianExact/hessian_trace_peakmem.txt}
       & \input{\datapathWeightedLaplacianExact/hessian_trace_peakmem.txt}
       & \textbf{\input{\datapathBilaplacianExact/hessian_trace_peakmem.txt}}
@@ -70,7 +70,7 @@
       & \input{\datapathBilaplacianExact/jet_simplified_peakmem.txt}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB] \\ (non-diff.)}}
-      & \textcolor{tab-blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested 1\textsuperscript{st}-order}
       & \input{\datapathLaplacianExact/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathWeightedLaplacianExact/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathBilaplacianExact/hessian_trace_peakmem_nondifferentiable.txt}
@@ -90,7 +90,7 @@
       \midrule
       \multirow{9}{*}{\textbf{Stochastic}}
       & \multirow{3}{*}{Time [ms]}
-      & \textcolor{tab-blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested 1\textsuperscript{st}-order}
       & \input{\datapathLaplacianStochastic/hessian_trace_best.txt}
       & \input{\datapathWeightedLaplacianStochastic/hessian_trace_best.txt}
       & \input{\datapathBilaplacianStochastic/hessian_trace_best.txt}
@@ -108,7 +108,7 @@
       & \textbf{\input{\datapathBilaplacianStochastic/jet_simplified_best.txt}}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB]\\(differentiable)}}
-      & \textcolor{tab-blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested 1\textsuperscript{st}-order}
       & \input{\datapathLaplacianStochastic/hessian_trace_peakmem.txt}
       & \input{\datapathWeightedLaplacianStochastic/hessian_trace_peakmem.txt}
       & \input{\datapathBilaplacianStochastic/hessian_trace_peakmem.txt}
@@ -126,7 +126,7 @@
       & \textbf{\input{\datapathBilaplacianStochastic/jet_simplified_peakmem.txt}}
       \\ \cmidrule{2-6}
       & \multirow{3}{*}{\makecell{Mem.\,[MiB]\\(non-diff.)}}
-      & \textcolor{tab-blue}{Nested first-order}
+      & \textcolor{tab-blue}{Nested 1\textsuperscript{st}-order}
       & \input{\datapathLaplacianStochastic/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathWeightedLaplacianStochastic/hessian_trace_peakmem_nondifferentiable.txt}
       & \input{\datapathBilaplacianStochastic/hessian_trace_peakmem_nondifferentiable.txt}
@@ -145,7 +145,7 @@
       \\
       \bottomrule
     \end{tabular}
-  }
+  \end{small}
 \end{table}
 %%% Local Variables:
 %%% mode: LaTeX
