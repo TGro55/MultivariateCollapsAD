@@ -4,7 +4,8 @@ We decided so because PyTorch's \texttt{fx} library provides a user-friendly off
 While we believe that such graph transformations should in principle be feasible in JAX as well (and could \eg be integrated into its \texttt{jit} compiler), it seems that this can currently only be achieved with (potentially fragile) internal APIs and requires a deep understanding of its internal tracing mechanisms.
 Main advantage seems to be that we can clearly disentangle building the graph from simplifying it using linearity, whereas in JAX we could write a custom interpreter that would have to re-implement the logic of summing the $K$-th component for abitrary $K$.
 
-\paragraph{Usage.} Our implementation takes a PyTorch function (\eg a neural net) and first captures its compute graph using \texttt{torch.fx}'s symbolic tracing mechanism, then replaces each operation with its Taylor arithmetic.
+\paragraph{Usage.}
+Our implementation takes a PyTorch function (\eg a neural net) and first captures its compute graph using \texttt{torch.fx}'s symbolic tracing mechanism, then replaces each operation with its Taylor arithmetic.
 This yields the compute graph of the function's $K$-jet.
 Users can use this vanilla Taylor mode to define their differential operator's computation.
 The collapsing is done by again tracing said computation with \texttt{torch.fx} and rewriting the resulting graph, propagating the summation of highest coefficient up.
@@ -67,7 +68,6 @@ In general, we find that the choice of ML framework does not affect the results.
 We find the same trend when comparing our collapsed Taylor mode and JAX's forward Laplacian.
 Interestingly, we noticed that JAX's Taylor mode was consistently slower than our PyTorch implementation, despite using \texttt{jit}.
 We conclude from these results that (both ours, as well as the existing JAX) Taylor mode implementations still have potential for improvements that may further improve the margin to nested first-order.
-
 
 %%% Local Variables:
 %%% mode: LaTeX

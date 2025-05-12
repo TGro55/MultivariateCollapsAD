@@ -17,7 +17,12 @@ For instance, the PINN formulation of Kolmogorov-type equations—including the 
 
 \todo{T: What about discussing recent approaches, like forward-laplace, Hutchison trace and stochastic ad?}
 
-\paragraph{Computational Challenges} As illustrated in Figure \ref{fig:benchmark} and Figure \ref{fig:benchmark-randomized-laplacians}, the computation of input derivatives can be a significant computational bottleneck in terms of both memory and runtime, particularly for high-dimensional or high-order operators. This limitation may restrict the scalability of recent approaches and hinder broader applicability. To address this challenge, we advocate for more efficient and automated use of advanced AD. In particular, we propose to generalize recent graph simplification strategies—such as the forward Laplacian scheme—by systematically exploiting the linearity of differential operators leveraging Taylor-mode AD. This generalization enables us to apply efficient propagation schemes to a wide range of operators. This has the potential to both reduce resource consumption and broaden the range of feasible applications in VMC, PINNs, and related areas.
+\paragraph{Computational Challenges} As illustrated in Figure \ref{fig:benchmark} and Figure \ref{fig:benchmark-randomized-laplacians}, the computation of input derivatives can be a significant computational bottleneck in terms of both memory and runtime, particularly for high-dimensional or high-order operators.
+This limitation may restrict the scalability of recent approaches and hinder broader applicability.
+To address this challenge, we advocate for more efficient and automated use of advanced AD.
+In particular, we propose to generalize recent graph simplification strategies—such as the forward Laplacian scheme—by systematically exploiting the linearity of differential operators leveraging Taylor-mode AD.
+This generalization enables us to apply efficient propagation schemes to a wide range of operators.
+This has the potential to both reduce resource consumption and broaden the range of feasible applications in VMC, PINNs, and related areas.
 
 While recent work has pointed out a connection between Taylor-mode and the Forward-Laplacian, it remains unclear how to leverage this connection.
 Our work changes this.
