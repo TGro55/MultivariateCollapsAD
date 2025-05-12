@@ -1,9 +1,10 @@
 \begin{figure}[!t]
   \centering
-  \begin{minipage}[t]{0.7\linewidth}
+  \begin{minipage}[t]{0.63\linewidth}
     \centering
+    \vspace{0pt}
    \begin{tikzpicture}
-    \tikzset{box/.style={rectangle, rounded corners, draw=black, inner sep=3pt}}
+    \tikzset{box/.style={rectangle, rounded corners, draw=black, inner sep=3pt, very thick}}
     \node[align=center, box] (topleft) {Extent input to \\ smooth path
       $\vx(t)$};
 
@@ -27,12 +28,14 @@
       }};
     \draw [-Latex] (topleft.south) to node [midway, left] {$J^K$} (bottomleft.north);
 
-    \draw [-Latex, \colorTM, align=center] (bottomleft.east) to node [midway, above, tab-orange] {\color{\colorTM}Taylor-mode\\ AD} (bottomright.west);
+    \draw [-Latex, \colorTM, align=center, very thick] (bottomleft.east) to node [midway, above, tab-orange] {\color{\colorTM}Taylor-mode\\ AD} (bottomright.west);
   \end{tikzpicture}
   \end{minipage}
   \hfill
-  \begin{minipage}[b]{0.29\linewidth}
-    \caption{The Taylor-mode AD: From the $K$-jet of the input to the $K$-jet of the output.}
+  \begin{minipage}[t]{0.35\linewidth}
+    \caption{\textbf{Taylor-mode propagates Taylor coefficients of a path in input space.}
+    This results in the function-transformed path's Taylor coefficients.
+    The Taylor expansion of degree $K$ is called a $K$-jet; hence Taylor-mode propagates the input $K$-jet to the output $K$-jet.}
   \label{fig:utp}
   \end{minipage}
 \end{figure}
