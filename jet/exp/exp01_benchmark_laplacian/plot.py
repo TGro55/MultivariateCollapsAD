@@ -16,8 +16,13 @@ HEREDIR = path.dirname(path.abspath(__file__))
 PLOTDIR = path.join(HEREDIR, "figures")
 makedirs(PLOTDIR, exist_ok=True)
 
+# Use 3-Dark2 from (https://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3)
+BLUE = (117 / 255, 112 / 255, 179 / 255)
+ORANGE = (217 / 255, 95 / 255, 2 / 255)
+GREEN = (27 / 255, 158 / 255, 119 / 255)
+
 MARKERS = {"hessian_trace": "o", "jet_naive": ">", "jet_simplified": "<"}
-COLORS = {"hessian_trace": "C0", "jet_naive": "C1", "jet_simplified": "C2"}
+COLORS = {"hessian_trace": BLUE, "jet_naive": ORANGE, "jet_simplified": GREEN}
 LINESTYLES = {"hessian_trace": "-", "jet_naive": "-", "jet_simplified": "-"}
 LABELS = {
     "hessian_trace": "Hessian trace (baseline)",
