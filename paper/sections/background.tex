@@ -3,7 +3,7 @@ Taylor-mode AD (or, simply, Taylor mode) computes higher-order derivatives---as 
 \input{figures/taylor_signature}
 
 \paragraph{Scalar case.}
-To illustrate Taylor-mode, consider the scalar function $f: \sR \to \sR$ and extend the input variable $x$ to a path $x(t)$ whose form is a univariate Taylor polynomial of degree $K$, $\smash{x(t) = \sum_{k=0}^K \frac{t^k}{k!} x_k}$ with $x_k$ the $k$-th Taylor coefficient.
+To illustrate Taylor-mode\todo{Taylor mode}, consider the scalar function $f: \sR \to \sR$ and extend the input variable $x$ to a path $x(t)$ whose form is a univariate Taylor polynomial of degree $K$, $\smash{x(t) = \sum_{k=0}^K \frac{t^k}{k!} x_k}$ with $x_k$ the $k$-th Taylor coefficient. \todo{T: das passt nicht mit unsere Jet erklärung}
 If $f$ is smooth enough, we can evaluate Taylor coefficients of the transformed path $\smash{f(x(t)) = \sum_{k=0}^K \frac{t^k}{k!} f_k}$ with $\smash{f_k \coloneqq \frac{\mathrm{d}^k}{\mathrm{d}t^k} f(x(t)) |_{t=0}}$.
 The chain rule provides the coefficients' propagation rules.
 \Eg, for degree $K=3$ we get
@@ -38,7 +38,7 @@ Given $K$ vectors $\vv_1, \dots, \vv_K \in \sR^D$, we write their tensor product
   \text{with entries}
   \quad
   \left[\otimes_{k=1}^K \vv_k\right]_{d_1, \dots, d_K}
-  = [\vv_1]_{d_1} \cdots [\vv_K]_{d_K}
+  = [\vv_1]_{d_1} \cdot \ldots \cdot [\vv_K]_{d_K}
 \end{equation*}
 for $d_1, \dots, d_K \in \{1, \dots, D\}$, and compactly write $\vv^{\otimes K} = \otimes_{k=1}^K \vv$.
 We define the inner product of two tensors $\smash{\tA, \tB \in (\sR^{D})^{\otimes K}}$ as the Euclidean inner product of their flattened versions
@@ -52,20 +52,17 @@ We define the inner product of two tensors $\smash{\tA, \tB \in (\sR^{D})^{\otim
   \sum_{d_2}
   \dots
   \sum_{d_K}
-  \tA_{d_1, d_2, \dots, d_K}
-  \tB_{d_1, d_2, \dots, d_K} \in \sR\,.
+  \left[\tA\right]_{d_1, d_2, \dots, d_K}
+  \left[\tB\right]_{d_1, d_2, \dots, d_K} \in \sR\,.
 \end{align}
 We allow broadcasting in \cref{eq:derivative-tensor-scalar-product}: if one tensor has more dimensions but matching trailing dimensions, we take the inner product for each component of the leading dimensions.
 This allows to express contractions with derivative tensors of vector-valued functions, \eg,
-contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \otimes (\sR^D)^k$, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
+contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \times (\sR^D)^{\otimes k}$\todo{T: Notation check please -> F: Looks good to me!?}, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
 
-\paragraph{Multivariate case \& composition.}
+\paragraph{Multivariate case \& composition.}\todo{Discussion about Jet definition as it is:
+T: The Jet definition allows us to naturally use Faa di Bruno because this is exactly the d/dt derivative; Otherwise we would have the problem that we have to introduce an auxiliary $t$ anyway. Therefore, we use Jets definition as it is to be able to easily explain how to compute the coefficients but we never really compute a Jet. We are interested in the last coefficients. Right? Shall we mention this somewhere? If you agree, feel free to add something}
 Evaluating the $K$-jet of $\vf$ at an argument $\vx_0 \in \sR^D$ starts with the extension of $\vx_0$ to a smooth path $\vx: \sR \to \sR^D$ with $\vx(0) = \vx_0$.
-The $K$-jet of $\vf$ is defined as \todo{Felix@Tim: Wouldn't it be better to define the $K$-jet as mapping from $\times_{k=0}^K \sR^D \to \times_{k=0}^K \sR^C$ ?
-  This would be more aligned with the propagation in \cref{eq:taylor-mode-composition}
-  T: We could, this is just notation, I thought it would be better because this is the usual motivation of Taylor-mode.
-  AW: I think to be precise it should be a mapping from $\times_{k=0}^K \sR^D$ to the polynomials of degree $\le K$ in the sense of Fig. 3 ;-), but that might be too complicated. For me the current statement is fine, since $(J^K \vf)$ indeed maps from $\R \to \R^C$ as stated
-  T: The mapping is actually precise in the sense that you could interpret everything as the vectors of the coefficients and use this as the jet definition instead of the sum. Then, we would have indeed the mapping between $\times_{k=0}^K \sR^D$ and $\times_{k=0}^K \sR^C$. Ive seen this in other ML papers about taylor mode. But as I said, for me it doesnt matter :D}
+The $K$-jet of $\vf$ is defined as 
 \begin{align*}
   \textstyle % Comment out this line if we have enough space
   J^K \vf : \sR \to \sR^C\,,
@@ -73,10 +70,10 @@ The $K$-jet of $\vf$ is defined as \todo{Felix@Tim: Wouldn't it be better to def
   \quad \text{with} \quad
   \vf_k := \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k} \vf(\vx(t)) \right|_{t=0}
 \end{align*}
-and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$ (illustrated in \cref{fig:utp}). \todo{mention the jet form (x1, ... xk)}
+and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$ (illustrated in \cref{fig:utp}). $J^K \vf$ is sometimes also considered differently as a mapping $(\vx_0, \dots, \vx_K) \mapsto (\vf_0, \dots, \vf_K)$ \cite{bradbury2018jax}, because we are interested in the coefficients, not the Taylor polynomial itself. \todo{T: @Felix ok?}
 
 As is common for AD, the computation of the $\vf_k$ known as Taylor mode relies on composing $\vf$ of elemental functions with known derivatives, and the chain rule.
-In the simplest case, let $\vf$ be given by $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg$ and $\vh$. Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t)) \right|_{t=0}$ are computed using the generalized Faà di Bruno formula \eqref{eq:faa-di-bruno}:
+In the simplest case, let $\vf$ be given by $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg$ and $\vh$. Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t)) \right|_{t=0}$ are computed using the generalized Faà di Bruno formula
 \begin{align}
   \label{eq:faa-di-bruno}
   % \textstyle % Comment out this line if we have enough space

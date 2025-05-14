@@ -29,9 +29,10 @@
 \begin{abstract}
   Computing partial differential equation (PDE) operators of high-dimensional functions via nested backpropagation becomes prohibitively expensive in time and memory, severely restricting their utility in scientific machine learning.
   % As an alternative, Taylor‑mode AD computes derivatives in a single forward pass but backpropagation remains the de-facto standard in many implementations.
-  Recent advances, such as the forward Laplacian and randomized Taylor mode, propose enhanced forward mode automatic differentiation (AD) schemes to address this challenge.
-  We unify and generalize these schemes, introducing a modified version of Taylor mode AD that ``collapses'' highest-order derivatives by rewriting the computational graph, and demonstrate how to exploit this optimization for general PDE operators.
-  \todo{Felix: This sentence is okay but not 100\% accurate. We do not unify the schemes. We show (i) that standard Taylor mode can be collapsed (e.g. yielding the forward Laplacian) and (ii) that this collapsing can also be applied to STDE).}
+  Recent advances, such as the forward Laplacian and randomized Taylor mode, propose enhanced forward mode automatic differentiation (AD) schemes 
+  to address this challenge. We introduce a modified version of Taylor mode AD that ``collapses'' highest-order derivatives by rewriting 
+  the computational graph, and demonstrate how to exploit this optimization for general PDE operators and randomized Taylor mode.
+  %\todo{Felix: This sentence is okay but not 100\% accurate. We do not unify the schemes. We show (i) that standard Taylor mode can be collapsed (e.g. yielding the forward Laplacian) and (ii) that this collapsing can also be applied to STDE).}
   Empirical evaluations for Laplacian and Bi-Laplacian operators confirm the reduced runtime and memory requirements compared to standard Taylor mode AD.
   Our graph-based modifications simply require the propagation of a sum up the computational graph, hence we argue that it could (or should) be performed by the just-in-time compiler in modern machine learning frameworks.
   Our preliminary experiments achieve promising, fully automated speed-ups, which we believe can easily be integrated into automatic differentiation libraries.
@@ -50,7 +51,7 @@
 \section{Background: Introduction to Taylor-Mode AD}\label{sec:background}
 \input{sections/background.tex}
 
-\section{The Collapsed Taylor-Mode AD}\label{sec:methodology}
+\section{Collapsing Taylor Mode AD}\label{sec:methodology}
 \input{sections/method}
 
 \section{Implementation \& Experiments}\label{sec:experiments}
@@ -86,10 +87,12 @@
 \section{Fa\`a Di Bruno Formula Cheat Sheet}\label{sec:faa-di-bruno-cheatsheet}
 \input{sections/faa_di_bruno}
 
-
-
 \section{TTC}\label{sec:appendix_ttc}
 \input{sections/appendix_ttc}
+
+\section{PyTorch benchmark}
+\label{sec:pytorch-benchmark}
+\input{sections/appendix_torch}
 
 \section{JAX benchmark}
 \label{sec:jax-benchmark}

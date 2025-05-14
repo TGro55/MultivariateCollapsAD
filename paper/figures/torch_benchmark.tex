@@ -64,7 +64,7 @@
 
   \caption{\textbf{\textcolor{tab-green}{Collapsed Taylor mode} is faster than \textcolor{tab-orange}{standard Taylor mode} and \textcolor{tab-blue}{nested first-order automatic differentiaion} while using less or the same memory, \textcolor{black!50!white}{opaque} memory consumptions are for non-differentiable computations.}
     Results are on GPU and we use a $D \to 768 \to 768 \to 512 \to 512 \to 1$ MLP with tanh activations.
-    The exact computation varies the batch size, and the approximate computation fixes the batch size then varies the number of Monte-Carlo samples such that $S < D$ for the Laplacians, and $2 + 3S < 6D^2 - 3D + 6$ for the Bi-Laplacian (we can compute exactly otherwise).
+    The exact computation varies the batch size, and the approximate computation fixes the batch size then varies the number of Monte-Carlo samples such that $S < D$ for the Laplacians, and $2 + 3S < 6D^2 - 3D + 6$ for the Biharmonic (we can compute exactly otherwise).
     For each approach, we fit a line to the data and report the slope in \Cref{tab:benchmark}  to quantify the relative speedup and memory reduction.
   }
   \label{fig:benchmark}

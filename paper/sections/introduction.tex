@@ -1,34 +1,24 @@
-Using neural networks to learn (potentially high-dimensional) functions constrained by physical laws is a popular trend in scientific machine learning \cite{carleo2017solving, pfau2020ab, hermann2020deep, karniadakis2021physics, raissi2019physics, hu2023hutchinson, sun2020global}.
-Typically, the Physics is encoded through partial differential equations (PDEs) that the neural net must satisfy.
+\todo{Biharmonic Operator instead of Bi-laplace!}\todo{Make clear that we consider PDE operators that consist of sums}Using neural networks to learn functions constrained by physical laws is a popular trend in scientific machine learning \cite{carleo2017solving, pfau2020ab, hermann2020deep, karniadakis2021physics, raissi2019physics, hu2023hutchinson, sun2020global}.
+Typically, the physics is encoded through partial differential equations (PDEs) that the neural net must satisfy.
 The associated loss functions require evaluating differential operators \wrt the network's input, rather than weights.
-Typically, evaluating the differential operator is a bottleneck since it contains higher-order derivatives.
+Evaluating differential operators remains a computational challenge, especially if they contain high-order derivatives.
 
-\paragraph{Differential operators in the wild.} Two important fields of application are variational Monte-Carlo (VMC) and Physics-informed neural networks (PINNs).
-VMC employs neural networks as ansatz for the Schr\"odinger equation \cite{carleo2017solving, pfau2020ab, hermann2020deep} and demands computing the net's Laplacian (the Hessian trace) to capture the kinetic energy in the Hamiltonian.
-PINNs also use a neural net ansatz to learn a PDE solution and cast the problem as optimization task by minimizing the residuals of the governing equations \cite{raissi2019physics, karniadakis2021physics}.
-This approach necessitates differentiable application of potentially high-order PDE operators.
-For instance, the PINN formulation of Kolmogorov-type equations—including the Fokker-Planck, Black-Scholes, and Hamilton-Jacobi-Bellman equations—requires the evaluation of weighted second-order derivatives for high-dimensional spatial domains \cite{hu2023hutchinson, sun2024dynamical}.
-The Biharmonic Operator occurs in PINNs for elasticity theory \cite{vahab_physics-informed_2022} and requires fourth-order derivatives of \wrt to the net's input. Due to the computational challenges associated with the fourth-order derivatives, the Biharmonic operator is commonly considered a benchmarking problem for PINNs \cite{hu2023hutchinson, vikas_biharm, shi2024stochastic}.
+\paragraph{Computing PDE operators.} Two important fields that require the evaluation of PDE operators are variational Monte-Carlo (VMC) simulations and physics-informed neural networks (PINNs).
+VMC employs neural networks as an ansatz for the Schr\"odinger equation \cite{carleo2017solving, pfau2020ab, hermann2020deep} and demands computing the net's Laplacian, i.e., the Hessian trace usually in a non-differentiable fashion.
+PINNs represent PDE solutions as a neural network and train the network via minimizing the residuals of the governing equations \cite{raissi2019physics, karniadakis2021physics}. For instance, Kolmogorov-type equations—including the Fokker-Planck and Black-Scholes equation—requires the differentiable evaluation of weighted second-order derivatives on high-dimensional spatial domains \cite{hu2023hutchinson, sun2024dynamical}. For PINN applications in elasticity, the Biharmonic operator \cite{vahab_physics-informed_2022} requires the computation of fourth-order derivatives, making it a commonly considered a benchmarking problem for computing high-order derivatives in PINNs \cite{hu2023hutchinson, vikas_biharm, shi2024stochastic}.
 
 \paragraph{Is backpropagation all we need?}
-% Alternative: The gap between theory and practise
-Although it is known---at least on paper---that nesting first-order automatic differentiation (AD) to compute high-order derivatives scales poorly, this approach is common practise.
-\todo{Felix: We should back this up with a reference, and optionally a statement about the scaling. I think the STDE paper does some analysis.}
-The AD community has developed a more favourable alternative to nested backpropagation that promises faster computation of higher-order derivatives: \emph{Taylor-mode AD}~\cite[or simply \emph{Taylor-mode},][\S13]{griewank2008evaluating}.
-\citet{bettencourt2019taylor} introduced Taylor-mode to the machine learning community in \citeyear{bettencourt2019taylor} and provided an implementation in JAX \cite{bradbury2018jax}.
-However, we observe empirically that vanilla Taylor-mode is often not enough to beat nested backpropagation: We took a 5-layer $\tanh$ activated MLP (such nets are commonly used as PINNs) and evaluated its Laplacian using JAX's Taylor mode and compared its performance to computing, then tracing, the Hessian via Hessian-vector products \cite{pearlmutter1994fast,dagreou2024how}.
-On this example, we found that \emph{vanilla Taylor mode is 50\% slower than nested backpropagation}.
-This calls into question the relevance of Taylor mode for computing differential operators that ML practitioners are interested in.
+% Alternative: The gap between theory and practice
+Although nesting first-order automatic differentiation (AD) to compute high-order derivatives scales poorly, this approach is common practice.
+\todo{Felix, M: still needs citation.}
+A promising alternative to nested backpropagation, especially for higher-order derivatives is \emph{Taylor-mode AD}~\cite[or simply \emph{Taylor-mode},][\S13]{griewank2008evaluating}, introduced to the machine learning community in \citeyear{bettencourt2019taylor} and the JAX ecosystem in \cite{bradbury2018jax}.
+However, we observe empirically that vanilla Taylor-mode is often not enough to improve upon nested backpropagation: Evaluating the Laplacian of a 5-layer $\tanh$ activated MLP using JAX' \emph{Taylor mode is 50\% slower} than nested backpropagation via computing, then tracing, the Hessian via Hessian-vector products \cite{pearlmutter1994fast,dagreou2024how}. This calls into question the relevance of Taylor mode for computing common PDE operators.
 
-\paragraph{No.}
-\todo{Felix: Tone down, this is too much.}
-Although it looks like, at first sight, backpropagation is all we need, recent works have successfully demonstrated the potential of Taylor mode and forward propagation schemes.
-For the Laplacian, \citet{li2023forward} developed a special forward propagation framework called the \emph{forward Laplacian} (later generalized to weighted Laplacians \cite{li2024dof}).
-Coming back to our example from above, we can see that JAX's forward Laplacian \cite{gao2023folx} outperforms nested backpropagation and is roughly twice as fast.
-To stochastically approximate differential operators over extremely high-dimensional domains, \citet{shi2024stochastic} proposed using Taylor mode with carefully chosen randomly sampled directions.
-While the forward Laplacian does not rely on Taylor mode, recent work pointed out a connection \cite{dangel2024kroneckerfactored}; however, it remains unclear what disentangles them, and if efficient forward schemes can also be derived for other differential operators.
-Our work changes this.
-We make the following contributions:
+\paragraph{Improved Taylor mode schemes}
+However, recent works have successfully demonstrated the potential of modified forward propagation schemes.
+For the (weighted) Laplacian, \citet{li2023forward, li2024dof} developed a special forward propagation framework called the \emph{forward Laplacian}.
+Relating to our example above, JAX' forward Laplacian \cite{gao2023folx} is roughly twice as fast as nested backpropagation at reduced memory costs.
+While the forward Laplacian does not rely on Taylor mode, recent work pointed out a connection \cite{dangel2024kroneckerfactored}; however, it remains unclear if efficient forward schemes can be derived for other differential operators. Another line of work concerns the stochastic approximation of differential operators in high-dimensions \citet{shi2024stochastic}, relying on Taylor mode with suitably sampled random directions. In this work we identify a mechanism to rewrite the computational graph of standard Taylor mode, applicable to general PDE operators and stochastic Taylor mode. Precisely, our contributions are:
 \todo{Felix: Make it more explicit that we evaluate Taylor mode in multiple directions and then sum the results. The sum can be pulled inside.}
 
 \begin{figure*}[!t]
@@ -56,20 +46,23 @@ We make the following contributions:
 \end{figure*}
 
 \begin{enumerate}[leftmargin=0.5cm]
-\item \textbf{We propose optimizing standard Taylor mode by collapsing the highest Taylor coefficients} and directly propagates their sum, rather than propagating then summing (\cref{fig:visual-abstract}).
-  Collapsing standard Taylor mode for the Laplacian yields the forward Laplacian \cite{li2023forward}, but we show that this optimization is applicable to many other differential operators, and stochastic Taylor mode \cite{shi2024stochastic}.
+\item \textbf{We propose optimizing standard Taylor mode by collapsing the highest Taylor coefficients} by directly propagating their sum, rather than propagating then summing (\cref{fig:visual-abstract}). This recovers the forward Laplacian and is applicable to randomized Taylor mode. Furthermore, relying on a result of Griewank et al.\, \cite{griewank_evaluating_1999}, we show how to transform general PDE operators into a form amenable to our setting.
+
+%and, relying on [...] can be generalized to 
+
+  %Collapsing standard Taylor mode for the Laplacian yields the forward Laplacian \cite{li2023forward}, but we show that this optimization is applicable to many other differential operators, and stochastic Taylor mode \cite{shi2024stochastic}.
   \todo{Felix: Phrase this so that it becomes clear that this is a theoretical contribution.}
 
-\item \textbf{We show how to collapse standard Taylor mode by simple graph rewrites based on linearity.}
-  This leads to a clean separation of concepts:
-  Users can build their computational graph using standard Taylor mode, then use graph rewrites to collapse it.
-  Due to the simple nature of our proposed rewrites, this feature could easily be absorbed into the just-in-time (JIT) compilation of ML frameworks, without introducing a new interface.
+%\item \textbf{We show how to collapse standard Taylor mode by simple graph rewrites based on linearity.}
+%  This leads to a clean separation of concepts:
+%  Users can build their computational graph using standard Taylor mode, then use graph rewrites to collapse it.
+%  Due to the simple nature of our proposed rewrites, this feature could easily be absorbed into the just-in-time (JIT) compilation of ML frameworks, without introducing a new interface.
 
-\item \textbf{We empirically demonstrate the performance improvements of collapsed Taylor mode.} Doing so, we introduce a Taylor mode library for PyTorch \cite{paszke2019pytorch}, realize the graph simplifications with \texttt{torch.fx} \cite{reed2022torch}, and show how that collapsing Taylor mode yields the theoretically expected improvements in run time and memory consumption.
+\item \textbf{We empirically demonstrate the performance improvements of collapsed Taylor mode.} We introduce a Taylor mode library for PyTorch \cite{paszke2019pytorch} that realizes the graph simplifications with \texttt{torch.fx} \cite{reed2022torch}. Furthemore, we show that collapsing Taylor mode yields the theoretically expected improvements in run time and memory consumption. Due to the simple nature of our proposed rewrites, this feature could easily be integrated into the just-in-time (JIT) compilation of ML frameworks, without introducing a new interface.
 
 \end{enumerate}
 
-Our work takes an important step towards the broader adoption of Taylor mode as viable alternative to backpropagation for computing PDE operators, while being as easy to use. 
+%Our work takes an important step towards the broader adoption of Taylor mode as viable alternative to backpropagation for computing PDE operators, while being as easy to use. 
 
 %%% Local Variables:
 %%% mode: LaTeX
