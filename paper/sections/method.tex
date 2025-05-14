@@ -17,7 +17,7 @@ In our notation, this sum can be represented as
 \end{align}
 For the Laplacian, one has $K = 2$, $R$ equals the dimension of $\vx$, i.e., $R = D$, and the vectors are chosen as the unit vectors $\vv_r = \ve_r\in \R^D$.
 Instead of nesting derivative calculations to compute the full $K$-th order derivative tensor to afterwards select only the required derivatives, $K$-jets can be utilized to (theoretically) efficiently calculate the required derivatives directly.
-In case of \cref{eq:sum-k-directional}, one propagates $R$ $K$-jets through the computational graph using Taylor mode as illustrated in the appendix \cref{eq:sum-taylor-mode-naive}. To obtain the differential operator \cref{eq:sum-k-directional}, it is crucial to select appropriate input $K$-jets. To this end, we select the $r$th $K$-jet to $\vx_{0, r} = \vx_0$, $\vx_{1, r} = \vv_r$ and $\vx_{2, r} = \ldots = \vx_{K, r} = \vzero$. 
+In case of \cref{eq:sum-k-directional}, one propagates $R$ $K$-jets through the computational graph using Taylor mode as illustrated in the appendix \cref{eq:sum-taylor-mode-naive}. To obtain the differential operator \cref{eq:sum-k-directional}, it is crucial to select appropriate input $K$-jets. To this end, we select the $r$th $K$-jet to $\vx_{0, r} = \vx_0$, $\vx_{1, r} = \vv_r$ and $\vx_{2, r} = \ldots = \vx_{K, r} = \vzero$.
 
 Without further optimizations, then standard Taylor mode propagates $1 + KN$ vectors through every node of the computational graph, where the length of the vectors depend on the individual node.
 Subsequently, one has to sum up the corresponding highest derivatives to obtain \cref{eq:sum-k-directional} as illustrated for our simple example in the appendix, see \cref{eq:sum-taylor-mode-naive}.
@@ -73,7 +73,7 @@ It contains the Hessian trace of each element of a function, \ie, for $\vf: \sR^
   \right>
   &\text{(exact)}
   \\
-  \overset{\text{\cite{shi2024stochastic}}}{\approx} 
+  \overset{\text{\cite{shi2024stochastic}}}{\approx}
   \frac{1}{S} \sum_{s=1}^S
   \left<
   \partial^2 \vf(\vx_0),
@@ -87,10 +87,10 @@ By pattern-matching \cref{eq:laplacian} with the RHS of \cref{eq:sum-k-direction
 \begin{align*}
 \begin{array}{rlrlrlll}
     \{(\vx_{0,d} & = \vx_0, &\vx_{1, d} & = \ve_d, & \vx_{2,d} &= \vzero)\}_{d=1}^D
-    \quad 
+    \quad
     &{\color{tab-orange} 1 + D + D\, \text{vectors}}
     \quad
-    &\text{(exact)} 
+    &\text{(exact)}
     \\[1ex]
     \{(\vx_{0,s} & = \vx_0, &\vx_{1, s} & = \vv_s, &\vx_{2,s} & = \vzero)\}_{s=1}^S
     \quad
@@ -107,7 +107,7 @@ Note how we seamlessly can also support more efficient stochastic approximation.
 \paragraph{Weighted Laplacian.} %\todo{We can make the connection \cite{hu2023hutchinson} equation (5) clear and discuss the case of $\mC$ being a function of the input}
 
 A natural generalization of the Laplace operator involves forming weighted sums of second derivatives.
-Given a positive semi-definite matrix $\boldsymbol{C} = \msigma \msigma^\top \in\mathbb R^{D\times D}$ with factorization $\msigma 
+Given a positive semi-definite matrix $\boldsymbol{C} = \msigma \msigma^\top \in\mathbb R^{D\times D}$ with factorization $\msigma
  = (\vs_1, \dots, \vs_{\rank(\mC)}) \in \sR^{D \times \rank(\mC)} = \sum_{n=1}^{\rank(\mC)} \vs_n \vs_n^\top$, we consider the operator
 \begin{align}\label{eq:weighted-laplacian}
   \textstyle % Comment out this line if we have enough space
@@ -124,7 +124,7 @@ Given a positive semi-definite matrix $\boldsymbol{C} = \msigma \msigma^\top \in
      \left< \partial^2 \vf(\vx_0), \vs_n^{\otimes 2} \right>
      & \text{(exact)}
      \\
-      \overset{\text{\cite{shi2024stochastic}}}{\approx} 
+      \overset{\text{\cite{shi2024stochastic}}}{\approx}
      \frac{1}{S}
      \sum_{s=1}^S
      \left< \partial^2 \vf(\vx_0), (\msigma \vv_s)^{\otimes 2} \right>
@@ -172,7 +172,7 @@ As one important example, we consider the Biharmonic Operator, i.e.,
   \right>
      & \text{(exact)}
      \\
-      \overset{\text{\cite{shi2024stochastic}}}{\approx} 
+      \overset{\text{\cite{shi2024stochastic}}}{\approx}
      \frac{1}{S}
      \sum_{s=1}^S
      \left< \partial^4 \vf(\vx_0), \vv_s^{\otimes 4} \right>
@@ -276,7 +276,6 @@ This simplification leads to the final efficient jet-based formula as stated in 
 based on $D + D(D-1) + \frac{D(D-1)}{2}$ different $4$-jets, where once more we collapse the highest coefficients.
 Hence, our formula for the Biharmonic Operator propagates $1 + 3D + 1 + 1 + 3 D(D-1) + 1 + 1 + 3 \frac{D(D-1)}{2} + 1 = 9\frac{D^2}{2} - 3\frac{D}{2} + 6$ vectors through every node in the computational graph, when applying the proposed collapsed Taylor mode.
 As before, all jets can be computed in parallel, which provides further benefits for the runtime complexity.
-
 
 The above procedure describes a generic approach for computing linear differential operators with our collapsed Taylor mode.
 %that can be combined with our proposed collapsing method.
