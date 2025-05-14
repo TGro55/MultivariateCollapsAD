@@ -56,106 +56,112 @@ To emphasize that the saving of $N-1$ coefficients at every node in the computat
 
 \paragraph{Laplacian.} The Laplace operator (or simply \emph{Laplacian}) plays a central role in Physics and engineering, including electrostatics, fluid dynamics, heat conduction, and quantum mechanics \cite{foulkes2001quantum, pfau2020ab}.
 It contains the Hessian trace of each element of a function, \ie, for $\vf: \sR^D \to \sR^C$, it is
-\begin{align}\label{eq:laplacian}
-  \textstyle % Comment out this line if we have enough space
-  \underbrace{
-  \Delta \vf(\vx_0)
-  }_{\in \sR^C}
-  :=
-  \left<
-  \partial^2 \vf(\vx_0), \mI_D
-  \right>
-  \quad
-  \begin{cases}
-  = \sum_{d=1}^D \left<
-  \partial^2 \vf(\vx_0),
-  \ve_d^{\otimes 2}
-  \right>
-  &\text{(exact)}
-  \\
-  \overset{\text{\cite{shi2024stochastic}}}{\approx}
-  \frac{1}{S} \sum_{s=1}^S
-  \left<
-  \partial^2 \vf(\vx_0),
-  \vv_s^{\otimes 2}
-  \right>
-  &\text{(stochastic)}
-  \end{cases}
-\end{align}
-with the $d$-th standard basis vector $\ve_d$ used for exact computation, and $S$ random vectors $\vv_s$ drawn \iid from a distribution with unit variance (\eg Rademacher or standard Gaussian) for stochastic estimation.
-By pattern-matching \cref{eq:laplacian} with the RHS of \cref{eq:sum-k-directional} we conclude that $K=2$, and the following choices for computing the Laplacian with standard Taylor mode:
-\begin{align*}
-\begin{array}{rlrlrlll}
-    \{(\vx_{0,d} & = \vx_0, &\vx_{1, d} & = \ve_d, & \vx_{2,d} &= \vzero)\}_{d=1}^D
+\begin{subequations}
+  \begin{align}\label{eq:laplacian}
+    \textstyle % Comment out this line if we have enough space
+    \underbrace{
+    \Delta \vf(\vx_0)
+    }_{\in \sR^C}
+    :=
+    \left<
+    \partial^2 \vf(\vx_0), \mI_D
+    \right>
     \quad
-    &{\color{tab-orange} 1 + D + D\, \text{vectors}}
-    \quad
-    &\text{(exact)}
-    \\[1ex]
-    \{(\vx_{0,s} & = \vx_0, &\vx_{1, s} & = \vv_s, &\vx_{2,s} & = \vzero)\}_{s=1}^S
-    \quad
-    &{\color{tab-orange} 1 + S + S\, \text{vectors}}
-    \quad
-    &\text{(stochastic)}
+    \begin{cases}
+      = \sum_{d=1}^D \left<
+      \partial^2 \vf(\vx_0),
+      \ve_d^{\otimes 2}
+      \right>
+      &\text{(exact)}
+      \\
+      \overset{\text{\cite{shi2024stochastic}}}{\approx}
+      \frac{1}{S} \sum_{s=1}^S
+      \left<
+      \partial^2 \vf(\vx_0),
+      \vv_s^{\otimes 2}
+      \right>
+      &\text{(stochastic)}
+    \end{cases}
+  \end{align}
+  with the $d$-th standard basis vector $\ve_d$ used for exact computation, and $S$ random vectors $\vv_s$ drawn \iid from a distribution with unit variance (\eg Rademacher or standard Gaussian) for stochastic estimation.
+  By pattern-matching \cref{eq:laplacian} with the RHS of \cref{eq:sum-k-directional} we conclude that $K=2$, and the following choices for computing the Laplacian with standard Taylor mode:
+  \begin{align}
+    \begin{array}{rlrlrlll}
+      \{(\vx_{0,d} & = \vx_0, &\vx_{1, d} & = \ve_d, & \vx_{2,d} &= \vzero)\}_{d=1}^D
+                                                                   \quad
+      &{\color{tab-orange} 1 + D + D\, \text{vectors}}
+        \quad
+      &\text{(exact)}
+      \\[1ex]
+      \{(\vx_{0,s} & = \vx_0, &\vx_{1, s} & = \vv_s, &\vx_{2,s} & = \vzero)\}_{s=1}^S
+                                                                  \quad
+      &{\color{tab-orange} 1 + S + S\, \text{vectors}}
+        \quad
+      &\text{(stochastic)}
     \end{array}.
-\end{align*}
+  \end{align}
+\end{subequations}
 Collapsing standard Taylor mode yields {\color{tab-green}$1 + D + 1$} (exact) and {\color{tab-green}{$1 + S + 1$}} (stochastic) vectors.
 In fact, the collapsed Taylor mode for the exact Laplacian is the forward Laplacian from \citet{li2023forward} (see \cref{eq:laplacian-efficient} for detailed presentation of the forward propagation).
 Note how we seamlessly can also support more efficient stochastic approximation.
 
-\todo{Felix working here.}
-\paragraph{Weighted Laplacian.} %\todo{We can make the connection \cite{hu2023hutchinson} equation (5) clear and discuss the case of $\mC$ being a function of the input}
+\paragraph{Weighted Laplacian.}
+A natural generalization of the Laplacian involves contracting with a positive semi-definite matrix $\mD = \msigma \msigma^\top \in \mathbb R^{D\times D}$ rather than the identity.
+Assume $\rank(\mD) = R$ and therefore $\msigma = (\vs_1, \dots, \vs_R) \in \sR^{D \times R} = \smash{\sum_{r=1}^R \vs_r \vs_r^\top}$.
+For example, $\mD$ represents the diffusion tensor in Kolmogorov-type PDEs like the Fokker-Planck equation \cite{hu2023hutchinson}, and $\msigma$ can depend on $\vx_0$ \cite{fa2011solution}.
+The weighted Laplacian contains the weighted Hessian's trace $\Tr(\msigma \msigma^{\top} \partial^2 [\vf]_c)$for each output element $c$ of a function.
+In the general case,
+\begin{subequations}
+  \begin{align}\label{eq:weighted-laplacian}
+    \textstyle % Comment out this line if we have enough space
+    \underbrace{
+    \Delta_\mD \vf(\vx_0)
+    }_{\in \sR^C}
+    :=
+    \left<
+    \partial^2 \vf(\vx_0), \mD
+    \right>
+    \quad
+    \begin{cases}
+      = \sum_{r=1}^R
+      \left< \partial^2 \vf(\vx_0), \vs_r^{\otimes 2} \right>
+      & \text{(exact)}
+      \\
+      \overset{\text{\cite{hu2023hutchinson}}}{\approx}
+      \frac{1}{S}
+      \sum_{s=1}^S
+      \left< \partial^2 \vf(\vx_0), (\msigma \vv_s)^{\otimes 2} \right>
+      & \text{(stochastic)}
+    \end{cases}
+    .
+  \end{align}
+  Computing it requires computing the following 2-jets with standard Taylor mode:
+  \begin{align}
+    \begin{array}{rlrlrlll}
+      \{(\vx_{0,r} & = \vx_0, &\vx_{1, r} & = \vs_r, & \vx_{2,r} &= \vzero)\}_{r=1}^R
+                                                                   \quad
+      &{\color{tab-orange} 1 + R + R\, \text{vectors}}
+        \quad
+      &\text{(exact)}
+      \\[1ex]
+      \{(\vx_{0,s} & = \vx_0, &\vx_{1, s} & = \msigma \vv_s, &\vx_{2,s} & = \vzero)\}_{s=1}^S
+                                                                  \quad
+      &{\color{tab-orange} 1 + S + S\, \text{vectors}}
+        \quad
+      &\text{(stochastic)}
+    \end{array}.
+  \end{align}
+\end{subequations}
+Collapsing standard Taylor mode yields {\color{tab-green}$1 + R + 1$} (exact) and {\color{tab-green}{$1 + S + 1$}} (stochastic) vectors.
+This yields the modified forward Laplacian from \citet{li2024dof}; collapsing the stochastic variant speeds up the Hutchinson trace estimator from \citet{hu2023hutchinson}.
+For indefinite $\mD$, we can simply apply this scheme to the positive and negative eigen-spaces.
+However, such weighted Laplacians are not used in practise.
 
-A natural generalization of the Laplace operator involves forming weighted sums of second derivatives.
-Given a positive semi-definite matrix $\boldsymbol{C} = \msigma \msigma^\top \in\mathbb R^{D\times D}$ with factorization $\msigma
- = (\vs_1, \dots, \vs_{\rank(\mC)}) \in \sR^{D \times \rank(\mC)} = \sum_{n=1}^{\rank(\mC)} \vs_n \vs_n^\top$, we consider the operator
-\begin{align}\label{eq:weighted-laplacian}
-  \textstyle % Comment out this line if we have enough space
-  \underbrace{
-  \Delta_\mC \vf(\vx_0)
-  }_{\in \sR^C}
-  :=
-  \left<
-  \partial^2 \vf(\vx_0), \mC
-  \right>
-  \quad
-  \begin{cases}
-     = \sum_{n=1}^{\rank(\mC)}
-     \left< \partial^2 \vf(\vx_0), \vs_n^{\otimes 2} \right>
-     & \text{(exact)}
-     \\
-      \overset{\text{\cite{shi2024stochastic}}}{\approx}
-     \frac{1}{S}
-     \sum_{s=1}^S
-     \left< \partial^2 \vf(\vx_0), (\msigma \vv_s)^{\otimes 2} \right>
-     & \text{(stochastic)}
-  \end{cases}
-  .
-\end{align}
-This expression represents, for example, the diffusion term in a Kolmogorov-type PDE \cite{hu2023hutchinson}.
-It is often equivalently written as $\Tr ( \msigma \msigma^\top \partial^2 \vf(\vx_0))$, where $\msigma$ may be a function $\msigma:\mathbb R^{D}\to \mathbb R^{D\times D}$.
-with $K = 2, N = \rank(\mC)$ and $\vv_n = \vc_n$.
-This requires the propagation of $1 + \rank(\mC) + 1$ vectors instead of $1 + 2\rank(\mC)$.
-An important special case of \cref{eq:weighted-laplacian} is the Hutchinson Trace Estimation for the Laplacian \cite{hu2023hutchinson}, which is also computable like the Forward-Laplacian scheme \cite{li2023forward}, leveraging the collapsed Taylor-mode.
-For our simple example $\vf = \vg \circ \vh$ from above, the differential operator \eqref{eq:weighted-laplacian} can be calculated using \cref{eq:sum-taylor-mode-efficient}.
-
-% Another important differential operator is represented by a symmetric positive semi-definite (PSD) matrix $\boldsymbol{C} \in \left(\mathbb{R}^D\right)^{\otimes 2}$:
-% \begin{align}\label{eq:weighted-laplacian}
-%   \sum_{i,j} \boldsymbol{C}_{i,j} \frac{\partial^2 \vf(\vx_0)}{\partial x_i \partial x_j}.
-% \end{align}
-% Those operators occur, for example, as
-% \begin{equation*}
-%   \Tr (\msigma \msigma^\top \partial^2 \vf(\vx_0)
-% \end{equation*}
-% in Fokker-Planck and Hamiltonian-Jacobi Bellmann equations. \todo{need citations} Since $\boldsymbol{C}$ is PSD it can be expressed as $\mC = \sum_{n=1}^{\rank(\mC)} \vc_n \vc_n^\top$ for suitable $\vc_n \in \sR^D$. Therefore, it fits the setting of \cref{eq:sum-k-directional} with $K = 2, N = \rank(\mC)$ and $\vv_n = \vc_n$, and can be compute using \cref{eq:sum-taylor-mode-efficient}. This requires the propagation of $1 + \rank(\mC) + 1$ vectors instead of $1 + 2\rank(\mC)$.
-
-\subsection{Collapsed Taylor-mode AD for arbitrary mixed-partial derivatives}
-Despite being already general enough to unify various approaches for the computation of important differential operators, up to now our framework cannot handle operators that include arbitrary mixed-partial derivatives, i.e.,
-operators where we have to sum over different directions in every inner product.
-For orders higher than two, such operators can not be decomposed into the weighted sums scheme given in \cref{eq:weighted-laplacian}.
-To tackle this problem, we extend our framework to transform a differential operator containing mixed-partial derivatives into a family of jets using the result of Griewank et al.~\cite{griewank_evaluating_1999}.
-
-As one important example, we consider the Biharmonic Operator, i.e.,
+\subsection{Collapsed Taylor Mode for Arbitrary Mixed Partial Derivatives}
+So far, we discussed operators that result from contracting the second-order derivative tensor with a coefficient matrix ($\mI$ or $\mD$) that can conveniently be written as sum of vector outer products.
+For orders higher than two, the coefficient tensor can in general \emph{not} be decomposed as such.
+To tackle this problem, we extend our framework to transform a differential operator containing mixed-partial derivatives into a family of jets using the result of \citet{griewank_evaluating_1999}.
+We will then demonstrate the approach on the biharmonic operator with 4-dimensional coefficient tensor
 \begin{align}
   \label{eq:biharm}
   \textstyle % Comment out this line if we have enough space
@@ -164,64 +170,71 @@ As one important example, we consider the Biharmonic Operator, i.e.,
   \Delta(\Delta \vf(\vx_0))
   \quad
   \begin{cases}
-  =
-  \sum_{n_1=1}^D \sum_{n_2=1}^D
-  \left<
-  \partial^4 \vf(\vx_0),
-  \ve_{n_1}^{\otimes 2} \otimes \ve_{n_2}^{\otimes 2}
-  \right>
-     & \text{(exact)}
-     \\
-      \overset{\text{\cite{shi2024stochastic}}}{\approx}
-     \frac{1}{S}
-     \sum_{s=1}^S
-     \left< \partial^4 \vf(\vx_0), \vv_s^{\otimes 4} \right>
-     & \text{(stochastic)}
+    =
+    \sum_{d_1=1}^D \sum_{d_2=1}^D
+    \left<
+    \partial^4 \vf(\vx_0),
+    \ve_{d_1}^{\otimes 2} \otimes \ve_{d_2}^{\otimes 2}
+    \right>
+    & \text{(exact)}
+    \\
+    \overset{\text{\cite{shi2024stochastic}}}{\approx}
+    \frac{1}{S}
+    \sum_{s=1}^S
+    \left< \partial^4 \vf(\vx_0), \vv_s^{\otimes 4} \right>
+    & \text{(stochastic)}
   \end{cases}
 \end{align}
-The $\vv_s$ are drawn \iid from a standard Gaussian.
-Once more, we introduce a notation that allows us to cover also more general cases.
-For the maximal derivative degree $K$, $P \leq K$ different sums and arbitrary directions $\vv_{n_k}$, we can rewrite \cref{eq:biharm} for the exact case as
+
+\paragraph{General approach.}
+Assume we want to contract the $K$-th order derivative tensor $\partial^K \vf(\vx_0)$ with a coefficient tensor $\tC \in (\sR^D)^{\otimes K}$.
+We can always express this tensor in a tensor product basis,
 \begin{align}\label{eq:sums-k-directional}
   \textstyle % Comment out this line if we have enough space
-  \sum_{n_1=1}^{N_1} \dots \sum_{n_P=1}^{N_P}\left<
+  \left<
+  \partial^K \vf(\vx_0), \tC
+  \right>
+  =
+  \sum_{d_1=1}^{D_1} \dots \sum_{d_P=1}^{D_P}\left<
   \partial^{K} f(\vx_0),
-  \vv_{n_1}^{\otimes p_1}
+  \vv_{d_1}^{\otimes p_1}
   \otimes \ldots \otimes
-  \vv_{n_P}^{\otimes p_P}
-  \right>,
+  \vv_{d_P}^{\otimes p_P}
+  \right>
+  \,
+  \in \sR^C\,,
 \end{align}
-with $K = 4, P = 2, N_1 = N_2 = D, \vp = (2, 2), \vv_{n_1} = \ve_{n_1}$ and $\vv_{n_2} = \ve_{n_2}$.
-Note that for $\vp = (p_1, \dots, p_P)$ one must have $\sum_i p_i = K$.
-Eq.~\eqref{eq:sums-k-directional} may include summands where not all directions coincide as it is the case for \cref{eq:sum-k-directional}.
-Those summands are not directly representable by $K$-jets and thus, not computable via collapsed Taylor-mode AD.
-However, Griewank et al.
-derived in \cite{griewank_evaluating_1999} an approach to reconstruct linear combinations of mixed-partial derivatives of degree $K$ from a family of $K$-jets, which corresponds exactly to our situation and is given by
+where the $p_i$s sum to $K$ and the $D_i$s are at most $D$ (in the worst case $(D_i, p_i) = (D, 1)\, \forall i$).
+For the biharmonic \cref{eq:biharm}, we identify $K = 4, P = 2, \vp = (2, 2), D_1 = D_2 = D, \vv_{d_1} = \ve_{d_1}$, and $\vv_{d_2} = \ve_{d_2}$.
+From the Fa\'a di Bruno formula, we know that we can only compute terms of the form $\langle \partial^{K} \vf(\vx_0), \vv^{\otimes K}\rangle$ with a $K$-jet.
+The challenge in \cref{eq:sums-k-directional} is that it includes terms whose directions do \emph{not} coincide in all directions (\eg for the biharmonic we have $P=2$ different directions).
+
+Fortunately, \citet{griewank_evaluating_1999} derived an approach to reconstruct linear combinations of mixed-partial derivatives of degree $K$ from a family of $K$-jets, which corresponds exactly to our situation and is given by
 \begin{equation}
   \label{eq:ttc_general}
   \textstyle % Comment out this line if we have enough space
   \left<
     \partial^{K} f(\vx_0),
-    \vv_{n_1}^{\otimes p_1}
+    \vv_{d_1}^{\otimes p_1}
     \otimes \ldots \otimes
-    \vv_{n_P}^{\otimes p_P}
+    \vv_{d_P}^{\otimes p_P}
   \right>
   = \sum_{\underset{\vq \in \mathbb{N}^P}{|\vq| = K}}
   \gamma_{\vp \vq}
   \frac{1}{K!}
   \left<
     \partial^{K}\vf(\vx_0),
-      \left(\sum_{p=1}^P \vv_{n_p} q_p\right)^{\otimes K}
+    \left(\sum_{p=1}^P \vv_{n_p} q_p\right)^{\otimes K}
   \right>
 \end{equation}
 \todo{Felix@Tim: I find the notation confusing: Do we first sum, then take the tensor product? If not, we need to set parentheses.
-Tim: this is excalty what we are doing. First sum, then product. We might use $(...)^{\otimes K}$}
+  Tim: this is excalty what we are doing. First sum, then product. We might use $(...)^{\otimes K}$}
 in our notation.
 \Cref{sec:appendix_ttc} provides supplementary details for the multi-index notation and the coefficients in the formula.
 From this reconstruction we conclude that \cref{eq:sums-k-directional} can be rewritten as
 \begin{align} \label{eq:ttc_general_operator}
   \textstyle % Comment out this line if we have enough space
-  \sum_{n_1=1}^{N_1} \dots \sum_{n_P=1}^{N_P}
+  \sum_{d_1=1}^{D_1} \dots \sum_{d_P=1}^{D_P}
   \sum_{\underset{\vq \in \mathbb{N}^P}{|\vq| = K}}
   \gamma_{\vp \vq}
   \frac{1}{K!}
@@ -238,7 +251,7 @@ Therefore, we can pull out the inner sum as well as the coefficients to obtain t
   \sum_{\underset{\vq \in \mathbb{N}^P}{|\vq| = K}}
   \gamma_{\vp \vq}
   \frac{1}{K!}
-  \sum_{n_1=1}^{N_1} \dots \sum_{n_P=1}^{N_P}
+  \sum_{d_1=1}^{D_1} \dots \sum_{d_P=1}^{D_P}
   \left<
     \partial^{K}\vf(\vx_0),
     \otimes_{k=1}^K
@@ -271,14 +284,14 @@ This simplification leads to the final efficient jet-based formula as stated in 
   \vspace{-2ex}
   \caption{\textbf{Illustration of \Cref{eq:ttc-general} for the Bi-Laplacian}, \ie, the jet directions and coefficients for computing the partial derivative $\nicefrac{\partial^4}{\partial^2 x_i \partial^2 x_j}$.
     They correspond to the border of a parallelepiped.}
-    \label{fig:ttc_biharm_coeffs}
+  \label{fig:ttc_biharm_coeffs}
 \end{wrapfigure}
 based on $D + D(D-1) + \frac{D(D-1)}{2}$ different $4$-jets, where once more we collapse the highest coefficients.
 Hence, our formula for the Biharmonic Operator propagates $1 + 3D + 1 + 1 + 3 D(D-1) + 1 + 1 + 3 \frac{D(D-1)}{2} + 1 = 9\frac{D^2}{2} - 3\frac{D}{2} + 6$ vectors through every node in the computational graph, when applying the proposed collapsed Taylor mode.
 As before, all jets can be computed in parallel, which provides further benefits for the runtime complexity.
 
 The above procedure describes a generic approach for computing linear differential operators with our collapsed Taylor mode.
-%that can be combined with our proposed collapsing method.
+% that can be combined with our proposed collapsing method.
 % We demonstrated it on the Biharmonic Operator, as it is a commonly used operator of degree greater than two.
 We also considered other proposed approaches, which underperform our contribution.
 For a comparison, see \cref{sec:appendix_ttc_other_methods}.
