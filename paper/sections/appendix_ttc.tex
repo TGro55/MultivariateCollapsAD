@@ -1,49 +1,49 @@
 This section introduces the notation used in \cref{eq:ttc_general}. 
-The right side of the formula sums over all multi-indices $\vq = (q_1, \dots q_P) \in \mathbb{N}^p$ such that $|\vq| := \sum_i q_i = K$. If $p=2$ and $|\vq| = 4$ this index-set consists of $\left\{ (4,0), (0, 4), (3, 1), (1, 3),  (2, 2)\right\}$. 
+The right side of the formula sums over all multi-indices $\vj = (j_1, \dots j_I) \in \mathbb{N}^I$ such that $|\vj| := \sum_i j_i = K$. If $I=2$ and $|\vj| = 4$ this index-set consists of $\left\{ (4,0), (0, 4), (3, 1), (1, 3),  (2, 2)\right\}$. 
 
-The coefficient $\gamma_{\vp \vq}$ is given as
+The coefficient $\gamma_{\vi \vj}$ is given as
 \begin{equation}
 \label{eq:ttc_coeff}
-    \gamma_{\vp \vq} = \sum_{0 < \vm \leq \vp} (-1)^{|\vp - \vm|} 
+    \gamma_{\vi \vj} = \sum_{0 < \vm \leq \vi} (-1)^{|\vi - \vm|} 
     \left(
     \begin{matrix}
-        \vp \\
+        \vi \\
         \vm
     \end{matrix}
     \right) 
     \left( 
     \begin{matrix}
-        |\vp|\frac{\vm}{|\vm|} \\
-        \vq
+        |\vi|\frac{\vm}{|\vm|} \\
+        \vj
     \end{matrix} 
     \right)  
     \left( 
-    \frac{|\vm|}{|\vp|}
-    \right)^{|\vp|}.
+    \frac{|\vm|}{|\vi|}
+    \right)^{|\vi|}.
 \end{equation}
-The summation ranges over the set $\left\{ \vm = (m_1, \dots, m_p) \in \mathbb{N}^p \mid m_1 \leq p_1, \dots, m_p \leq p_P, |m| > 0 \right\}$. Furthermore, we utilize the generalized binomial coefficient
+The summation ranges over the set $\left\{ \vm = (m_1, \dots, m_I) \in \mathbb{N}^I \mid m_1 \leq j_1, \dots, m_p \leq j_P, |\vm| > 0 \right\}$. Furthermore, we utilize the generalized binomial coefficient
 \begin{equation}
     \left(
        \begin{matrix}
         a \\
         b
     \end{matrix}
-    \right) = \prod_{i=0}^{b-1} \frac{a - i}{b - i}
+    \right) = \prod_{l=0}^{b-1} \frac{a - l}{b - l}
 \end{equation}
 to allow the computation for all $a \in \mathbb{R}$ and $b \in \mathbb{N}$, which is defined to be $1$ if $b=0$. The generalized binomial coefficient of multi-indices, is the product of all generalized binomial coefficients of the components of the indices:
 $
 \left(
     \begin{matrix}
-        \vk \\
-        \vl
+        \va \\
+        \vb
     \end{matrix}
     \right) 
     = 
-    \prod_{i=1}^p 
+    \prod_{i=1}^I
     \left(
        \begin{matrix}
-        k_i \\
-        l_i
+        a_i \\
+        b_i
     \end{matrix}
     \right).
 $ 
@@ -113,7 +113,7 @@ To compute \cref{eq:biharm} with \cref{eq:ttc_general}, we first select $K = 4, 
     \Big).
     \end{aligned}
 \end{equation}
-Afterwards, we exploit the symmetry of the coefficients $\gamma_{(2, 2)(4, 0)} = \gamma_{(2, 2)(0, 4)}$ and $\gamma_{(2, 2)(3, 1)} = \gamma_{(2, 2)(1, 3)}$
+Afterwards, we exploit the symmetry of the coefficients $\gamma_{(2, 2)(4, 0)} = \gamma_{(2, 2)(0, 4)}$ and $\gamma_{(2, 2)(3, 1)} = \gamma_{(2, 2)(1, 3)}$ yielding
 
 \begin{equation} \label{eq:ttc_for_biharm_2}
     \begin{aligned}
@@ -180,7 +180,7 @@ Since the first sum captures all diagonal directions $e_{n_1} = e_{n_2}$, we ext
     \Big).
     \end{aligned}
 \end{equation}
-Exploiting furter symmetries, one obtains
+Exploiting further symmetries, one obtains
 \begin{equation} \label{eq:ttc_for_biharm_final}
     \begin{aligned}
     \Delta^2 \vf(\vx_0) &=
@@ -218,12 +218,13 @@ Exploiting furter symmetries, one obtains
 \subsection{Other methods}\label{sec:appendix_ttc_other_methods}
 
 \paragraph{Hutchinson Trace Estimation}
-In Theorem 3.3 of \cite{hu2023hutchinson}, the authors showed how to approximate the Biharmonic Operator using a normal distribution and a 4-Jet. We improve their result in two directions. On the one hand, we allow exact computation of the Biharmonic Operator, using a family of 4-Jets, avoiding the estimation error and the selection of sampling batches. On the other hand, we improved the underlying Taylor-mode of the approximate solution by introducing the collapsed Taylor-mode.
+In Theorem 3.3 of \cite{hu2023hutchinson}, the authors showed how to approximate the Biharmonic Operator using a normal distribution and a 4-jet. We improve their result in two directions. On the one hand, we allow exact computation of the Biharmonic Operator, using a family of 4-jets, avoiding the estimation error and the selection of sampling batches. On the other hand, we improved the underlying Taylor mode of the approximate solution by introducing the collapsed Taylor mode.
 
 
 \paragraph{Stochastic Taylor Derivative Estimator}
-A different approach was proposed in \cite{shi2024stochastic}, which relies on the hand-selection of certain $6$-Jets to extract the searched derivatives. The degree and directions for the Jets are obtained by considering the Faà di Bruno formula for the 6-th coefficient $\vf_6$. Selecting coefficients of the input $6$-Jet to $\vx_1 = \ve_{n_1}, \vx_2 = \ve_{n_2}$ and  $\vx_3 = \vx_4 = \vx_5 = \vx_6 = \vzero$ leads us to
+A different approach was proposed in \cite{shi2024stochastic}, which relies on the hand-selection of certain $6$-jets to extract the required derivatives. The degree and directions for the jets are obtained by considering the Faà di Bruno formula for the 6-th coefficient $\vf_6$. Selecting coefficients of the input $6$-jet to $\vx_1 = \ve_{n_1}, \vx_2 = \ve_{n_2}$ and  $\vx_3 = \vx_4 = \vx_5 = \vx_6 = \vzero$ leads us to
 \begin{align}\label{eq:felix-biharmonic-jet1}
+\begin{split}
     \vf_6
     &=
     \left<
@@ -236,7 +237,8 @@ A different approach was proposed in \cite{shi2024stochastic}, which relies on t
     \partial^5 \vf(\vx_0), 
     \left(\ve_{n_1}\right)^{\otimes 4} \otimes \ve_{n_2}
     \right>
-    +
+    \\
+    &  \quad{}  +
     {\color{blue}
     45 
     \left<
@@ -244,13 +246,13 @@ A different approach was proposed in \cite{shi2024stochastic}, which relies on t
     \left(\ve_{n_1}\right)^{\otimes 2} \otimes \left(\ve_{n_2} \right)^{\otimes 2}
     \right>
     }
-    \\
-    &+
++
     15 
     \left<
     \partial^3 \vf(\vx_0), 
     \otimes_{k=1}^3 \ve_{n_2}
     \right>.
+    \end{split}
 \end{align}
 Notice the \textcolor{blue}{blue term}, which has the same structure as the summands we want to compute for the Biharmonic operator. Therefore, a first $6$-Jet with the input Jet is computed as explained above. To cancel out the unwanted terms, we evaluate another $6$-Jet with $\vx_2 = -\ve_{n_2}$ and adding the $6$-th coefficient of this Jet to \cref{eq:felix-biharmonic-jet1} gives
 \begin{align}\label{eq:felix-biharmonic-jet2}

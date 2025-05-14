@@ -40,18 +40,18 @@ However, recent developments in optimization have also revived the use of differ
 \paragraph{Experimental results.}
 \Cref{fig:benchmark} visualizes the computational demands' growth \wrt the batch size (exact) and number of Monte-Carlo samples (stochastic) for fixed dimensions $D$.
 We used a 5-layer MLP with $\tanh$ activation and around 3M parameters, similar to the ones employed in other works on PINNs \cite{dangel2024kroneckerfactored,shi2024stochastic}.
-As the scalings with batch size and Monte-Carlo samples are both linear, we quantify the results by fitting linear functions and reporting their slopes (\ie time and memory added per datum/sample) in \Cref{tab:benchmark}. We make the following observations:
+As the scalings with batch size and Monte-Carlo samples are both linear, we quantify the results by fitting linear functions and reporting their slopes (\ie, time and memory added per datum/sample) in \Cref{tab:benchmark}. We make the following observations:
 \begin{itemize}[leftmargin=0.5cm]
 \item \textbf{Collapsed Taylor mode accelerates standard Taylor mode.}
-  When comparing collapsed with standard Taylor mode, we observe that the measure runtime differences correspond well with the theoretical prediction.
-  \Eg for the Laplacian, the ratio of propagated vectors between standard and collapsed is $\nicefrac{(2 + D)}{(1 + 2D)} \approx 0.5$; we observe that adding one datum adds $0.60ms$ to standard and $0.33ms$ to collapsed Taylor mode.
+  When comparing collapsed with standard Taylor mode, we observe that the measured runtime differences correspond well with the theoretical prediction.
+  \Eg, for the Laplacian, the ratio of propagated vectors between standard and collapsed is $\nicefrac{(2 + D)}{(1 + 2D)} \approx 0.5$; we observe that adding one datum adds $0.60ms$ to standard and $0.33ms$ to collapsed Taylor mode.
   Similar for the weighted Laplacian and for their stochastic versions.
   This means that we can compute these operators with twice the batch size or MC-samples in the same time as had we used standard Taylor mode.
 
 \item \textbf{Collapsed Taylor mode consistently outperforms nested 1\textsuperscript{st}-order AD.}
   For the exact and stochastic Laplacian and weighted Laplacian, collapsed Taylor mode is roughly twice as fast as nested AD while using 70-80\% of the latter's memory.
-  The only exception is for the differentiable Bi-Laplacian, which consumes about 20\% more memory, but uses only 66\% time.
-  For the randomized Bi-harmonic, we observe even greater runtime and memory improvements by roughly 9 and 3 (or 6 if non-differentiable)x.
+  The only exception is for the differentiable Biharmonic, which consumes about 20\% more memory, but uses only 66\% time.
+  For the randomized Biharmonic, we observe even greater runtime and memory improvements by roughly 9 and 3 (or 6 if non-differentiable)x.
 
   \todo{FD: I think one reason why we get bigger improvements for the stochastic Bi-Laplacian is that I have to use \texttt{vmap} twice and this might mess up performance (hard to verify though).
   }

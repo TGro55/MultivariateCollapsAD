@@ -59,8 +59,7 @@ We allow broadcasting in \cref{eq:derivative-tensor-scalar-product}: if one tens
 This allows to express contractions with derivative tensors of vector-valued functions, \eg,
 contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \times (\sR^D)^{\otimes k}$\todo{T: Notation check please -> F: Looks good to me!?}, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
 
-\paragraph{Multivariate case \& composition.}\todo{Discussion about Jet definition as it is:
-T: The Jet definition allows us to naturally use Faa di Bruno because this is exactly the d/dt derivative; Otherwise we would have the problem that we have to introduce an auxiliary $t$ anyway. Therefore, we use Jets definition as it is to be able to easily explain how to compute the coefficients but we never really compute a Jet. We are interested in the last coefficients. Right? Shall we mention this somewhere? If you agree, feel free to add something}
+\paragraph{Multivariate case \& composition.}
 Evaluating the $K$-jet of $\vf$ at an argument $\vx_0 \in \sR^D$ starts with the extension of $\vx_0$ to a smooth path $\vx: \sR \to \sR^D$ with $\vx(0) = \vx_0$.
 The $K$-jet of $\vf$ is defined as 
 \begin{align*}

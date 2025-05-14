@@ -137,7 +137,7 @@ The following Taylor mode AD scheme results from inserting \cref{eq:sum-k-direct
 \end{align}
 Leveraging linearity in the certain terms (in green) of the highest coefficient instead, leads to
 \begin{align}\label{eq:sum-taylor-mode-efficient}
-  \begin{split}
+%  \begin{split}
       \begin{pmatrix*}
         \vx_0
         \\
@@ -149,8 +149,7 @@ Leveraging linearity in the certain terms (in green) of the highest coefficient 
         \\
         \textcolor{\colorcTM}{\displaystyle\sum_{r = 1}^R\vx_{K, r}}
       \end{pmatrix*}
-      &\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
-        \begin{pmatrix*}[l]
+  &\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}        \begin{pmatrix*}[l]
           \vh_0 &=  \vh(\vx_0)
           \\
           \{\vh_{1,r}\} &=  
@@ -192,9 +191,8 @@ Leveraging linearity in the certain terms (in green) of the highest coefficient 
           \sum_{r=1}^R \vx_{K, r}
           }
           \right>
-        \end{pmatrix*} 
-        \\
-        &\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
+        \end{pmatrix*}      \nonumber \\    
+       &\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
         \begin{pmatrix*}[l]
           \vg_0 &=  \vg(\vh_0)
           \\
@@ -234,7 +232,9 @@ Leveraging linearity in the certain terms (in green) of the highest coefficient 
           \textcolor{\colorcTM}{\displaystyle \sum_{r=1}^R\vh_{K, r}}
           \right>
         \end{pmatrix*}
-        \\
+         \end{align}      
+\begin{align*}%\label{eq:sum-taylor-mode-efficient}
+  %\begin{split} 
         &\overset{\text{(\ref{eq:faa-di-bruno})}}{=}
         \begin{pmatrix*}[l]
           \vf_0 &=  \vf(\vx_0)
@@ -281,13 +281,16 @@ Leveraging linearity in the certain terms (in green) of the highest coefficient 
           \partial^K \vf(\vx_0), 
           \otimes_{k=1}^K \vv_r
           \right>
-    \end{split}
-\end{align}
+   % \end{split}
+\end{align*}
 
 \subsection{Examples -- Laplace Operator}
 
-\paragraph{Naive Laplacian}
-The propagation scheme below is obtained, by applying \cref{eq:sum-taylor-mode-naive} to \cref{eq:laplacian}.
+\paragraph{Vanilla Taylor Mode AD}
+If we have $f = \vg \circ \vh$ and apply the vanilla Taylor mode (see \cref{eq:sum-taylor-mode-naive}) to compute the Laplacian we obtain
+{
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
 \begin{align}\label{eq:laplacian-naive}
   \begin{split}
     \begin{pmatrix*}
@@ -372,13 +375,16 @@ The propagation scheme below is obtained, by applying \cref{eq:sum-taylor-mode-n
     &\overset{\text{slice}}{\to} \{ g_{2,d} \}
     \\
     &\overset{\text{sum}}{\to} \sum_{d=1}^D \{ g_{2,d} \}
-      \overset{\{\vx_{1,d} = \ve_d, \vx_{2,d} = \vzero\}}{=} \Delta f(\vx_0)
+      \overset{\{\vx_{1,d} = \ve_d, \vx_{2,d} = \vzero\}}{=} \Delta f(\vx_0).
   \end{split}
 \end{align}
+}
 
-
-\paragraph{Efficient Laplacian}
-Instead of naively applying \cref{eq:sum-taylor-mode-naive}, \cref{eq:sum-taylor-mode-efficient} is used to obtain a efficient Laplacian propagation approach:
+\paragraph{Collapsed Taylor Mode AD}
+Using our proposed collapsed Taylor mode we get
+{
+\setlength{\abovedisplayskip}{2pt}
+\setlength{\belowdisplayskip}{2pt}
 \begin{align}\label{eq:laplacian-efficient}
   \begin{split}
     \begin{pmatrix*}
@@ -465,3 +471,4 @@ Instead of naively applying \cref{eq:sum-taylor-mode-naive}, \cref{eq:sum-taylor
       \Delta f(\vx_0)
   \end{split}
 \end{align}
+}
