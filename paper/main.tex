@@ -3,20 +3,53 @@
 % use numbers for citations to save space
 \PassOptionsToPackage{numbers, compress}{natbib}
 
+% The authors should use one of these tracks.
+% Before accepting by the NeurIPS conference, select one of the options below.
+% 0. "default" for submission
 % either empty (for submission), 'preprint', or 'final'
-\def\status{}
-\usepackage[\status]{neurips_2024}
+\def\status{main}
+\usepackage[\status]{neurips_2025}
+% the "default" option is equal to the "main" option, which is used for the Main Track with double-blind reviewing.
+% 1. "main" option is used for the Main Track
+%  \usepackage[main]{neurips_2025}
+% 2. "position" option is used for the Position Paper Track
+%  \usepackage[position]{neurips_2025}
+% 3. "dandb" option is used for the Datasets & Benchmarks Track
+ % \usepackage[dandb]{neurips_2025}
+% 4. "creativeai" option is used for the Creative AI Track
+%  \usepackage[creativeai]{neurips_2025}
+% 5. "sglblindworkshop" option is used for the Workshop with single-blind reviewing
+ % \usepackage[sglblindworkshop]{neurips_2025}
+% 6. "dblblindworkshop" option is used for the Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop]{neurips_2025}
+
+% After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
+% 1. Main Track
+ % \usepackage[main, final]{neurips_2025}
+% 2. Position Paper Track
+%  \usepackage[position, final]{neurips_2025}
+% 3. Datasets & Benchmarks Track
+ % \usepackage[dandb, final]{neurips_2025}
+% 4. Creative AI Track
+%  \usepackage[creativeai, final]{neurips_2025}
+% 5. Workshop with single-blind reviewing
+%  \usepackage[sglblindworkshop, final]{neurips_2025}
+% 6. Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop, final]{neurips_2025}
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
+% For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
+
+% "preprint" option is used for arXiv or other preprint submissions
+ % \usepackage[preprint]{neurips_2025}
 
 \input{preamble/custom_early.tex}
-\input{preamble/neurips_2024.tex}
+\input{preamble/neurips_2025.tex}
 % follow DL notation from the Goodfellow book
 \input{preamble/goodfellow.tex}
 \input{preamble/custom.tex}
 \input{preamble/metadata.tex}
 
 \definecolor{darkgreen}{rgb}{0,0.6,0}
-%\newcommand{\AK}[2][]{\alternatingtodo[color=red!40, #1]{#2 }}
-\newcommand{\temp}[1]{\textcolor{blue}{#1}}
 \newcommand{\AW}[1]{\textcolor{darkgreen}{#1}}
 \newcommand{\colorcTM}{tab-green}
 \newcommand{\colorTM}{tab-orange}
@@ -29,8 +62,8 @@
 \begin{abstract}
   Computing partial differential equation (PDE) operators of high-dimensional functions via nested backpropagation becomes prohibitively expensive in time and memory, severely restricting their utility in scientific machine learning.
   % As an alternative, Taylor‑mode AD computes derivatives in a single forward pass but backpropagation remains the de-facto standard in many implementations.
-  Recent advances, such as the forward Laplacian and randomized Taylor mode, propose enhanced forward mode automatic differentiation (AD) schemes 
-  to address this challenge. We introduce a modified version of Taylor mode AD that ``collapses'' highest-order derivatives by rewriting 
+  Recent advances, such as the forward Laplacian and randomized Taylor mode, propose enhanced forward mode automatic differentiation (AD) schemes
+  to address this challenge. We introduce a modified version of Taylor mode AD that ``collapses'' highest-order derivatives by rewriting
   the computational graph, and demonstrate how to exploit this optimization for general PDE operators and randomized Taylor mode.
   %\todo{Felix: This sentence is okay but not 100\% accurate. We do not unify the schemes. We show (i) that standard Taylor mode can be collapsed (e.g. yielding the forward Laplacian) and (ii) that this collapsing can also be applied to STDE).}
   Empirical evaluations for Laplacian and Bi-Laplacian operators confirm the reduced runtime and memory requirements compared to standard Taylor mode AD.
@@ -98,8 +131,9 @@
 \label{sec:jax-benchmark}
 \input{sections/appendix_jax}
 
-% \input{sections/appendix.tex}
-% \input{sections/checklist.tex}
+\newpage
+\section*{NeurIPS Paper Checklist}
+\input{sections/checklist.tex}
 
 \end{document}
 %%% Local Variables:
