@@ -3,7 +3,7 @@ Taylor-mode AD (or, simply, Taylor mode) computes higher-order derivatives---as 
 \input{figures/taylor_signature}
 
 \paragraph{Scalar case.}
-To illustrate Taylor-mode\todo{Taylor mode}, consider the scalar function $f: \sR \to \sR$ and extend the input variable $x$ to a path $x(t)$ whose form is a univariate Taylor polynomial of degree $K$, $\smash{x(t) = \sum_{k=0}^K \frac{t^k}{k!} x_k}$ with $x_k$ the $k$-th Taylor coefficient. \todo{T: das passt nicht mit unsere Jet erklärung}
+To illustrate Taylor mode, consider the scalar function $f: \sR \to \sR$ and extend the input variable $x$ to a path $x(t)$ whose form is a univariate Taylor polynomial of degree $K$, $\smash{x(t) = \sum_{k=0}^K \frac{t^k}{k!} x_k}$ with $x_k$ the $k$-th Taylor coefficient.
 If $f$ is smooth enough, we can evaluate Taylor coefficients of the transformed path $\smash{f(x(t)) = \sum_{k=0}^K \frac{t^k}{k!} f_k}$ with $\smash{f_k \coloneqq \frac{\mathrm{d}^k}{\mathrm{d}t^k} f(x(t)) |_{t=0}}$.
 The chain rule provides the coefficients' propagation rules.
 \Eg, for degree $K=3$ we get
@@ -57,7 +57,7 @@ We define the inner product of two tensors $\smash{\tA, \tB \in (\sR^{D})^{\otim
 \end{align}
 We allow broadcasting in \cref{eq:derivative-tensor-scalar-product}: if one tensor has more dimensions but matching trailing dimensions, we take the inner product for each component of the leading dimensions.
 This allows to express contractions with derivative tensors of vector-valued functions, \eg,
-contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \times (\sR^D)^{\otimes k}$\todo{T: Notation check please -> F: Looks good to me!?}, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
+contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \times (\sR^D)^{\otimes k}$, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
 
 \paragraph{Multivariate case \& composition.}
 Evaluating the $K$-jet of $\vf$ at an argument $\vx_0 \in \sR^D$ starts with the extension of $\vx_0$ to a smooth path $\vx: \sR \to \sR^D$ with $\vx(0) = \vx_0$.
@@ -69,7 +69,7 @@ The $K$-jet of $\vf$ is defined as
   \quad \text{with} \quad
   \vf_k := \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k} \vf(\vx(t)) \right|_{t=0}
 \end{align*}
-and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$ (illustrated in \cref{fig:utp}). $J^K \vf$ is sometimes also considered differently as a mapping $(\vx_0, \dots, \vx_K) \mapsto (\vf_0, \dots, \vf_K)$ \cite{bradbury2018jax}, because we are interested in the coefficients, not the Taylor polynomial itself. \todo{T: @Felix ok?}
+and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$ (illustrated in \cref{fig:utp}). $J^K \vf$ is sometimes also considered differently as a mapping $(\vx_0, \dots, \vx_K) \mapsto (\vf_0, \dots, \vf_K)$ \cite{bradbury2018jax}, because we are interested in the coefficients, not the Taylor polynomial itself.
 
 As is common for AD, the computation of the $\vf_k$ known as Taylor mode relies on composing $\vf$ of elemental functions with known derivatives, and the chain rule.
 In the simplest case, let $\vf$ be given by $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg$ and $\vh$. Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t)) \right|_{t=0}$ are computed using the generalized Faà di Bruno formula

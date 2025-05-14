@@ -8,8 +8,8 @@
     xtick={0,1,2,3,4},
     ytick={0,1,2,3,4},
     grid=major,
-    xlabel={Differentiate \wrt $x_i$},
-    ylabel={Differentiate \wrt $x_j$},
+    %xlabel={Along $\ve_{d_1}$},
+    %ylabel={Along $\ve_{d_2}$},
     enlargelimits=false,
     tick style={black},
     tick align=outside,
@@ -28,33 +28,35 @@
       only marks,
       mark=*,
       mark size=2.5pt,
-      black
+      tab-orange,
       ] coordinates {(\x,\y)};
     }
+
+    \draw[tab-orange, ultra thick, dotted] (axis cs:-0.3, 4.3) to (axis cs:4.3, -0.3);
 
     % Draw arrow from origin to (x, y)
     % NOTE Could not figure out how to do this inside the loop, so
     % doing it manually
-    \draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:0,4);
-    \draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:1,3);
-    \draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:2,2);
-    \draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:3,1);
-    \draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:4,0);
+    %\draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:0,4);
+    %\draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:1,3);
+    %\draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:2,2);
+    %\draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:3,1);
+    %\draw[-Stealth, tab-orange, ultra thick] (axis cs:0,0) -- (axis cs:4,0);
 
     % Draw the labels for the q coordinates
-    \node[anchor=north, yshift=-2pt] at (axis cs:5.25,0) {$[\vq]_1$};
-    \node[anchor=east, xshift=-2pt] at (axis cs:0,5.25) {$[\vq]_2$};
+    \node[anchor=north, yshift=-2pt] at (axis cs:5.25,0) {$[\vj]_1$};
+    \node[anchor=east, xshift=-2pt] at (axis cs:0,5.25) {$[\vj]_2$};
 
     % Draw the gamma values
-    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:0,4) {$\gamma_{{\vp, (4,0)}} = \nicefrac{13}{192} $};
-    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:1,3) {$\gamma_{{\vp, (1,3)}} = -\nicefrac{1}{3} $};
-    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:2,2) {$\gamma_{{\vp, (2,2)}} = \nicefrac{5}{8} $};
-    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:3,1) {$\gamma_{{\vp, (3,1)}}$};
-    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:4,0) {$\gamma_{{\vp, (4,0)}}$};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:0,4) {$\gamma_{{\vi, (4,0)}} = \nicefrac{13}{192} $};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:1,3) {$\gamma_{{\vi, (1,3)}} = -\nicefrac{1}{3} $};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:2,2) {$\gamma_{{\vi, (2,2)}} = \nicefrac{5}{8} $};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:3,1) {$\gamma_{{\vi, (3,1)}}$};
+    \node[anchor=south west, transparentfill, xshift=2pt, yshift=2pt] at (axis cs:4,0) {$\gamma_{{\vi, (4,0)}}$};
   \end{axis}
 
   % Draw the values of p
-  \node[anchor=north east, transparentfill] at (current bounding box.north east) {$\vp = (2, 2)$};
+  \node[anchor=north east, transparentfill] at (current bounding box.north east) {$\vi = (2, 2)$};
 \end{tikzpicture}
 % \end{minipage}
 %%% Local Variables:

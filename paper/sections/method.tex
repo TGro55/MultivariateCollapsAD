@@ -7,10 +7,10 @@ However, our proposed algorithm only needs jets of the highest derivative degree
 
 \subsection{Exploiting Linearity to Collapse Taylor Mode AD}
 To derive our proposed method, the considerations start with a sum over $K$th-order directional derivatives of a function $\vf$ like the Laplacian.
-In our notation, this sum can be represented as
+In our notation, this sum can be represented as 
 \begin{align}\label{eq:sum-k-directional}
   \textstyle % Comment out this line if we have enough space
-  \sum_{r=1}^R\left<
+  \langle \partial^K \vf(\vx_0), \mC \rangle= \sum_{r=1}^R\left<
   \partial^{K} \vf(\vx_0),
   \otimes_{k=1}^K \vv_r
   \right>.
@@ -22,13 +22,30 @@ In case of \cref{eq:sum-k-directional}, one propagates $R$ $K$-jets through the 
 Without further optimizations, standard Taylor mode propagates $1 + KR$ vectors through every node of the computational graph, where the length of the vectors depend on the individual node.
 Subsequently, one has to sum up the corresponding highest derivatives to obtain \cref{eq:sum-k-directional} as illustrated for our simple example in the appendix, see \cref{eq:sum-taylor-mode-naive}.
 The approach we propose here is based on the observation that there is a special element in the set of integer partitions $\partitioning(K)$, namely the trivial partition $\tilde{\sigma}= \{K\}$ corresponding to the term $ \nu(\tilde{\sigma}) \left< \partial \vg(\vh_0), \vh_{K,r} \right>$ in \eqref{eq:faa-di-bruno} with $\nu(\tilde{\sigma}) = 1$, yielding
-\begin{equation}\label{eq:faa-di-bruno-expanded}
+\begin{align}\label{eq:faa-di-bruno-expanded}
   \textstyle % Comment out this line if we have enough space
-  \vf_{K, r}
+  \sum_r\vf_{K, r}
   =
-  \vg_{K,r}
-  =
-  \sum_{
+  \sum_r\vg_{K,r}
+  &=
+  \sum_r\sum_{
+    \sigma \in \partitioning(K) \setminus \{\tilde{\sigma}\}
+  }
+  \nu(\sigma) \left<
+    \partial^{|\sigma|} \vg(\vh_0),
+    \tensorprod{s \in \sigma} \vh_{K, r}
+  \right>
+  +
+  {
+  \color{tab-orange}
+  \sum_r\left<
+    \partial \vg(\vh_0),
+    \vh_{K, r}
+  \right> 
+  }
+  \\
+  &= 
+  \sum_r\sum_{
     \sigma \in \partitioning(K) \setminus \{\tilde{\sigma}\}
   }
   \nu(\sigma) \left<
@@ -38,9 +55,11 @@ The approach we propose here is based on the observation that there is a special
   +
   \left<
     \partial \vg(\vh_0),
-    \vh_{K, r}
-  \right>
-\end{equation}
+    {
+    \color{tab-green}\sum_r \vh_{K, r}
+    }
+  \right> 
+\end{align}
 for our simple example.
 The last inner-product term on the right-hand side is linear in $\vh_{K,r}$, marking the key property for our method.
 To compute the sum of $\{\vg_{K, r}\}_r$, i.e., \cref{eq:sum-k-directional}, it is possible to directly propagate their sum, like $\sum_r \vh_{K,r}$, due to the linearity of $\left<\partial \vh, \bullet \right>$ and $\left< \partial \vg, \bullet \right>$ instead of passing the highest coefficients, like $\{\vh_{K,r}\}_r$, separately along the nodes of the computational graph.
@@ -179,19 +198,19 @@ We will then demonstrate the approach on the biharmonic operator with 4-dimensio
     & \text{(exact)}
     \\
     \overset{\text{\cite{shi2024stochastic}}}{\approx}
-    \frac{1}{S}
+    \frac{D}{S}
     \sum_{s=1}^S
     \left< \partial^4 \vf(\vx_0), \vv_s^{\otimes 4} \right>
     & \text{(stochastic)}
   \end{cases}
 \end{align}
-The stochastic version is already solved by our approach presented above. We simply draw $S$ standard normal vectors $\vv_s$, then propagate the coefficients $(\vx_{0,s} = \vx_0, \vx_{1,s} = \vv_s, \vx_{2,s} = \vx_{3,s} = \vx_{4,s} = \vzero)$.
-Using standard Taylor mode, this uses ${\color{tab-orange} 1 + S + S + S + S}$ vectors.
-Collapsing Taylor mode uses ${\color{tab-green} 1 + S + S + S + 1}$ vectors.
+We can directly address the stochastic version: simply draw $S$ standard normal vectors $\vv_1, \dots, \vv_S$ and propagate the coefficients $\{(\vx_{0,s} = \vx_0, \vx_{1,s} = \vv_s, \vx_{2,s} = \vx_{3,s} = \vx_{4,s} = \vzero)\}_{s=1}^S$.
+With standard Taylor mode, this uses ${\color{tab-orange} 1 + S + S + S + S}$ vectors; collapsed Taylor mode uses ${\color{tab-green} 1 + S + S + S + 1}$ vectors.
 For the exact biharmonic, we need to develop an approach to compute mixed partials.
 
 \paragraph{General approach.}
-Assume we want to contract the $K$-th order derivative tensor $\partial^K \vf(\vx_0)$ with a coefficient tensor $\tC \in (\sR^D)^{\otimes K}$.
+Assume we want to compute a linear differential operator of degree $K$.
+We can do so by contracting the $K$-th order derivative tensor $\partial^K \vf(\vx_0)$ with a coefficient tensor $\tC \in (\sR^D)^{\otimes K}$.
 We can always express this tensor in a tensor product basis,
 \begin{align}\label{eq:sums-k-directional}
   \textstyle % Comment out this line if we have enough space
@@ -216,7 +235,7 @@ The challenge in \cref{eq:sums-k-directional} is that it includes terms where \e
 Fortunately, \citet{griewank_evaluating_1999} derived an approach to reconstruct such mixed-direction terms by linear combining a \emph{family} of $K$-jets.
 This family is determined by all vectors $\vj \in \sN^P$ whose entries sum to $K$ (see \cref{fig:ttc_biharm_coeffs} for an illustration for the biharmonic (5 directions)).
 The $K$-jets along these directions are then combined with coefficients $\gamma_{\vi, \vj} \in \sR$, whose definition we provide in \cref{sec:appendix_ttc}.
-In summary, we get \todo{T: Why [] for the multi-indices? F: We use [] to indicate indexing into a vector. Otherwise it is unclear if a subscript is a direction, data point, degree of derivative, etc.}
+In summary, we get
 \begin{equation}
   \label{eq:ttc_general}
   \textstyle % Comment out this line if we have enough space
@@ -263,18 +282,17 @@ and---since the coefficients $\gamma_{\vi,\vj}$ only depend on the problem struc
     \right)^{\otimes K}
   \right>}\,.
 \end{equation}
-We can use standard Taylor mode to compute each \textcolor{tab-orange}{summand}, propagating different $K$-jets with coefficients $(\vx_0, \vx_1 = \sum_i \vv_{d_i}[\vj]_i, \vx_2 = \dots =\vx_K = \vzero)$, then \textcolor{tab-green}{collapse} the sum from the basis expansion \todo{t: Does basis expansion refer to the mathematical term? I dont understand what this means in our context}.
+We can use standard Taylor mode to compute each \textcolor{tab-orange}{summand}, propagating different $K$-jets with coefficients $(\vx_0, \vx_1 = \sum_i \vv_{d_i}[\vj]_i, \vx_2 = \dots =\vx_K = \vzero)$, then \textcolor{tab-green}{collapse} the sums from the tensor basis expansion.
 Repeating this process for each $\vj$, then forming the linear combination using the $\gamma_{{\vi, \vj}}$'s, yields the differential operator we sought to compute originally.
-Further, we can often exploit symmetries in the $\gamma_{\vi, \vj}$s and the basis vectors to further reduce the number of $K$-jets. \todo{T: what are the basis vectors?}
+Further, we can often exploit symmetries in the $\gamma_{\vi, \vj}$s and the basis vectors to further reduce the number of $K$-jets.
 Please see \cref{sec:appendix_ttc} for a fully-contained example.
 
-\begin{wrapfigure}[20]{r}{0.4\textwidth}
+\begin{wrapfigure}[19]{r}{0.4\textwidth}
   \centering
   \vspace{-2ex}
   \input{figures/ttc_bilaplacian}
-  \vspace{-2ex}
-  \caption{\textbf{Illustration of \Cref{eq:ttc-general} for the Bi-Laplacian}, \ie, the jet directions and coefficients for computing the partial derivative $\nicefrac{\partial^4}{\partial^2 x_i \partial^2 x_j}$.
-    They correspond to the border of a parallelepiped.}
+  \vspace{-1ex}
+  \caption{\textbf{Illustration of \cref{eq:ttc-general} for the biharmonic operator}, \ie the five values of $\vj$ (integer points that fulfill $\lVert \vj \rVert_1 = 4$) and their coefficients $\gamma_{\vi, \vj}$ for interpolating the desired mixed partials.}
   \label{fig:ttc_biharm_coeffs}
 \end{wrapfigure}
 
@@ -285,11 +303,13 @@ A close look into the definition \cref{eq:ttc_coeff} shows the equality of $\gam
 Exploiting those symmetries allows us to reduce the required jets for every summand from five to three (\cref{eq:ttc_for_biharm_2}).
 Removing doubly-computed terms brings down the number of $4$-jets to the final value $D + D(D-1) + \nicefrac{1}{2}D(D-1)$.
 All these jets are computed in parallel.
-In total, we need to propagate $1 + 4D + 1 + 4D(D-1) + 1 + \nicefrac{4}{2}D(D-1) = 6D^2 - 2D + 3$ vectors using standard Taylor mode.
-After collapsing, we propagate ${\color{tab-green}1 + 3D + 1 + 1 + 3 D(D-1) + 1 + 1 + \frac{3}{2} D(D-1)  + 1 = 9\frac{D^2}{2} - 3\frac{D}{2} + 6}$ vectors.
-This is more efficient than other (arguably more pedagogical) approaches based $6$-jets, see \cref{sec:appendix_ttc_other_methods} for a comparison. \todo{t: grafic needs update for new notation: $\vp$ vs $\vi$, $\vj$ vs. $\vq$, $\vx_1$ vs $\ve_{d_1}$, $\vx_j$ vs $\ve_{d_2}$ and $\gamma_{\vp}$ vs $\gamma_{\vi}$}
-\todo{T: do we summarize the first term in the propagation scheme? should be always the same, right?}
-\paragraph{Summary} Overall, this demonstrates the relevance of collapsing standard Taylor mode. It is applicable to computing \emph{general} linear differential operators beyond Laplacians.
+In total, we need to propagate $1 + 4D + 4D(D-1) + \nicefrac{4}{2}D(D-1) = 6D^2 - 2D + 1$ vectors using standard Taylor mode.
+After collapsing, we propagate ${\color{tab-green}1 + 3D + 1 + 3 D(D-1) + 1 + \nicefrac{3}{2} D(D-1)  + 1 = \nicefrac{9}{2}D^2 - D\nicefrac{3}{2} + 4}$ vectors.
+
+\paragraph{Summary and relation to other approaches for computing mixed partials.} Overall, this demonstrates the relevance of collapsing standard Taylor mode. It is applicable to computing \emph{general} linear differential operators beyond Laplacians.
+While our method seems daunting, it uses $K$-jets to compute arbitrary mixed partials of order $K$.
+There are more `pedagogical' approaches, which however require evaluating $(K'>K)$-jets and this becomes expensive, see \cref{sec:appendix_ttc_other_methods} where we present a pedagogical (but inefficient) approach to compute the biharmonic with $6$-jets similar to the approach proposed in \cite[][\S{}F]{shi2024stochastic}.
+
 
 %%% Local Variables:
 %%% mode: LaTeX

@@ -9,8 +9,8 @@ PINNs represent PDE solutions as a neural network and train the network via mini
 
 \paragraph{Is backpropagation all we need?}
 % Alternative: The gap between theory and practice
-Although nesting first-order automatic differentiation (AD) to compute high-order derivatives scales poorly, this approach is common practice.
-\todo{Felix, M: still needs citation.}
+Although nesting first-order automatic differentiation (AD) to compute high-order derivatives scales exponentially in time and memory, this approach is common practice \cite[][\S3.2]{shi2024stochastic}.
+\todo{Felix, M: still needs citation}
 A promising alternative to nested backpropagation, especially for higher-order derivatives is \emph{Taylor-mode AD}~\cite[or simply \emph{Taylor-mode},][\S13]{griewank2008evaluating}, introduced to the machine learning community in \citeyear{bettencourt2019taylor} and the JAX ecosystem in \cite{bradbury2018jax}.
 However, we observe empirically that vanilla Taylor-mode is often not enough to improve upon nested backpropagation: Evaluating the Laplacian of a 5-layer $\tanh$ activated MLP using JAX' \emph{Taylor mode is 50\% slower} than nested backpropagation via computing, then tracing, the Hessian via Hessian-vector products \cite{pearlmutter1994fast,dagreou2024how}. This calls into question the relevance of Taylor mode for computing common PDE operators.
 

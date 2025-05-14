@@ -66,7 +66,7 @@
   to address this challenge. We introduce a modified version of Taylor mode AD that ``collapses'' highest-order derivatives by rewriting
   the computational graph, and demonstrate how to exploit this optimization for general PDE operators and randomized Taylor mode.
   %\todo{Felix: This sentence is okay but not 100\% accurate. We do not unify the schemes. We show (i) that standard Taylor mode can be collapsed (e.g. yielding the forward Laplacian) and (ii) that this collapsing can also be applied to STDE).}
-  Empirical evaluations for Laplacian and Bi-Laplacian operators confirm the reduced runtime and memory requirements compared to standard Taylor mode AD.
+  Empirical evaluations for Laplacian and biharmonic operators confirm the reduced runtime and memory requirements compared to standard Taylor mode AD.
   Our graph-based modifications simply require the propagation of a sum up the computational graph, hence we argue that it could (or should) be performed by the just-in-time compiler in modern machine learning frameworks.
   Our preliminary experiments achieve promising, fully automated speed-ups, which we believe can easily be integrated into automatic differentiation libraries.
 
