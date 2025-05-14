@@ -19,38 +19,38 @@ For the Laplacian, one has $K = 2$, $R$ equals the dimension of $\vx$, i.e., $R 
 Instead of nesting derivative calculations to compute the full $K$-th order derivative tensor to afterwards select only the required derivatives, $K$-jets can be utilized to (theoretically) efficiently calculate the required derivatives directly.
 In case of \cref{eq:sum-k-directional}, one propagates $R$ $K$-jets through the computational graph using Taylor mode as illustrated in the appendix \cref{eq:sum-taylor-mode-naive}. To obtain the differential operator \cref{eq:sum-k-directional}, it is crucial to select appropriate input $K$-jets. To this end, we select the $r$th $K$-jet to $\vx_{0, r} = \vx_0$, $\vx_{1, r} = \vv_r$ and $\vx_{2, r} = \ldots = \vx_{K, r} = \vzero$.
 
-Without further optimizations, then standard Taylor mode propagates $1 + KN$ vectors through every node of the computational graph, where the length of the vectors depend on the individual node.
+Without further optimizations, standard Taylor mode propagates $1 + KR$ vectors through every node of the computational graph, where the length of the vectors depend on the individual node.
 Subsequently, one has to sum up the corresponding highest derivatives to obtain \cref{eq:sum-k-directional} as illustrated for our simple example in the appendix, see \cref{eq:sum-taylor-mode-naive}.
-The approach we propose here is based on the observation that there is a special element in the set of integer partitions $\partitioning(K)$, namely the trivial partition $\tilde{\sigma}= \{K\}$ corresponding to the term $ \nu(\tilde{\sigma}) \left< \partial \vg(\vh_0), \vh_{K, n} \right>$ in \eqref{eq:faa-di-bruno} with $\nu(\tilde{\sigma}) = 1$, yielding
+The approach we propose here is based on the observation that there is a special element in the set of integer partitions $\partitioning(K)$, namely the trivial partition $\tilde{\sigma}= \{K\}$ corresponding to the term $ \nu(\tilde{\sigma}) \left< \partial \vg(\vh_0), \vh_{K,r} \right>$ in \eqref{eq:faa-di-bruno} with $\nu(\tilde{\sigma}) = 1$, yielding
 \begin{equation}\label{eq:faa-di-bruno-expanded}
   \textstyle % Comment out this line if we have enough space
-  \vf_{K, n}
+  \vf_{K, r}
   =
-  \vg_{K,n}
+  \vg_{K,r}
   =
   \sum_{
     \sigma \in \partitioning(K) \setminus \{\tilde{\sigma}\}
   }
   \nu(\sigma) \left<
     \partial^{|\sigma|} \vg(\vh_0),
-    \tensorprod{s \in \sigma} \vh_{K, n}
+    \tensorprod{s \in \sigma} \vh_{K, r}
   \right>
   +
   \left<
     \partial \vg(\vh_0),
-    \vh_{K, n}
+    \vh_{K, r}
   \right>
 \end{equation}
 for our simple example.
-The last inner-product term on the right-hand side is linear in $\vh_{K,n}$, marking the key property for our method.
-To compute the sum of $\{\vg_{K, n}\}_n$, i.e., \cref{eq:sum-k-directional}, it is possible to directly propagate their sum, like $\sum_n \vh_{K,n}$, due to the linearity of $\left<\partial \vh, \bullet \right>$ and $\left< \partial \vg, \bullet \right>$ instead of passing the highest coefficients, like $\{\vh_{K,n}\}_n$, separately along the nodes of the computational graph.
+The last inner-product term on the right-hand side is linear in $\vh_{K,r}$, marking the key property for our method.
+To compute the sum of $\{\vg_{K, r}\}_r$, i.e., \cref{eq:sum-k-directional}, it is possible to directly propagate their sum, like $\sum_r \vh_{K,r}$, due to the linearity of $\left<\partial \vh, \bullet \right>$ and $\left< \partial \vg, \bullet \right>$ instead of passing the highest coefficients, like $\{\vh_{K,r}\}_r$, separately along the nodes of the computational graph.
 This observation also holds for general functions $ \vf$.
 Combining this insight with the Taylor mode yields our proposed {\em collapsed Taylor-mode AD}.
 It propagates only $1 \!+\!
-(K \!- \!1)N \!+\!
+(K \!- \!1)R \!+\!
 1$ vectors at every node in the computational graph, where the length of the vectors varies for each individual node in the same way as for the standard Taylor mode.
 For our simple example, the collapsed Taylor-mode AD is detailed in the appendix, see \cref{eq:sum-taylor-mode-efficient}, where the changes are highlighted in \textcolor{\colorcTM}{\colorcTMname}.
-To emphasize that the saving of $N-1$ coefficients at every node in the computational graph is indeed significant for common applications, important operators are discussed below.
+To emphasize that the saving of $R-1$ coefficients at every node in the computational graph is indeed significant for common applications, important operators are discussed below.
 
 \subsection{Second-order Operators}
 
@@ -87,13 +87,13 @@ It contains the Hessian trace of each element of a function, \ie, for $\vf: \sR^
   By pattern-matching \cref{eq:laplacian} with the RHS of \cref{eq:sum-k-directional} we conclude that $K=2$, and the following choices for computing the Laplacian with standard Taylor mode:
   \begin{align}
     \begin{array}{rlrlrlll}
-      \{(\vx_{0,d} & = \vx_0, &\vx_{1, d} & = \ve_d, & \vx_{2,d} &= \vzero)\}_{d=1}^D
+      \{(\vx_{0,d} & \!\!\!\!= \vx_0, &\vx_{1, d} & \!\!\!\!= \ve_d, & \vx_{2,d} &\!\!\!\!= \vzero)\}_{d=1}^D
                                                                    \quad
       &{\color{tab-orange} 1 + D + D\, \text{vectors}}
         \quad
       &\text{(exact)}
       \\[1ex]
-      \{(\vx_{0,s} & = \vx_0, &\vx_{1, s} & = \vv_s, &\vx_{2,s} & = \vzero)\}_{s=1}^S
+      \{(\vx_{0,s} & \!\!\!\!= \vx_0, &\vx_{1, s} & \!\!\!\!= \vv_s, &\vx_{2,s} & \!\!\!\!= \vzero)\}_{s=1}^S
                                                                   \quad
       &{\color{tab-orange} 1 + S + S\, \text{vectors}}
         \quad
@@ -138,7 +138,7 @@ In the general case,
   Computing it requires computing the following 2-jets with standard Taylor mode:
   \begin{align}
     \begin{array}{rlrlrlll}
-      \{(\vx_{0,r} & = \vx_0, &\vx_{1, r} & = \vs_r, & \vx_{2,r} &= \vzero)\}_{r=1}^R
+      \{(\vx_{0,r} & \!\!\!\!= \vx_0, &\vx_{1, r} & \!\!\!\!= \vs_r, & \vx_{2,r} &\!\!\!\!= \vzero)\}_{r=1}^R
                                                                    \quad
       &{\color{tab-orange} 1 + R + R\, \text{vectors}}
         \quad
