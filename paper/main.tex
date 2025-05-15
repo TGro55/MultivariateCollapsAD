@@ -60,22 +60,11 @@
 \maketitle
 
 \begin{abstract}
-  Computing partial differential equation (PDE) operators of high-dimensional functions via nested backpropagation becomes prohibitively expensive in time and memory, severely restricting their utility in scientific machine learning.
-  % As an alternative, Taylor‑mode AD computes derivatives in a single forward pass but backpropagation remains the de-facto standard in many implementations.
-  Recent advances, such as the forward Laplacian and randomized Taylor mode, propose enhanced forward mode automatic differentiation (AD) schemes
-  to address this challenge. We introduce a modified version of Taylor mode AD that ``collapses'' highest-order derivatives by rewriting
-  the computational graph, and demonstrate how to exploit this optimization for general PDE operators and randomized Taylor mode.
-  %\todo{Felix: This sentence is okay but not 100\% accurate. We do not unify the schemes. We show (i) that standard Taylor mode can be collapsed (e.g. yielding the forward Laplacian) and (ii) that this collapsing can also be applied to STDE).}
-  Empirical evaluations for Laplacian and biharmonic operators confirm the reduced runtime and memory requirements compared to standard Taylor mode AD.
-  Our graph-based modifications simply require the propagation of a sum up the computational graph, hence we argue that it could (or should) be performed by the just-in-time compiler in modern machine learning frameworks.
-  Our preliminary experiments achieve promising, fully automated speed-ups, which we believe can easily be integrated into automatic differentiation libraries.
-
-
-%Recent developments in the field of physically informed neural networks have been concerned with the efficient computation of the involved, often higher-order, differential operators. While the classical way of nesting the derivative computations is seen to be inefficient, various methods were investigated to tackle this bottleneck. Besides the approximation of the operators by stochastic sampling, using modified automatic differentiation methods has become a field of interest. To accelerate the evaluation of differential operators, we explore automated computational graph simplifications based on the concept of linearity on top of Taylor-Mode AD to exploit inherent structure of common differential operators. We show that the required Taylor coefficients can first be summed, then propagated, which reduces the overall computational cost, yielding our proposed method collapsed Taylor-Mode.
-%These simplifications can be used for many common differential operators like the Laplacian.
-%In addition, we combined collapsed Taylor-Mode with a result of the automatic differentiation community to be able to leverage our approach when the operator is not directly representable through Taylor-Mode AD. Our approach can be naturally combined with stochastic approaches and extends previous modified AD schemes while being able to handle operators with derivatives of arbitrary order that were difficult, if not impossible, to evaluate using previous approaches.
-
-%Due to the simplicity of our graph modification (propagating a sum up a computational graph), we argue that it could (or should) be performed by the just-in-time (\texttt{jit}) compiler in machine learning frameworks. Our preliminary experiments achieve promising, fully automated, speed-ups, which we believe can easily be integrated into automatic differentiation libraries.
+  Computing partial differential equation (PDE) operators via nested backpropagation is expensive, yet popular, and severely restricts their utility for scientific machine learning.
+  Recent advances, like the forward Laplacian and randomizing Taylor mode automatic differentiation (AD), propose forward schemes to address this.
+  We introduce an optimization technique for Taylor mode that ``collapses''  derivatives by rewriting the computational graph, and demonstrate how to apply it to general linear PDE operators, and randomized Taylor mode.
+  The modifications simply require propagating a sum up the computational graph, which could---or should---be done by a machine learning compiler, without exposing complexity to users.
+  We implement our collapsing procedure and evaluate it on popular PDE operators, confirming it accelerates Taylor mode and outperforms nested backpropagation.
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
@@ -129,7 +118,7 @@
 \input{figures/interface_overview}
 \clearpage
 
-\section{Graph Simplifications}
+\section{Graph Simplifications}\label{sec:graph-simplifications}
 \input{sections/graph_simplifications}
 \clearpage
 

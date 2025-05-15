@@ -60,19 +60,22 @@ This allows to express contractions with derivative tensors of vector-valued fun
 contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \times (\sR^D)^{\otimes k}$, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
 
 \paragraph{Multivariate case \& composition.}
-Evaluating the $K$-jet of $\vf$ at an argument $\vx_0 \in \sR^D$ starts with the extension of $\vx_0$ to a smooth path $\vx: \sR \to \sR^D$ with $\vx(0) = \vx_0$.
-The $K$-jet of $\vf$ is defined as 
+Evaluating the $K$-jet of $\vf$ at $\vx_0 \in \sR^D$ starts with the extension of $\vx_0$ to a smooth path $\vx: \sR \to \sR^D$ with $\vx(0) = \vx_0$.
+Formally, the $K$-jet of $\vf$ is defined as 
 \begin{align*}
   \textstyle % Comment out this line if we have enough space
   J^K \vf : \sR \to \sR^C\,,
   \quad (J^K \vf)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vf_k
   \quad \text{with} \quad
-  \vf_k := \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k} \vf(\vx(t)) \right|_{t=0}
+  \vf_k := \frac{\mathrm{d}^k}{\mathrm{d}t^k} \vf(\vx(t)) |_{t=0}
 \end{align*}
-and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$ (illustrated in \cref{fig:utp}). $J^K \vf$ is sometimes also considered differently as a mapping $(\vx_0, \dots, \vx_K) \mapsto (\vf_0, \dots, \vf_K)$ \cite{bradbury2018jax}, because we are interested in the coefficients, not the Taylor polynomial itself.
+and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$.
+As we are interested in the coefficients, we will slightly abuse the $K$-jet as mapping $(\vx_0, \dots, \vx_K) \mapsto (\vf_0, \dots, \vf_K)$  (see \cref{fig:utp} for an illustration). 
 
-As is common for AD, the computation of the $\vf_k$ known as Taylor mode relies on composing $\vf$ of elemental functions with known derivatives, and the chain rule.
-In the simplest case, let $\vf$ be given by $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg$ and $\vh$. Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \left. \frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t)) \right|_{t=0}$ are computed using the generalized Faà di Bruno formula
+As is common for AD, propagating the coefficients is broken down into 
+composing $\vf$ of atomic functions with known derivatives and the chain rule.
+In the simplest case, let $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg, \vh$.
+Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \smash{\frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t))} |_{t=0}$ follow from the generalized Faà di Bruno formula
 \begin{align}
   \label{eq:faa-di-bruno}
   % \textstyle % Comment out this line if we have enough space
@@ -99,11 +102,11 @@ In the simplest case, let $\vf$ be given by $\vf = \vg \circ \vh: \sR^D \to \sR^
       \prod_{s \in \sigma}
       s!
     \right)
-  }\,
+  }\,.
 \end{align}
-Here, $\partitioning(k)$ is the integer partitioning of $k$ (a set of sets), $\nu$ is a multiplicity function, and $n_s$ counts occurrences of $s$ in an integer partitioning $\sigma$ (\eg $n_1(\{1,1,3\}) = 2$ and $n_3 = 1$).
-The $\vh_k$'s are propagated through $\vg$ resulting in the $K$-jet for $\vf$.
-In summary, this yields the propagation scheme (where $\vx_k \in \sR^D$, $\vh_k \in \sR^I$, $\vf_k \in \sR^C$)
+Here, $\partitioning(k)$ is the integer partitioning of $k$ (a set of sets), $\nu$ is a multiplicity function, and $n_s$ counts occurrences of $s$ in a set $\sigma$ (\eg $n_1(\{1,1,3\}) = 2$ and $n_3 = 1$).
+Propagating the $\vh_k$s through $\vg$ results in the $K$-jet for $\vf$.
+In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$, $\vf_k \in \sR^C$)
 \begin{align}\label{eq:taylor-mode-composition}
   \begin{split}
     &\begin{pmatrix*}
@@ -219,9 +222,8 @@ In summary, this yields the propagation scheme (where $\vx_k \in \sR^D$, $\vh_k 
       \right)
   \end{split}
 \end{align}
-which describes the forward propagation of a single $K$-jet.
-\citet[][\S13]{griewank2008evaluating} presents explicit formulas of common elemental functions that have quadratic complexity in $K$.
-However, computing PDE operators requires propagating \emph{multiple} $K$-jets in parallel accumulating their results.
+which describes the forward propagation of a \emph{single} $K$-jet.
+However, computing popular PDE operators requires propagating \emph{multiple} $K$-jets in parallel, then summing their results.
 We propose to pull this accumulation inside Taylor mode's propagation scheme, thereby collapsing it.
 
 %%% Local Variables:

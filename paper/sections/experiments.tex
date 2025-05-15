@@ -1,4 +1,4 @@
-Here, we describe how we implemented the collapsing process of Taylor mode and empirically validate the performance improvements of collapsing standard Taylor mode on the previously described operators.
+Here, we describe our implementation of the Taylor mode collapsing process and empirically validate its performance improvements on the previously discussed operators.
 
 \paragraph{Design decisions \& limitations.}
 JAX~\cite{bradbury2018jax} already offers an--albeit experimental---Taylor mode implementation~\cite{bettencourt2019taylor}.
@@ -14,68 +14,65 @@ Our JAX experiments with the Laplacian confirm that relative performance remains
 Last, while our Taylor mode implementation is competitive with JAX's, we did not fully optimize it (\eg we do \emph{not} use in-place operations, and we do \emph{not} implement the efficient scheme from \citet[][\S13]{griewank_evaluating_1999}, but stick to \cref{eq:faa-di-bruno}).
 Given our implementation's superiority compared to nested first-order AD that we demonstrate below, these are promising future efforts that will further improve performance, and we believe that making Taylor mode available to the PyTorch community is also an important step towards establishing its use.
 
-\paragraph{Usage.}
+\paragraph{Usage (overview in \cref{sec:appendix-visual-tour}).}
 Our implementation takes a PyTorch function (\eg a neural net) and first captures its computational graph using \texttt{torch.fx}'s symbolic tracing mechanism.
 Then, it replaces each operation with its Taylor arithmetic, which yields the computational graph of the function's $K$-jet.
 Users can use this vanilla Taylor mode to define their differential operator's computation.
 The collapsing is done by again by a function \texttt{simplify}, which again traces the computation, then rewrites the graph, propagating the summation of highest coefficients up to the leafs.
-This requires one backward traversal of the graph.
+This requires one backward traversal through the graph (\cref{sec:graph-simplifications} presents a detailed example).
 The resulting graph performs the same computation, but propagates summed coefficients, \ie uses collapsed Taylor mode.
-See \cref{fig:interface-overview} for a visual walk-through of the procedure.
 
 \input{figures/torch_benchmark}
 \input{tables/torch_benchmark}
 
 \paragraph{Experimental setup.}
 We empirically validate our proposed collapsing approach in PyTorch.
-We compare collapsed Taylor mode with vanilla Taylor mode and nested first-order AD on the previously discussed differential operators using an Nvidia RTX 6000 with 24 GiB memory.
+We compare \textcolor{tab-orange}{standard Taylor mode} with \textcolor{tab-green}{collapsed Taylor mode} and \textcolor{tab-blue}{nested first-order AD} on an Nvidia RTX 6000 GPU with 24 GiB memory.
 To implement the (weighted) Laplacian and its stochastic counterpart, we use vector-Hessian-vector products (VHVPs) in forward-over-reverse order, as recommended \cite{griewank2008evaluating,dagreou2024how}.
 For the biharmonic operator, we simply nest two VHVPs.
-We use a $D \to 768 \to 768 \to 512 \to 512 \to 1$ MLP $f_\vtheta$ with tanh activations and trainable parameters $\vtheta$, and compute the differential operators on multiple data in parallel, \ie on a batch of size $N$.
-
-For all implementations, we measure three performance metrics (memory allocation does not fluctuate, hence we determine it in a single run):
-\begin{enumerate}[leftmargin=0.5cm]
-    \item \textbf{Runtime.} We report the smallest value of 50 independent repetitions.
-    
-    \item \textbf{Peak memory (non-differentiable \wrt $\vtheta$)} when computing the PDE operator inside a \texttt{torch.no\_grad} context, \ie we are only interested in its value (\eg in VMC \cite{pfau2020ab}).
-    
-    \item \textbf{Peak memory (differentiable \wrt $\vtheta$)} when computing the PDE operator inside a \texttt{torch.enable\_grad} context. This covers applications like PINNs or alternative VMC works \cite{webber2022rayleigh, toulouse2007optimization} that demand the PDE operator be differentiable \wrt the neural network's parameters $\vtheta$.
-\end{enumerate}
+For the weighted Laplacian's coefficient matrix, we choose a simple full-rank diagonal matrix.
+As common for PINNs \cite[\eg][]{shi2024stochastic,dangel2024kroneckerfactored}, we use a 5-layer MLP $\smash{f_\vtheta}: D \to 768 \to 768 \to 512 \to 512 \to 1$ with $\tanh$ activations and trainable parameters $\vtheta$, and compute the PDE operators on multiple data, \ie a batch of size $N$.
+We measure three performance metrics:
+\textbf{(1) Run time} reports the smallest computation time of 50 repetitions.
+\textbf{(2) Peak memory (non-differentiable)} measures the maximum allocated GPU memory when computing the PDE operator's value (\eg used in VMC \cite{pfau2020ab}) inside a \texttt{torch.no\_grad} context.
+\textbf{(3) Peak memory (differentiable)} is the maximum memory usage when computing the PDE operator inside a \texttt{torch.enable\_grad} context, which allows backpropagation to $\vtheta$ (required for training PINNs, or alternative VMC works \cite{webber2022rayleigh, toulouse2007optimization}). This demands saving intermediates, but does not affect run time.
+As memory allocation does not fluctuate much, we measure it in a single run.
 
 \paragraph{Results.}
-\Cref{fig:benchmark} visualizes the computational demands' growth \wrt the batch size (exact) and number of Monte-Carlo samples (stochastic) for fixed dimensions $D$.
-We used a 5-layer MLP with $\tanh$ activation and around 3M parameters, similar to the ones employed in other works on PINNs \cite{dangel2024kroneckerfactored,shi2024stochastic}.
-As the scalings with batch size and Monte-Carlo samples are both linear, we quantify the results by fitting linear functions and reporting their slopes (\ie, time and memory added per datum/sample) in \Cref{tab:benchmark}. We make the following observations:
+\Cref{fig:benchmark} visualizes the growth in computational resources \wrt the batch size (exact) and random samples (stochastic) for fixed dimensions $D$.
+Run time and memory increase linearly in both, as expected.
+We quantify the results by fitting linear functions and reporting their slopes (\ie, time and memory added per datum/sample) in \cref{tab:benchmark}.
+We make the following observations:
 \begin{itemize}[leftmargin=0.5cm]
 \item \textbf{Collapsed Taylor mode accelerates standard Taylor mode.}
-  When comparing collapsed with standard Taylor mode, we observe that the measured runtime differences correspond well with the theoretical prediction.
-  \Eg, for the Laplacian, the ratio of propagated vectors between standard and collapsed is $\nicefrac{(2 + D)}{(1 + 2D)} \approx 0.5$; we observe that adding one datum adds $0.60ms$ to standard and $0.33ms$ to collapsed Taylor mode.
-  Similar for the weighted Laplacian and for their stochastic versions.
-  This means that we can compute these operators with twice the batch size or MC-samples in the same time as had we used standard Taylor mode.
+  The measured performance differences correspond well with the theoretical estimate by counting the number of forward-propagated vectors.
+  \Eg, for the exact Laplacian, adding one datum introduces {\color{tab-green}$2 + D$} versus {\color{tab-orange}$1 + 2D$} new vectors.
+  For $D=50$, their ratio is $\nicefrac{\color{tab-green}(2 + D)}{\color{tab-orange}(1 + 2D)} \approx 0.51$.
+  Empirically, we measure that adding one datum adds {\color{tab-orange}$0.60$\,ms} to standard and {\color{tab-green}$0.33$\,ms} to collapsed Taylor mode, whose ratio of $\approx 0.55$ is close.
+  Similar arguments hold for peak memory of differentiable computation, stochastic approximation, and the other PDE operators (see \cref{tab:benchmark-ratios} for all numbers).
+  % \Eg This means that we can compute these operators with twice the batch size or MC-samples in the same time as had we used standard Taylor mode.
 
-\item \textbf{Collapsed Taylor mode consistently outperforms nested 1\textsuperscript{st}-order AD.}
-  For the exact and stochastic Laplacian and weighted Laplacian, collapsed Taylor mode is roughly twice as fast as nested AD while using 70-80\% of the latter's memory.
-  The only exception is for the differentiable Biharmonic, which consumes about 20\% more memory, but uses only 66\% time.
-  For the randomized Biharmonic, we observe even greater runtime and memory improvements by roughly 9 and 3 (or 6 if non-differentiable)x.
-
-  \todo{FD: I think one reason why we get bigger improvements for the stochastic Bi-Laplacian is that I have to use \texttt{vmap} twice and this might mess up performance (hard to verify though).
-  }
-
-\item \textbf{If the PDE operator can be non-differentiable, both standard and Taylor mode require significantly less memory than nested 1\textsuperscript{st}-order AD.}
-  This aligns with our understanding of Taylor mode, which performs a single forward propagation and does not need to store any intermediates for future differentiation, in contrast to the nested differentiation.
+\item \textbf{Collapsed Taylor mode outperforms nested 1\textsuperscript{st}-order AD.}
+  For the exact and stochastic (weighted) Laplacians, collapsed Taylor mode is roughly twice as fast (consistent with the JAX results in \cref{fig:vanilla-taylor-not-enough}) while using only 70-80\% memory.
+  For the biharmonic operator, we also observe speed-ups\footnote{For the exact biharmonic, the first-order AD implementation uses a somewhat unfair advantage we have been withholding so far:
+  it computes the biharmonic by taking the Laplacian of the Laplacian;
+  our Taylor mode implementations do not.
+  We intentionally decided to treat the biharmonic operator as example for a \emph{general} linear operator to demonstrate that, even in this case, collapsing Taylor still leads to (albeit smaller) improvements, although the memory consumption is larger.
+  In \cref{sec:jax-benchmark}, we confirm that the best way to compute the biharmonic operator is indeed by nesting Laplacians, which can of course also be done in Taylor mode:
+  With collapsed Taylor mode, we then obtain much larger savings of roughly 3x in run time \emph{and} memory (\cref{tab:jax-benchmark,fig:jax-benchmark}).
+  },
+  up to 9x in the stochastic case.
 \end{itemize}
 
-Because of its special structure, there is another efficient scheme for computing the Biharmonic Operator that nests twice the Laplacian.
-In the appendix, we briefly discuss this approach in combination with our collapsed Taylor mode.
-However, our focus here was to show that our idea applies to other differential operators, therefore making it a relevant contribution.
+Because Taylor mode performs a single forward propagation, in contrast to nested differentiation which needs to store intermediates for future differentiation, its memory consumption is much better specifically for non-differentiable computations.
+\todo{F: This paragraph could be left out for space reasons.}
 
-
-We also conducted experiments with JAX (+ \texttt{jit}) to rule out artifacts from the ML framework.
+\paragraph{Comparison with JAX.} We also conducted experiments with JAX (+ \texttt{jit}) to rule out artifacts from choosing PyTorch, implementation mistakes in our Taylor mode library, or unexpected simplifications from the JIT compiler.
 In general, we find that the choice of ML framework does not affect the results.
-\Eg, for computing the Laplacian with nesting, we found that PyTorch increases by 0.61ms and 4.4 and 2.2 MiB per datum, while JAX increases by 0.57ms and 6.0, and 1.4 MiB per datum (\Cref{fig:vanilla-taylor-not-enough,tab:jax-benchmark}).
+\Eg, computing the exact Laplacian with nested first-order AD, PyTorch increases by $0.61$\,ms per datum (\cref{tab:benchmark}), while JAX increases by $0.57$\,ms (\Cref{fig:vanilla-taylor-not-enough,tab:jax-benchmark}).
 We find the same trend when comparing our collapsed Taylor mode and JAX's forward Laplacian.
 Interestingly, we noticed that JAX's Taylor mode was consistently slower than our PyTorch implementation, despite using \texttt{jit}.
-We conclude from these results that (both ours, as well as the existing JAX) Taylor mode implementations still have potential for improvements that may further improve the margin to nested first-order.
+We conclude from these results that (both ours, as well as the existing JAX) Taylor mode still has potential for improvements that may further improve the margin to nested first-order.
 
 %%% Local Variables:
 %%% mode: LaTeX
