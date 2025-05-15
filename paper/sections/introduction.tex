@@ -19,7 +19,7 @@ This calls into question the relevance of Taylor mode for computing common PDE o
 Recent works have successfully demonstrated the potential of modified forward propagation schemes, though.
 For the Laplacian, \citet{li2023forward, li2024dof} developed a special forward propagation framework called the \emph{forward Laplacian}, whose JAX implementation \cite{gao2023folx} is \emph{roughly twice as fast as nested first-order AD}.
 While the forward Laplacian does not rely on Taylor mode, recent work pointed out a connection \cite{dangel2024kroneckerfactored}; it remains unclear, though, if efficient forward schemes exist for other differential operators, and how they relate to Taylor mode.
-Concurrently, \citet{shi2024stochastic} derived highly-efficient stochastic approximations of differential operators in high dimensions by evaluating Taylor mode along suitably sampled random directions.
+Concurrently, \citet{shi2024stochastic} derived stochastic approximations of differential operators in high dimensions by evaluating Taylor mode along suitably sampled random directions.
 
 Irrespective of stochastic or exact computation, at their core, these popular PDE operators are \emph{linear}: we must evaluate derivatives along multiple directions, then sum them.
 Based on this linearity, we identify an optimization mechanism to rewrite the computational graph of standard Taylor mode that is applicable to general linear PDE operators and randomized Taylor mode:
