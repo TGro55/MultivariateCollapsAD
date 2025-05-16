@@ -75,7 +75,7 @@ As we are interested in the coefficients, we will slightly abuse the $K$-jet as 
 As is common for AD, propagating the coefficients is broken down into 
 composing $\vf$ of atomic functions with known derivatives and the chain rule.
 In the simplest case, let $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg, \vh$.
-Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \smash{\frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t))} |_{t=0}$ follow from the generalized Faà di Bruno formula
+Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \smash{\frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t))} |_{t=0}$ follow from the generalized Faà di Bruno formula (spelled out for some $k$s in \cref{sec:faa-di-bruno-cheatsheet})
 \begin{align}
   \label{eq:faa-di-bruno}
   % \textstyle % Comment out this line if we have enough space
@@ -120,7 +120,7 @@ In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$
       \\
       \vx_K
     \end{pmatrix*}
-      \!\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}\!
+      \overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
       \begin{pmatrix*}[l]
         \vh_0 \!=\!  \vh(\vx_0)
         \\
@@ -131,7 +131,7 @@ In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$
         \\
         \vh_2 \!=\! \left<
         \partial^2 \vh(\vx_0),
-        \vx_1 \otimes \vx_1
+        \vx_1^{\otimes 2}
         \right>
         \!+\!
         \left <
@@ -153,7 +153,7 @@ In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$
         \right>\!\!\!
       \end{pmatrix*}
     \\
-    &\!\!\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}\!
+    &\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
       \left(\!\!\!
       \begin{array}{l}
         \vg_0 \!=\!  \vg(\vh_0)
@@ -165,7 +165,7 @@ In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$
         \\
         \vg_2 \!=\! \left<
         \partial^2 \vg(\vh_0),
-        \vh_1 \!\otimes\! \vh_1\right>
+        \vh_1^{\otimes 2}\right>
         \!+\!
         \left< \partial \vg(\vh_0),
         \vh_2
@@ -186,7 +186,7 @@ In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$
       \end{array}
       \!\!\!\!
       \right)
-      \!\!=\!\!
+      =
       \left(\!\!\!
       \begin{array}{l}
         \vf_0 \!=\!  \vf(\vx_0)
@@ -198,7 +198,7 @@ In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$
         \\
         \vf_2 \!=\! \left<
         \partial^2 \vf(\vx_0),
-        \vx_1 \!\otimes\! \vx_1
+        \vx_1^{\otimes 2}
         \right>
         \!+\!
         \left< \partial \vf(\vx_0),

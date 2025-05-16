@@ -13,7 +13,7 @@ First, as of now, our Taylor mode in PyTorch supports only a small number of pri
 Second, functions represented by \texttt{torch.fx} graphs can, at the moment, not be accelerated with \texttt{torch.compile}.
 In our PyTorch experiments, we therefore report uncompiled implementations. 
 Our JAX experiments with the Laplacian confirm that \texttt{jit} does not affect the relative performance (\cref{sec:jax-benchmark}). 
-Last, while our Taylor mode implementation is competitive with JAX's, we did not fully optimize it (\eg we do \emph{not} use in-place operations, and we do \emph{not} implement the efficient schemes from \citet[][\S13]{griewank_evaluating_1999}, but stick to \cref{eq:faa-di-bruno}).
+Last, while our Taylor mode implementation is competitive with JAX's, we did not fully optimize it (\eg we do \emph{not} use in-place operations, and we do \emph{not} implement the efficient schemes from \citet[][\S13]{griewank2008evaluating}, but stick to Fa\`a di Bruno (\cref{eq:faa-di-bruno})).
 Given our implementation's superiority compared to nested first-order AD that we demonstrate below, these are promising future efforts that will further improve performance, and we believe that making Taylor mode available to the PyTorch community is also an important step towards establishing its use.
 
 \paragraph{Usage (overview in \cref{sec:appendix-visual-tour}).}
@@ -22,7 +22,7 @@ Then, it replaces each operation with its Taylor arithmetic, which yields the co
 Users can then write a function to compute their differential operator with this vanilla Taylor mode. 
 Collapsing is achieved using a function \texttt{simplify}, which traces the computation again, rewrites the graph, and propagates the summation of highest coefficients up to its leafs.
 This requires one backward traversal through the graph (\cref{sec:graph-simplifications} presents a detailed example).
-The resulting graph performs the same computation, but propagates summed coefficients, \ie uses collapsed Taylor mode.
+The simplified graph produces the same result, but propagates summed coefficients, \ie uses collapsed Taylor mode.
 
 \input{tables/torch_benchmark}
 
@@ -36,7 +36,7 @@ As common for PINNs \cite[\eg][]{shi2024stochastic,dangel2024kroneckerfactored},
 We measure three performance metrics:
 \textbf{(1) runtime} reports the smallest execution time of 50 repetitions.
 \textbf{(2) Peak memory (non-differentiable)} measures the maximum allocated GPU memory when computing the PDE operator's value (\eg used in VMC \cite{pfau2020ab}) inside a \texttt{torch.no\_grad} context.
-\textbf{(3) Peak memory (differentiable)} is the maximum memory usage when computing the PDE operator inside a \texttt{torch.enable\_grad} context, which allows backpropagation to $\vtheta$ (required for training PINNs, or alternative VMC works \cite{webber2022rayleigh, toulouse2007optimization}). This demands saving intermediates, but does not affect runtime.
+\textbf{(3) Peak memory (differentiable)} is the maximum memory usage when computing the PDE operator inside a \texttt{torch.enable\_grad} context, which allows backpropagation to $\vtheta$ (required for training PINNs, or alternative VMC works \cite{webber2022rayleigh, toulouse2007optimization}). This demands saving intermediates, which uses more memory but does not affect runtime.
 As memory allocation does not fluctuate much, we measure it in a single run.
 
 \paragraph{Results.}
@@ -50,13 +50,13 @@ We make the following observations:
   \Eg, for the exact Laplacian, adding one datum introduces {\color{tab-green}$2 + D$} versus {\color{tab-orange}$1 + 2D$} new vectors.
   For $D=50$, their ratio is $\nicefrac{\color{tab-green}(2 + D)}{\color{tab-orange}(1 + 2D)} \approx 0.51$.
   Empirically, we measure that adding one datum adds {\color{tab-orange}$0.60$\,ms} to standard, and {\color{tab-green}$0.33$\,ms} to collapsed, Taylor mode; the ratio of $\approx 0.55$ is close.
-  Similar arguments hold for peak memory of differentiable computation, stochastic approximation, and the other PDE operators (see \cref{tab:benchmark-ratios} for all numbers).
+  Similar arguments hold for peak memory of differentiable computation, stochastic approximation, and the other PDE operators (see \cref{tab:benchmark-ratios} for all comparisons).
   % \Eg This means that we can compute these operators with twice the batch size or MC-samples in the same time as had we used standard Taylor mode.
 
 \item \textbf{Collapsed Taylor mode outperforms nested 1\textsuperscript{st}-order AD.}
   For the exact and stochastic (weighted) Laplacians, collapsed Taylor mode is roughly twice as fast (consistent with the JAX results in \cref{fig:vanilla-taylor-not-enough}) while using only 70-80\% memory.
   For the biharmonic operator, we also observe speed-ups;
-  in the stochastic case up to 9x in time, and 3x (differentiable) in memory.
+  in the stochastic case up to 9x in time, and 3x in memory (differentiable).
 \end{itemize}
 
 %Because Taylor mode performs a single forward propagation, in contrast to nested differentiation, which needs to store intermediates for future differentiation, its memory consumption is much better, specifically for non-differentiable computations.
@@ -66,7 +66,7 @@ We find that the choice of ML framework does not affect the results.
 \Eg, when computing the exact Laplacian with nested first-order AD, PyTorch consumes $0.61$\,ms per datum (\cref{tab:benchmark}), while JAX uses $0.57$\,ms (\cref{fig:vanilla-taylor-not-enough,tab:jax-benchmark}).
 We find the same trend when comparing our collapsed Taylor mode and JAX's forward Laplacian.
 Interestingly, we noticed that JAX's Taylor mode was consistently slower than our PyTorch implementation, despite using \texttt{jit}.
-We conclude from these results that (both ours, as well as the existing JAX) Taylor mode still has potential for improvements that may further improve the margin to nested first-order.
+We conclude from these results that (both ours, as well as the existing JAX) Taylor mode still has potential for improvements that may further increase the margin to nested first-order.
 
 %%% Local Variables:
 %%% mode: LaTeX

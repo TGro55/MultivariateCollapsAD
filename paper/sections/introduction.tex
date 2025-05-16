@@ -11,13 +11,13 @@ Other PINNs for elasticity problems use the biharmonic operator \cite{vahab_phys
 \paragraph{Is backpropagation all we need?}
 % Alternative: The gap between theory and practice
 Although nesting first-order automatic differentiation (AD) to compute high-order derivatives scales exponentially \wrt the degree in time and memory \cite[][\S3.2]{shi2024stochastic}, this approach is common practice: it is easy to implement in ML libraries, and their backpropagation is highly optimized.
-A promising alternative is \emph{Taylor-mode AD}~\cite[or simply \emph{Taylor-mode},][\S13]{griewank2008evaluating}, introduced to the ML community in \citeyear{bettencourt2019taylor}, which scales polynomially \wrt the degree in time and memory \cite{griewank_evaluating_1999}.
-However, we observe empirically that vanilla Taylor mode may not be enough to beat nesting: when evaluating the Laplacian of a 5-layer MLP, using JAX's \emph{Taylor mode is 50\% slower than nested backpropagation} that computes, then traces, the Hessian via Hessian-vector products \cite{pearlmutter1994fast,dagreou2024how}.
+A promising alternative is \emph{Taylor mode AD}~\cite[or simply \emph{Taylor mode},][\S13]{griewank2008evaluating}, introduced to the ML community in \citeyear{bettencourt2019taylor}, which scales polynomially \wrt the degree in time and memory \cite{griewank_evaluating_1999}.
+However, we observe empirically that vanilla Taylor mode may not be enough to beat nesting (\cref{fig:vanilla-taylor-not-enough}): evaluating the Laplacian of a 5-layer MLP, using JAX's \emph{Taylor mode is 50\% slower than nested backpropagation} that computes, then traces, the Hessian via Hessian-vector products \cite{pearlmutter1994fast}.
 This calls into question the relevance of Taylor mode for computing common PDE operators.
 
 \paragraph{The advent of forward schemes.}
 Recent works have successfully demonstrated the potential of modified forward propagation schemes, though.
-For the Laplacian, \citet{li2023forward, li2024dof} developed a special forward propagation framework called the \emph{forward Laplacian}, whose JAX implementation \cite{gao2023folx} is \emph{roughly twice as fast as nested first-order AD}.
+For the Laplacian, \citet{li2023forward, li2024dof} developed a special forward propagation framework called the \emph{forward Laplacian}, whose JAX implementation \cite{gao2023folx} is \emph{roughly twice as fast as nested first-order AD} (\cref{fig:vanilla-taylor-not-enough}).
 While the forward Laplacian does not rely on Taylor mode, recent work pointed out a connection \cite{dangel2024kroneckerfactored}; it remains unclear, though, if efficient forward schemes exist for other differential operators, and how they relate to Taylor mode.
 Concurrently, \citet{shi2024stochastic} derived stochastic approximations of differential operators in high dimensions by evaluating Taylor mode along suitably sampled random directions.
 
