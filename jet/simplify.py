@@ -6,13 +6,18 @@ from contextlib import contextmanager
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-from torch import Tensor, add, cos, cosh, div, einsum, mul
+from torch import Tensor, add, cos, cosh, div, mul
 from torch import pow as torch_pow
 from torch import sigmoid, sin, sub, tanh
 from torch.fx import Graph, GraphModule, Node
 from torch.nn.functional import linear
 
-from jet.utils import get_letters, replicate, sum_vmapped
+from jet.utils import (
+    print_tensor_constants_and_shapes,
+    recursive_getattr,
+    replicate,
+    sum_vmapped,
+)
 
 
 class RewriteReplicate:
@@ -84,11 +89,6 @@ class RewriteReplicate:
             self.replace_pattern(pattern)
             rewritten = True
 
-        if not rewritten:
-            rewritten = self.fuse_replicates_with_einsum()
-            if rewritten:
-                self.last_pattern_pos = 0
-
         return rewritten
 
     def find_pattern(self) -> Optional[Tuple[List[Node], Node]]:  # noqa: C901
@@ -156,70 +156,6 @@ class RewriteReplicate:
             ):
                 pattern = [parents, node]
 
-            # operations that consume multiple replicate tensors, and produce a tensor
-            # that can be expressed as a replicate, e.g. let `x_rep1 = replicate(x1)`,
-            # `x_rep2 = replicate(x2)` and `x_rep3 = replicate(x3)`. Then
-            # `einsum("...,...,...->...", x_rep1, x_rep2, x_rep3)`
-            # -> `replicate(einsum("...,...,...->...", x1, x2, x3))`
-            elif node.target == einsum:
-                # check if there are replicate nodes
-                equation, operands = node.args[0], node.args[1:]
-                replicate_pos = defaultdict(list)
-                for pos, op in enumerate(operands):
-                    if self.is_replicate(op):
-                        replicate_pos[op].append(pos)
-
-                if not replicate_pos:
-                    continue
-
-                # check if all replicate nodes have the same leading letter
-                lhs, rhs = equation.split("->")
-                lhs = lhs.split(",")
-                leading_letters = {
-                    lh[0]
-                    for pos, lh in enumerate(lhs)
-                    if pos in sum(list(replicate_pos.values()), [])
-                }
-                if len(leading_letters) != 1:
-                    continue
-
-                (rep_letter,) = leading_letters
-
-                # check that this leading letter is the first of the output
-                if rep_letter != rhs[0]:
-                    continue
-
-                # make sure it is not introduced by other non-replicate ops
-                introduced_by_others = any(
-                    rep_letter in lh
-                    for pos, lh in enumerate(lhs)
-                    if pos not in sum(list(replicate_pos.values()), [])
-                )
-
-                if introduced_by_others:
-                    continue
-
-                # maybe introduce a new letter
-                if rep_letter == ".":
-                    # get the letters that are used in the other operands
-                    other_letters = set("".join(lhs))
-                    # get a new letter that is not used in the other operands
-                    (rep_letter,) = get_letters(1, blocked=other_letters)
-                    lhs = [lh.replace("...", f"{rep_letter}...") for lh in lhs]
-                    rhs = rhs.replace("...", f"{rep_letter}...")
-
-                # We can omit the replicated index. The node rewrite is performed
-                # elsewhere, we only have to update the equation
-                lhs = [lh.replace(rep_letter, "") for lh in lhs]
-                rhs = rhs.replace(rep_letter, "")
-                new_equation = f"{','.join(lhs)}->{rhs}"
-                self.maybe_print(
-                    f"Changing {node} with {operands} from {equation}"
-                    + f" into {new_equation}."
-                )
-                node.update_arg(0, new_equation)
-                pattern = [list(replicate_pos.keys()), node]
-
             if pattern is not None:
                 self.maybe_print(f"Can swap {pattern[0]} and {pattern[1]}")
                 self.last_pattern_pos = max(0, pos - 1)
@@ -280,85 +216,6 @@ class RewriteReplicate:
         if self.verbose:
             print(message)
 
-    def fuse_replicates_with_einsum(self) -> bool:  # noqa: C901
-        """Attempt to fuse replicate nodes that act as inputs to einsum.
-
-        E.g. consider einsum('...,...->...', replicate(x), y). This can be simplified
-        into einsum('...,a...->a...', x, y)).
-
-        Returns:
-            Whether replicate nodes were fused with einsum nodes.
-        """
-        fused = False
-        for ein_node in list(self.graph.nodes):
-            if ein_node.op != "call_function" or ein_node.target != einsum:
-                continue
-
-            equation, operands = ein_node.args[0], ein_node.args[1:]
-
-            # check whether there are any replicate nodes in the operands and what
-            # their positions are
-            replicate_pos = defaultdict(list)
-            for pos, op in enumerate(operands):
-                if self.is_replicate(op):
-                    replicate_pos[op].append(pos)
-
-            if not replicate_pos:
-                continue
-
-            lhs, rhs = equation.split("->")
-            lhs = lhs.split(",")
-
-            # for each replicate op, determine if we can omit the replicating index
-            for rep_op, positions in replicate_pos.items():
-                # figure out what is the replicated letter
-                (rep_letter,) = {lhs[pos][0] for pos in positions}
-
-                # maybe introduce a new letter
-                if rep_letter == ".":
-                    # get the letters that are used in the other operands
-                    other_letters = set("".join(lhs))
-                    # get a new letter that is not used in the other operands
-                    (rep_letter,) = get_letters(1, blocked=other_letters)
-                    lhs = [lh.replace("...", f"{rep_letter}...") for lh in lhs]
-                    rhs = rhs.replace("...", f"{rep_letter}...")
-
-                # check if we can leave out the replicated index
-                can_omit = False
-                if rep_letter not in rhs:
-                    can_omit = True
-                else:
-                    # check that the letter is introduced by another operand
-                    can_omit = any(
-                        rep_letter in lh
-                        for pos, lh in enumerate(lhs)
-                        if pos not in positions
-                    )
-
-                if not can_omit:
-                    continue
-
-                # update the operands
-                (op,) = self.parents(rep_op)
-                ein_node.replace_input_with(rep_op, op)
-                # try removing the old replicate nodes
-                self.maybe_erase(rep_op)
-
-                # update the equation
-                lhs = [
-                    lh if pos not in positions else lh[1:] for pos, lh in enumerate(lhs)
-                ]
-                new_equation = f"{','.join(lhs)}->{rhs}"
-                ein_node.update_arg(0, new_equation)
-
-                fused = True
-                self.maybe_print(
-                    f"Fusing {ein_node}: {equation} {operands} into "
-                    + f"{ein_node.args[0]} {ein_node.args[1:]}"
-                )
-
-        return fused
-
     def remove_unused_nodes(self) -> bool:
         """Find and remove unused nodes from the graph.
 
@@ -405,7 +262,7 @@ class RewriteSumVmapped(RewriteReplicate):
 
         Returns:
             A pattern that can be simplified, or `None` if no such pattern is found.
-            A pattern consists of two parts: them `sum_vmapped` node that can be
+            A pattern consists of two parts: the `sum_vmapped` node that can be
             propagated up through the node returned as second part.
         """
         for node in self.graph.nodes:
@@ -433,9 +290,9 @@ class RewriteSumVmapped(RewriteReplicate):
                 and len(parents) == 1
             ):
                 pattern = [node, op]
+
             # operations that produce a tensor from two tensors `x`, `y`, which is then
             # `sum_vmapped`
-
             # NOTE This assumes there is no broadcasting (x.shape == y.shape)!
             elif (
                 op.target
@@ -450,9 +307,6 @@ class RewriteSumVmapped(RewriteReplicate):
                 pattern = [node, op]
             # sum_vmapped(linear(x, W, b)) -> linear(sum_vmapped(x), W, b)
             elif op.target == linear:
-                pattern = [node, op]
-            # sum_vmapped(einsum('xyz->a...')) -> einsum('xyz->...')
-            elif op.target == einsum:
                 pattern = [node, op]
 
             if pattern is not None:
@@ -471,76 +325,60 @@ class RewriteSumVmapped(RewriteReplicate):
         sum_node.replace_all_uses_with(op)
         self.maybe_erase(sum_node)
 
-        # for summing out the leading index of an einsum, we have to modify the equation
-        if op.target == einsum:
-            lhs, rhs = op.args[0].split("->")
-
-            if rhs.startswith("..."):  # we need to introduce a new index
-                used_letters = set(lhs)
-                (new_letter,) = get_letters(1, blocked=used_letters)
-                new_lhs = ",".join(
-                    [lh.replace("...", f"{new_letter}...") for lh in lhs.split(",")]
-                )
-                new_rhs = rhs
-            else:
-                new_lhs = lhs
-                new_rhs = rhs[1:]
-
-            new_equation = f"{new_lhs}->{new_rhs}"
-            op.update_arg(0, new_equation)
-
         # generate new `sum_vmapped` nodes above `op` and rewire the arguments
-        else:
-            parents = [op.args[0]] if op.target == linear else self.parents(op)
-            for parent in parents:
-                with self.graph.inserting_before(op):
-                    new_sum = self.graph.call_function(sum_vmapped, args=(parent,))
-                op.replace_input_with(parent, new_sum)
-                self.maybe_erase(parent)
+        parents = [op.args[0]] if op.target == linear else self.parents(op)
+        for parent in parents:
+            with self.graph.inserting_before(op):
+                new_sum = self.graph.call_function(sum_vmapped, args=(parent,))
+            op.replace_input_with(parent, new_sum)
+            self.maybe_erase(parent)
 
-    def raise_sum_vmapped_outside_einsum(self) -> bool:
-        """Hoist out `sum_vmapped` nodes from a einsum operations.
+    def simplify_vmapped_sum_with_replicate(self) -> bool:
+        """Simplify nodes that use `sum_vmapped` and `replicate` nodes.
 
-        For instance einsum('a...,...->...', x, y) can be simplified into
-        einsum('...,...->...', sum_vmapped(x), y).
+        For instance, `sum_vmapped(x * replicate(y))` can be simplified into
+        `sum_vmapped(x) * y`.
 
         Returns:
-            Whether a `sum_vmapped` was raised outside an `einsum` node.
+            Whether a `sum_vmapped` was fused with a `replicate`.
         """
-        modified = False
-
+        simplified = False
         for node in list(self.graph.nodes):
-            if node.op != "call_function" or node.target != einsum:
+            if not self.is_sum_vmapped(node):
+                continue
+            (op,) = self.parents(node)
+            if op.op not in {"call_function", "call_method"}:
                 continue
 
-            # NOTE This assumption is overly simplistic but sufficient for now
-            lhs, rhs = node.args[0].split("->")
-            if rhs != "...":
+            parents = self.parents(op)
+            if not any(self.is_replicate(p) for p in parents):
                 continue
 
-            # hoist out tensors with 'a...'
-            lhs = lhs.split(",")
-            usages = {n: node.args[1:].count(n) for n in node.all_input_nodes}
+            replicates = [p for p in parents if self.is_replicate(p)]
 
-            for idx, (eq, arg) in enumerate(zip(lhs, node.args[1:])):
-                # NOTE This assumption is overly simplistic but sufficient for now
-                if (
-                    eq == "a..."
-                    and usages[arg] == 1
-                    # no other operand should contain the index that is summed over
-                    and all("a" not in eq for i, eq in enumerate(lhs) if i != idx)
-                ):
-                    lhs[idx] = "..."
-                    with self.graph.inserting_before(node):
-                        new_sum = self.graph.call_function(sum_vmapped, args=(arg,))
-                    node.replace_input_with(arg, new_sum)
-                    modified = True
+            if (  # sum_vmapped(x * replicate(y)) -> sum_vmapped(x) * y
+                op.target in {mul, operator.mul} and len(parents) == 2
+            ):
+                # need to replace replicate(y) with y
+                (replicate,) = replicates
+                (replicated,) = self.parents(replicate)
+                op.replace_input_with(replicate, replicated)
+                self.maybe_erase(replicate)
 
-            # update the equation
-            new_equation = f"{','.join(lhs)}->..."
-            node.update_arg(0, new_equation)
+                # need to replace x with sum_vmapped(x)
+                (other_node,) = [p for p in parents if not self.is_replicate(p)]
+                with self.graph.inserting_after(other_node):
+                    new_sum = self.graph.call_function(sum_vmapped, args=(other_node,))
+                op.replace_input_with(other_node, new_sum)
+                self.maybe_erase(other_node)
 
-        return modified
+                # replace the sum_vmapped node with the operation node
+                node.replace_all_uses_with(op)
+                self.maybe_erase(node)
+
+                simplified = True
+
+        return simplified
 
     def fuse_vmapped_sum_with_tensor_constants(self) -> bool:
         """Fuse tensor constants with `vmapped_sum` nodes.
@@ -641,6 +479,97 @@ def common_subexpression_elimination(
     return replaced
 
 
+def common_tensor_constant_elimination(  # noqa: C901
+    mod: GraphModule, verbose: bool = False
+) -> bool:
+    """Eliminate duplicate tensor constants in a GraphModule by shape and value.
+
+    If two or more tensor constants have the same shape and values, all but one are
+    removed and their uses are redirected to the remaining one, saving memory.
+
+    Args:
+        mod: The GraphModule to optimize.
+        verbose: Whether to print debug information. Default: `False`.
+
+    Returns:
+        True if any tensor constants were eliminated, False otherwise.
+    """
+    if verbose:
+        print("Tensor constants and shapes before elimination:")
+        print_tensor_constants_and_shapes(mod)
+
+    # Gather all get_attr nodes for tensor constants
+    nodes = [
+        node
+        for node in mod.graph.nodes
+        if node.op == "get_attr" and "_tensor_constant" in node.target
+    ]
+
+    # Figure out which tensor constants are fetched by which nodes
+    constants_to_nodes = defaultdict(list)
+    for node in nodes:
+        constants_to_nodes[node.target].append(node)
+
+    # Figure out which tensor constants are identical
+    def _same(tensor1: Tensor, tensor2: Tensor) -> bool:
+        if (
+            tensor1.shape != tensor2.shape
+            or tensor1.dtype != tensor2.dtype
+            or tensor1.device != tensor2.device
+        ):
+            return False
+        return tensor1.allclose(tensor2)
+
+    # Figure out which tensors are the same
+    same: Dict[str, list[str]] = {}
+
+    for node in nodes:
+        ref = recursive_getattr(mod, node.target)
+        matched = False
+
+        for const in same:
+            if _same(ref, recursive_getattr(mod, const)):
+                same[const].append(node.target)
+                matched = True
+                break
+
+        if not matched:
+            same[node.target] = []
+
+    # Replace the nodes that access the same tensor constant
+    replaced = False
+    for ref, others in same.items():
+        ref_node = constants_to_nodes[ref][0]
+
+        duplicate_nodes = constants_to_nodes[ref][1:]
+        for other in others:
+            duplicate_nodes.extend(constants_to_nodes[other])
+
+        if duplicate_nodes:
+            # replace the nodes
+            if verbose:
+                print(f"Replacing {duplicate_nodes} with {ref_node}.")
+            for node in duplicate_nodes:
+                node.replace_all_uses_with(ref_node)
+                mod.graph.erase_node(node)
+
+            # delete the tensors
+            if verbose:
+                print(f"Deleting {others} module attributes.")
+            for other in others:
+                delattr(mod, other)
+            replaced = True
+        else:
+            if verbose:
+                print(f"{ref_node} has no duplicates.")
+
+    if replaced and verbose:
+        print("Tensor constants and shapes after elimination:")
+        print_tensor_constants_and_shapes(mod)
+
+    return replaced
+
+
 @contextmanager
 def check_unaltered(
     mod: GraphModule, x: Optional[Tensor], rtol: float = 1e-5, atol: float = 1e-8
@@ -691,6 +620,7 @@ def simplify(  # noqa: C901
     remove_unused: bool = True,
     pull_sum_vmapped: bool = True,
     eliminate_common_subexpressions: bool = True,
+    eliminate_tensor_constants: bool = True,
     verbose: bool = False,
     test_x: Optional[Tensor] = None,
 ) -> GraphModule:
@@ -705,6 +635,8 @@ def simplify(  # noqa: C901
 
     - Common subexpression elimination (CSE) to remove duplicate computations.
 
+    - Eliminating tensor constants which contain the same tensors.
+
     - Pulling of `sum_vmapped` nodes up the graph as much as possible.
       This avoids redundant computations on summed tensors.
 
@@ -716,6 +648,8 @@ def simplify(  # noqa: C901
         pull_sum_vmapped: Whether to pull `sum_vmapped` nodes up the graph.
             Default: `True`.
         eliminate_common_subexpressions: Whether to eliminate common subexpressions.
+            Default: `True`.
+        eliminate_tensor_constants: Whether to eliminate tensor constants.
             Default: `True`.
         verbose: Whether to print debug information. Default: `False`.
         test_x: Input tensor to the module that will be verified after each
@@ -744,9 +678,12 @@ def simplify(  # noqa: C901
         "common_subexpression_elimination": partial(
             common_subexpression_elimination, mod.graph, verbose=verbose
         ),
+        "eliminate_tensor_constants": partial(
+            common_tensor_constant_elimination, mod, verbose=verbose
+        ),
         "push_replicate": replicate_rewriter.rewrite_pattern,
         "pull_sum_vmapped": sum_vmapped_rewriter.rewrite_pattern,
-        "raise_sum_vmapped_outside_einsum": sum_vmapped_rewriter.raise_sum_vmapped_outside_einsum,  # noqa: B950
+        "simplify_vmapped_sum_with_replicate": sum_vmapped_rewriter.simplify_vmapped_sum_with_replicate,  # noqa: B950
         "fuse_with_tensor_constant": sum_vmapped_rewriter.fuse_vmapped_sum_with_tensor_constants,  # noqa: B950
     }
 
@@ -770,7 +707,7 @@ def simplify(  # noqa: C901
         round_three.extend(
             [
                 "pull_sum_vmapped",
-                "raise_sum_vmapped_outside_einsum",
+                "simplify_vmapped_sum_with_replicate",
                 "fuse_with_tensor_constant",
             ]
         )
@@ -780,6 +717,8 @@ def simplify(  # noqa: C901
 
     # round 4 of simplifications: remove redundancies in the graph and clean up
     round_four = []
+    if eliminate_tensor_constants:
+        round_four.append("eliminate_tensor_constants")
     if eliminate_common_subexpressions:
         round_four.append("common_subexpression_elimination")
     if remove_unused:

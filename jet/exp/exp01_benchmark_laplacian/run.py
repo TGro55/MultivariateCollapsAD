@@ -6,9 +6,10 @@ various architectures, dimensions, batch sizes, and devices. The results are
 gathered into a single data frame and saved to a CSV file.
 """
 
+from argparse import ArgumentParser
 from itertools import product
 from os import makedirs, path
-from typing import List, Optional
+from typing import Optional
 
 from pandas import DataFrame, concat
 from torch import cuda, linspace
@@ -24,17 +25,18 @@ makedirs(GATHERDIR, exist_ok=True)
 
 
 def measure(
-    architectures: List[str],
-    dims: List[int],
-    batch_sizes: List[int],
-    strategies: List[str],
-    devices: List[str],
+    architectures: list[str],
+    dims: list[int],
+    batch_sizes: list[int],
+    strategies: list[str],
+    devices: list[str],
     name: str,
     skip_existing: bool = False,
     gather_every: int = 10,
-    distributions: Optional[List[str]] = None,
-    nums_samples: Optional[List[int]] = None,
+    distributions: Optional[list[str]] = None,
+    nums_samples: Optional[list[int]] = None,
     operator: str = "laplacian",
+    compiled: Optional[list[bool]] = None,
     script_file: str = SCRIPT,
     rawdir: str = RAWDIR,
     gatherdir: str = GATHERDIR,
@@ -56,6 +58,8 @@ def measure(
         nums_samples: List of numbers of samples for the randomized Laplacian. `None`
             means that the exact Laplacian will be benchmarked. Default is `None`.
         operator: The differential operator to benchmark. Default is `'laplacian'`.
+        compiled: List of boolean values indicating whether to use torch.compile.
+            Default is `None` which means only non-compiled versions will be run.
         gatherdir: The directory to save the gathered data into. Default is the gather
             directory of the PyTorch benchmark.
         script_file: The path to the script file that runs the benchmark. Default is the
@@ -65,6 +69,7 @@ def measure(
     """
     _distributions = [None] if distributions is None else distributions
     _nums_samples = [None] if nums_samples is None else nums_samples
+    _compiled = [False] if compiled is None else compiled
 
     combinations = list(
         product(
@@ -75,6 +80,7 @@ def measure(
             devices,
             _distributions,
             _nums_samples,
+            _compiled,
         )
     )
     for idx, (
@@ -85,6 +91,7 @@ def measure(
         device,
         distribution,
         num_samples,
+        is_compiled,
     ) in enumerate(combinations):
         print(f"\n{idx + 1}/{len(combinations)}")
         kwargs = {
@@ -96,6 +103,7 @@ def measure(
             "distribution": distribution,
             "num_samples": num_samples,
             "operator": operator,
+            "compiled": is_compiled,
         }
 
         # maybe skip the computation
@@ -112,8 +120,14 @@ def measure(
 
         if not skip:
             cmd = ["python", script_file] + [
-                f"--{key}={value}" for key, value in kwargs.items() if value is not None
+                f"--{key}={value}"
+                for key, value in kwargs.items()
+                if value is not None and key != "compiled"
             ]
+
+            # Add the compiled flag without a value if it's True
+            if is_compiled:
+                cmd.append("--compiled")
             run_verbose(cmd)
 
         # gather data every few measurements so we can plot even before all are done
@@ -127,6 +141,7 @@ def measure(
                 devices,
                 _distributions,
                 _nums_samples,
+                _compiled,
                 operator,
                 rawdir,
                 allow_missing=not is_last,
@@ -137,13 +152,14 @@ def measure(
 
 
 def gather_data(
-    architectures: List[str],
-    dims: List[int],
-    batch_sizes: List[int],
-    strategies: List[str],
-    devices: List[str],
-    distributions: List[Optional[str]],
-    nums_samples: List[Optional[int]],
+    architectures: list[str],
+    dims: list[int],
+    batch_sizes: list[int],
+    strategies: list[str],
+    devices: list[str],
+    distributions: list[Optional[str]],
+    nums_samples: list[Optional[int]],
+    compiled: list[bool],
     operator: str,
     rawdir: str,
     allow_missing: bool = False,
@@ -158,6 +174,7 @@ def gather_data(
         devices: List of devices the experiments were run on.
         distributions: List of distributions for the randomized Laplacian.
         nums_samples: List of numbers of samples for the randomized Laplacian.
+        compiled: List of boolean values indicating whether torch.compile was used.
         operator: The differential operator that was benchmarked.
         rawdir: The directory where the raw data is stored.
         allow_missing: Whether to allow missing result files. Default is False.
@@ -176,6 +193,7 @@ def gather_data(
         device,
         distribution,
         num_samples,
+        is_compiled,
     ) in product(
         architectures,
         dims,
@@ -184,6 +202,7 @@ def gather_data(
         devices,
         distributions,
         nums_samples,
+        compiled,
     ):
         # Create a dictionary for each combination
         result = {
@@ -194,6 +213,7 @@ def gather_data(
             "device": [device],
             "distribution": [distribution],
             "num_samples": [num_samples],
+            "compiled": [is_compiled],
         }
         filename = savepath_raw(
             **{key: value[0] for key, value in result.items()},
@@ -250,6 +270,7 @@ EXPERIMENTS = [
             "strategies": SUPPORTED_STRATEGIES,
             "devices": ["cuda"],
             "operator": "laplacian",
+            "compiled": [False, True],
         },
         # what to plot: x-axis is batch_sizes and each strategy is plotted in a curve
         ("batch_size", "strategy"),
@@ -268,27 +289,12 @@ EXPERIMENTS = [
             "operator": "laplacian",
             "distributions": ["normal"],
             "nums_samples": linspace(1, 50, 10).int().unique().tolist(),
+            "compiled": [False, True],
         },
         # what to plot: x-axis is nums_samples and each strategy is plotted in a curve
         ("num_samples", "strategy"),
     ),
-    # Experiment 3:  Use the largest MLP from dangel2024kroneckerfactored and vary the
-    #                in features, computing the Bi-Laplacian.
-    (  # Experiment name, must be unique
-        "bilaplacian_vary_dim",
-        # Experiment parameters
-        {
-            "architectures": ["tanh_mlp_768_768_512_512_1"],
-            "dims": linspace(1, 10, 10).int().unique().tolist(),
-            "batch_sizes": [256],
-            "strategies": SUPPORTED_STRATEGIES,
-            "devices": ["cuda"],
-            "operator": "bilaplacian",
-        },
-        # what to plot: x-axis is dims and each strategy is plotted in a curve
-        ("dim", "strategy"),
-    ),
-    # Experiment 4:  Use the largest MLP from dangel2024kroneckerfactored with 50
+    # Experiment 3:  Use the largest MLP from dangel2024kroneckerfactored with 50
     #                in features; vary the batch size, computing the weighted Laplacian.
     (  # Experiment name, must be unique
         "weighted_laplacian_vary_batch_size",
@@ -300,11 +306,12 @@ EXPERIMENTS = [
             "strategies": SUPPORTED_STRATEGIES,
             "devices": ["cuda"],
             "operator": "weighted-laplacian",
+            "compiled": [False, True],
         },
         # what to plot: x-axis is batch size and each strategy is plotted in a curve
         ("batch_size", "strategy"),
     ),
-    # Experiment 5:  Use the largest MLP from dangel2024kroneckerfactored and with
+    # Experiment 4:  Use the largest MLP from dangel2024kroneckerfactored and with
     #                50 in features, vary the MC samples computing the randomized
     #                weighted Laplacian.
     (  # Experiment name, must be unique
@@ -319,11 +326,12 @@ EXPERIMENTS = [
             "operator": "weighted-laplacian",
             "distributions": ["normal"],
             "nums_samples": linspace(1, 50, 10).int().unique().tolist(),
+            "compiled": [False, True],
         },
         # what to plot: x-axis is nums_samples and each strategy is plotted in a curve
         ("num_samples", "strategy"),
     ),
-    # Experiment 6:  Use the largest MLP from dangel2024kroneckerfactored and with
+    # Experiment 5:  Use the largest MLP from dangel2024kroneckerfactored and with
     #                5 in features, vary the MC samples computing the randomized
     #                Bi-Laplacian.
     (  # Experiment name, must be unique
@@ -340,11 +348,12 @@ EXPERIMENTS = [
             # exact takes 4.5 D**2 - 1.5 D + 4 = 109, randomized takes 2 + 3S, so
             # choosing S <= 36 because for S=36 we can compute the Bi-Laplacian exactly
             "nums_samples": linspace(1, 36, 10).int().unique().tolist(),
+            "compiled": [False, True],
         },
         # what to plot: x-axis is nums_samples and each strategy is plotted in a curve
         ("num_samples", "strategy"),
     ),
-    # Experiment 7:  Use the largest MLP from dangel2024kroneckerfactored with 5
+    # Experiment 6:  Use the largest MLP from dangel2024kroneckerfactored with 5
     #                in features; vary the batch size, computing the Bi-Laplacian.
     (  # Experiment name, must be unique
         "bilaplacian_vary_batch_size",
@@ -356,16 +365,32 @@ EXPERIMENTS = [
             "strategies": SUPPORTED_STRATEGIES,
             "devices": ["cuda"],
             "operator": "bilaplacian",
+            "compiled": [False, True],
         },
         # what to plot: x-axis is batch size and each strategy is plotted in a curve
         ("batch_size", "strategy"),
     ),
 ]
 
-if __name__ == "__main__":
-    names = [name for (name, _, _) in EXPERIMENTS]
-    if len(names) != len(set(names)):
-        raise ValueError(f"Experiment names must be unique. Got: {names}.")
+# make sure experiment names are unique
+names = [name for (name, _, _) in EXPERIMENTS]
+if len(names) != len(set(names)):
+    raise ValueError(f"Experiment names must be unique. Got: {names}.")
 
-    for name, experiment, _ in EXPERIMENTS:
+if __name__ == "__main__":
+    parser = ArgumentParser(description="Run benchmark experiments")
+    parser.add_argument(
+        "--experiment_idx",
+        type=int,
+        choices=range(len(EXPERIMENTS)),
+        help="Index of the experiment to run (if unspecified, run all experiments)",
+        required=False,
+    )
+    args = parser.parse_args()
+
+    idx = args.experiment_idx
+    run_experiments = EXPERIMENTS if idx is None else [EXPERIMENTS[idx]]
+    print(f"Running {'all experiments' if idx is None else f'experiment {idx}'}.")
+
+    for name, experiment, _ in run_experiments:
         measure(**experiment, name=name, skip_existing=True, gather_every=10)

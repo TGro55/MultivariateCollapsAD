@@ -1,9 +1,11 @@
 """Utility functions for computing jets."""
 
+from collections import defaultdict
 from math import factorial, prod
-from typing import Callable, List, Optional, Set, Tuple
+from typing import Any, Callable, Optional, Tuple
 
-from torch import Tensor, device, dtype, einsum, empty
+from torch import Tensor, device, dtype, empty
+from torch.fx import GraphModule, Node
 from torch.nn import Module
 
 # type annotation for arguments and Taylor coefficients in input and output space
@@ -30,19 +32,6 @@ def integer_partitions(n: int, I: int = 1):  # noqa: E741
     for i in range(I, n // 2 + 1):
         for p in integer_partitions(n - i, i):
             yield (i,) + p
-
-
-def tensor_prod(*tensors: Tensor) -> Tensor:
-    """Compute the element-wise product of tensors.
-
-    Args:
-        tensors: Tensors to be multiplied.
-
-    Returns:
-        Element-wise product of the tensors.
-    """
-    equation = ",".join(len(tensors) * ["..."]) + "->..."
-    return einsum(equation, *tensors)
 
 
 def multiplicity(sigma: Tuple[int, ...]) -> float:
@@ -143,35 +132,57 @@ def rademacher(
     )
 
 
-def get_letters(num_letters: int, blocked: Optional[Set] = None) -> List[str]:
-    """Return a list of ``num_letters`` unique letters for an einsum equation.
+def recursive_getattr(obj: Any, attr: str) -> Any:
+    """Recursively retrieve a nested attribute from an object.
+
+    This function allows access to attributes that are nested within submodules or
+    objects, using a dot-separated string (e.g., 'foo.bar.baz'). It is useful for
+    retrieving parameters or buffers from submodules in a torch.fx.GraphModule, where
+    attribute names may refer to nested modules (e.g., 'layer1.0.weight').
 
     Args:
-        num_letters: Number of letters to return.
-        blocked: Set of letters that should not be used.
+        obj: The root object from which to retrieve the attribute.
+        attr: Dot-separated string specifying the attribute path.
 
     Returns:
-        List of ``num_letters`` unique letters.
-
-    Raises:
-        ValueError: If ``num_letters`` cannot be satisfied with einsum-supported
-            letters.
+        The value of the nested attribute.
     """
-    if num_letters == 0:
-        return []
+    for part in attr.split("."):
+        obj = getattr(obj, part)
+    return obj
 
-    max_letters = 26
-    blocked = set() if blocked is None else blocked
-    letters = []
 
-    for i in range(max_letters):
-        letter = chr(ord("a") + i)
-        if letter not in blocked:
-            letters.append(letter)
-            if len(letters) == num_letters:
-                return letters
+def print_tensor_constants_and_shapes(mod: GraphModule):
+    """Print names, shapes, and usage counts of all tensor constants in a graph module.
 
-    raise ValueError(
-        f"Ran out of letters. PyTorch's einsum supports {max_letters} letters."
-        + f" Requested {num_letters}, blocked: {len(blocked)}.)"
-    )
+    Args:
+        mod: The GraphModule to inspect.
+    """
+    # Count usages of each get_attr node by target name
+    usage_counts = defaultdict(int)  # noqa: B910
+    for node in mod.graph.nodes:
+        for arg in node.args:
+            if isinstance(arg, Node) and arg.op == "get_attr":
+                usage_counts[arg.target] += 1
+        for kwarg in node.kwargs.values():
+            if isinstance(kwarg, Node) and kwarg.op == "get_attr":
+                usage_counts[kwarg.target] += 1
+
+    # Print the names, shapes, usage counts, and total number of elements of tensor
+    # constants
+    total = 0
+    for node in mod.graph.nodes:
+        if node.op != "get_attr":
+            continue
+        if "_tensor_constant" not in node.target:
+            continue
+
+        tensor = recursive_getattr(mod, node.target)
+        if not isinstance(tensor, Tensor):
+            continue
+
+        count = usage_counts[node.target]
+        total += tensor.numel()
+        print(f"Name: {node.target}, Shape: {tuple(tensor.shape)}, Usages: {count}")
+
+    print(f"Total number of elements in tensor constants: {total}")
