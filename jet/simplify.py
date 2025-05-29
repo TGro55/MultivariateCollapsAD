@@ -162,7 +162,7 @@ class RewriteReplicate:
                 return pattern
 
     def maybe_erase(self, node: Node) -> bool:
-        """Remove a node if it has no children.
+        """Remove a node if it has no children and does not represent a variable.
 
         Args:
             node: The node to be checked for removal.
@@ -172,6 +172,9 @@ class RewriteReplicate:
         """
         if node.op == "output":
             self.maybe_print(f"Not removing {node} because it is an output node.")
+            return False
+        elif node.op == "placeholder":
+            self.maybe_print(f"Not removing {node} because it is a placeholder.")
             return False
 
         children = self.children(node)
@@ -598,7 +601,16 @@ def check_unaltered(
             mod.graph.lint()
             mod.recompile()
             out_after = mod(x)
-            close = out_before.allclose(out_after, rtol=rtol, atol=atol)
+            if isinstance(out_before, tuple) and isinstance(out_after, tuple):
+                # If both outputs are tuples, compare each element
+                close = len(out_before) == len(out_after) and all(
+                    a.allclose(b, rtol=rtol, atol=atol)
+                    for a, b in zip(out_before, out_after)
+                )
+            elif isinstance(out_before, Tensor) and isinstance(out_after, Tensor):
+                close = out_before.allclose(out_after, rtol=rtol, atol=atol)
+            else:
+                close = False
 
             if not close:
                 print(f"Before:\n{before_str}")
