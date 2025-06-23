@@ -322,7 +322,7 @@ def simplify(  # noqa: C901
             node.replace_all_uses_with(new_node)
             graph.erase_node(node)
 
-    # standardize `replicate and `sum_vmapped` nodes
+    # Unify the args/kwargs of replicate and sum_vmapped nodes
     for node in [
         n
         for n in graph.nodes
