@@ -1,6 +1,6 @@
 """Implements computing the Bi-Laplacian operator with Taylor mode."""
 
-from typing import Callable, Tuple
+from typing import Callable
 
 from torch import Tensor, eye, randn, zeros
 from torch.nn import Module
@@ -84,10 +84,10 @@ class Bilaplacian(Module):
 
         return term1 + term2 + term3
 
-    def set_up_taylor_coefficients(self, x: Tensor) -> Tuple[
-        Tuple[Tensor, Tensor, Tensor, Tensor, Tensor],
-        Tuple[Tensor, Tensor, Tensor, Tensor, Tensor],
-        Tuple[Tensor, Tensor, Tensor, Tensor, Tensor],
+    def set_up_taylor_coefficients(self, x: Tensor) -> tuple[
+        tuple[Tensor, Tensor, Tensor, Tensor, Tensor],
+        tuple[Tensor, Tensor, Tensor, Tensor, Tensor],
+        tuple[Tensor, Tensor, Tensor, Tensor, Tensor],
     ]:
         """Create the Taylor coefficients for the Bi-Laplacian computation.
 
@@ -239,7 +239,7 @@ class RandomizedBilaplacian(Bilaplacian):
 
     def set_up_taylor_coefficients(
         self, x: Tensor
-    ) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         """Create the Taylor coefficients for the MC-Bi-Laplacian computation.
 
         Args:

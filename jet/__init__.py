@@ -1,7 +1,7 @@
 """Taylor-mode automatic differentiation (jets) in PyTorch."""
 
 from math import factorial
-from typing import Callable, Optional
+from typing import Callable
 from warnings import warn
 
 from torch import Tensor, tensor, zeros_like
@@ -200,7 +200,7 @@ def _replace_operations_with_taylor(  # noqa: C901
 
 
 def rev_jet(
-    f: Callable[[Primal], Value], order: Optional[int] = None, detach: bool = True
+    f: Callable[[Primal], Value], order: int | None = None, detach: bool = True
 ) -> Callable[[PrimalAndCoefficients], ValueAndCoefficients]:
     """Implement Taylor-mode via nested reverse-mode autodiff.
 
@@ -234,7 +234,7 @@ def rev_jet(
         return grad(f, X, **grad_kwargs)[0] if f.requires_grad else zeros_like(X)
 
     def jet_f(
-        x: Primal, *vs: Primal, order: Optional[int] = order
+        x: Primal, *vs: Primal, order: int | None = order
     ) -> ValueAndCoefficients:
         """Compute the function and its Taylor coefficients.
 

@@ -3,7 +3,7 @@
 from functools import partial
 from test.test___init__ import report_nonclose, setup_case
 from test.test_laplacian import _check_mc_convergence
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 from einops import einsum
 from pytest import mark
@@ -104,7 +104,7 @@ def weighted_laplacian(
 
 
 @mark.parametrize("config", WEIGHTED_LAPLACIAN_CASES, ids=WEIGHTED_LAPLACIAN_IDS)
-def test_WeightedLaplacian(config: Dict[str, Any]):
+def test_WeightedLaplacian(config: dict[str, Any]):
     """Test computing dot products of the Hessian with a PSD matrix.
 
     Use a diagonal coefficient tensor whose diagonal elements are
@@ -129,7 +129,7 @@ def test_WeightedLaplacian(config: Dict[str, Any]):
 @mark.parametrize("distribution", DISTRIBUTIONS, ids=DISTRIBUTION_IDS)
 @mark.parametrize("config", WEIGHTED_LAPLACIAN_CASES, ids=WEIGHTED_LAPLACIAN_IDS)
 def test_RandomizedWeightedLaplacian(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     distribution: str,
     max_num_chunks: int = 500,
     chunk_size: int = 1_024,

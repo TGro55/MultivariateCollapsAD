@@ -1,7 +1,7 @@
 """Tests for jet/__init__.py."""
 
 from test.utils import report_nonclose
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from pytest import mark
 from torch import Tensor, cos, manual_seed, rand, sigmoid, sin, tanh, tensor
@@ -137,7 +137,7 @@ K_IDS = [f"{k=}" for k in K]
 
 
 def setup_case(
-    config: dict[str, Any], vmapsize: int = 0, k: Optional[int] = None
+    config: dict[str, Any], vmapsize: int = 0, k: int | None = None
 ) -> tuple[Callable[[Primal], Value], Primal, tuple[Primal], bool]:
     """Instantiate the function, its input, and Taylor coefficients.
 

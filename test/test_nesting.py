@@ -1,7 +1,7 @@
 """Test nesting calls to `jet`."""
 
 from test.test___init__ import setup_case
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 from pytest import mark
 from torch import Tensor, cos, manual_seed, ones, sigmoid, sin, tanh
@@ -89,7 +89,7 @@ class JetModule(Module):
 
 @mark.parametrize("k1, k2", [(0, 0), (0, 1), (2, 2), (3, 2)])
 @mark.parametrize("config", NEST_CASES, ids=[c["id"] for c in NEST_CASES])
-def test_nested_jet(config: Dict[str, Any], k1: int, k2: int):
+def test_nested_jet(config: dict[str, Any], k1: int, k2: int):
     """Test whether jets can be nested.
 
     Args:

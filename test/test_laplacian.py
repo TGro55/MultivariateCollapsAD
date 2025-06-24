@@ -2,7 +2,7 @@
 
 from functools import partial
 from test.test___init__ import setup_case
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 from pytest import mark
 from torch import Tensor, manual_seed, sigmoid, zeros_like
@@ -71,7 +71,7 @@ def laplacian(f: Callable[[Tensor], Tensor], x: Tensor) -> Tensor:
 
 
 @mark.parametrize("config", LAPLACIAN_CASES, ids=LAPLACIAN_IDS)
-def test_Laplacian(config: Dict[str, Any]):
+def test_Laplacian(config: dict[str, Any]):
     """Compare Laplacian implementations.
 
     Args:
@@ -90,7 +90,7 @@ def test_Laplacian(config: Dict[str, Any]):
 @mark.parametrize("distribution", DISTRIBUTIONS, ids=DISTRIBUTION_IDS)
 @mark.parametrize("config", LAPLACIAN_CASES, ids=LAPLACIAN_IDS)
 def test_RandomizedLaplacian(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     distribution: str,
     max_num_chunks: int = 500,
     chunk_size: int = 1_024,

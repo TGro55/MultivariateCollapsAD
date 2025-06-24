@@ -1,7 +1,6 @@
 """Implementation of AD primitives in Taylor-mode arithmetic."""
 
 import operator
-from typing import Dict, List, Optional, Tuple
 
 from scipy.special import comb, factorial, stirling2
 from torch import Tensor, cos, mul, sigmoid, sin, tanh
@@ -18,7 +17,7 @@ from jet.utils import (
 )
 
 
-def _faa_di_bruno(vs: Tuple[Primal, ...], K: int, dn: Dict[int, Primal]) -> List[Value]:
+def _faa_di_bruno(vs: tuple[Primal, ...], K: int, dn: dict[int, Primal]) -> list[Value]:
     """Apply Faà di Bruno's formula for elementwise functions.
 
     Args:
@@ -228,7 +227,7 @@ def jet_sigmoid(
 def jet_linear(
     s: PrimalAndCoefficients,
     weight: Tensor,
-    bias: Optional[Tensor] = None,
+    bias: Tensor | None = None,
     K=None,
     is_taylor: tuple[bool, ...] = (True, False, False),
 ) -> ValueAndCoefficients:

@@ -3,7 +3,7 @@
 from statistics import mean, stdev
 from subprocess import CalledProcessError, CompletedProcess, run
 from time import perf_counter
-from typing import Callable, List, Tuple, Union
+from typing import Callable
 
 import jax
 from memory_profiler import memory_usage
@@ -12,7 +12,7 @@ from torch import cuda
 
 def measure_time(
     f: Callable, name: str, is_cuda: bool, num_repeats: int = 50, warmup: int = 10
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """Measure the CPU time of a function.
 
     Args:
@@ -77,7 +77,7 @@ def measure_peak_memory(
     return peakmem_gib
 
 
-def run_verbose(cmd: List[str]) -> CompletedProcess:
+def run_verbose(cmd: list[str]) -> CompletedProcess:
     """Run a command and print stdout & stderr if it fails.
 
     Args:
@@ -111,7 +111,7 @@ def run_verbose(cmd: List[str]) -> CompletedProcess:
 def to_string(
     drop_none_values: bool = True,
     compact_bool_values: bool = True,
-    **kwargs: Union[str, int],
+    **kwargs: str | int,
 ) -> str:
     """Convert a dictionary to a string representation.
 

@@ -9,7 +9,6 @@ gathered into a single data frame and saved to a CSV file.
 from argparse import ArgumentParser
 from itertools import product
 from os import makedirs, path
-from typing import Optional
 
 from pandas import DataFrame, concat
 from torch import cuda, linspace
@@ -33,10 +32,10 @@ def measure(
     name: str,
     skip_existing: bool = False,
     gather_every: int = 10,
-    distributions: Optional[list[str]] = None,
-    nums_samples: Optional[list[int]] = None,
+    distributions: list[str] | None = None,
+    nums_samples: list[int] | None = None,
     operator: str = "laplacian",
-    compiled: Optional[list[bool]] = None,
+    compiled: list[bool] | None = None,
     script_file: str = SCRIPT,
     rawdir: str = RAWDIR,
     gatherdir: str = GATHERDIR,
@@ -157,8 +156,8 @@ def gather_data(
     batch_sizes: list[int],
     strategies: list[str],
     devices: list[str],
-    distributions: list[Optional[str]],
-    nums_samples: list[Optional[int]],
+    distributions: list[str | None],
+    nums_samples: list[int | None],
     compiled: list[bool],
     operator: str,
     rawdir: str,

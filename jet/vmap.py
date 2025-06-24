@@ -12,7 +12,7 @@ For instance, operations like addition/subtraction must avoid broadcasting.
 """
 
 import operator
-from typing import Callable, Optional
+from typing import Callable
 from warnings import warn
 
 from torch import Tensor, cos, mul, sigmoid, sin, tanh
@@ -149,7 +149,7 @@ vmap_tanh = vmap_elementwise(tanh)
 def vmap_linear(
     x: Tensor,
     weight: Tensor,
-    bias: Optional[None] = None,
+    bias: Tensor | None = None,
     is_const: tuple[bool, ...] = (True, True, True),
     vmapsize: int = 0,
 ) -> Tensor:

@@ -9,7 +9,7 @@ component. It has the same shape as f(x).
 
 from test.test___init__ import report_nonclose, setup_case
 from test.test_laplacian import _check_mc_convergence
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 from einops import einsum
 from pytest import mark
@@ -164,7 +164,7 @@ def bilaplacian_naive(
 
 
 @mark.parametrize("config", BILAPLACIAN_CASES, ids=BILAPLACIAN_IDS)
-def test_bilaplacian(config: Dict[str, Any]):
+def test_bilaplacian(config: dict[str, Any]):
     """Compare Laplacian implementations.
 
     Args:
@@ -188,7 +188,7 @@ def test_bilaplacian(config: Dict[str, Any]):
 @mark.parametrize("distribution", DISTRIBUTIONS, ids=DISTRIBUTION_IDS)
 @mark.parametrize("config", BILAPLACIAN_CASES, ids=BILAPLACIAN_IDS)
 def test_RandomizedBilaplacian(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     distribution: str,
     max_num_chunks: int = 500,
     chunk_size: int = 1_024,

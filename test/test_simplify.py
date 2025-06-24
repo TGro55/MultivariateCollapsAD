@@ -6,7 +6,7 @@ from test.test_bilaplacian import bilaplacian
 from test.test_laplacian import DISTRIBUTION_IDS, DISTRIBUTIONS, laplacian
 from test.test_weighted_laplacian import weighted_laplacian
 from test.utils import report_nonclose
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable
 
 from pytest import mark
 from torch import Size, Tensor, arange, manual_seed, sigmoid, sin, tanh, tensor
@@ -152,9 +152,9 @@ def ensure_outputs_replicates(graph: Graph, num_outputs: int, num_replicates: in
 
 def ensure_tensor_constants_collapsed(
     mod: GraphModule,
-    collapsed_shape: Union[Size, Tuple[int, ...]],
-    non_collapsed_shape: Union[Size, Tuple[int, ...]],
-    other_shapes: Optional[list[Union[Size, tuple[int, ...]]]] = None,
+    collapsed_shape: Size | tuple[int, ...],
+    non_collapsed_shape: Size | tuple[int, ...],
+    other_shapes: list[Size | tuple[int, ...]] | None = None,
     at_least: int = 1,
     strict: bool = True,
 ):
@@ -215,7 +215,7 @@ def ensure_tensor_constants_collapsed(
 @mark.parametrize(
     "distribution", [None] + DISTRIBUTIONS, ids=["exact"] + DISTRIBUTION_IDS
 )
-def test_simplify_laplacian(config: Dict[str, Any], distribution: Optional[str]):
+def test_simplify_laplacian(config: dict[str, Any], distribution: str | None):
     """Test the simplification of a Laplacian's compute graph.
 
     Replicate nodes should be propagated down the graph.
@@ -285,9 +285,7 @@ def test_simplify_laplacian(config: Dict[str, Any], distribution: Optional[str])
 @mark.parametrize(
     "distribution", [None] + DISTRIBUTIONS, ids=["exact"] + DISTRIBUTION_IDS
 )
-def test_simplify_weighted_laplacian(
-    config: Dict[str, Any], distribution: Optional[str]
-):
+def test_simplify_weighted_laplacian(config: dict[str, Any], distribution: str | None):
     """Test the simplification of a weighted Laplacian's compute graph.
 
     Replicate nodes should be propagated down the graph.
@@ -362,7 +360,7 @@ def test_simplify_weighted_laplacian(
 @mark.parametrize(
     "distribution", [None] + ["normal"], ids=["exact", "distribution=normal"]
 )
-def test_simplify_bilaplacian(config: Dict[str, Any], distribution: Optional[str]):
+def test_simplify_bilaplacian(config: dict[str, Any], distribution: str | None):
     """Test the simplifications for the Bi-Laplacian module.
 
     Args:

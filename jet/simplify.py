@@ -5,7 +5,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
 from itertools import product
-from typing import Callable, Optional
+from typing import Callable
 
 from torch import Tensor
 from torch.fx import Graph, GraphModule
@@ -203,7 +203,7 @@ def apply_once(
 
 @contextmanager
 def check_unaltered(
-    mod: GraphModule, x: Optional[Tensor], rtol: float = 1e-5, atol: float = 1e-8
+    mod: GraphModule, x: Tensor | None, rtol: float = 1e-5, atol: float = 1e-8
 ):
     """Verify that the module still produces the same output before and after the body.
 
@@ -262,7 +262,7 @@ def simplify(  # noqa: C901
     eliminate_common_subexpressions: bool = True,
     eliminate_tensor_constants: bool = True,
     verbose: bool = False,
-    test_x: Optional[Tensor] = None,
+    test_x: Tensor | None = None,
 ) -> GraphModule:
     """Simplify a compute graph.
 
@@ -405,7 +405,7 @@ def simplify(  # noqa: C901
 def _exhaust_incrementally(
     strategies: dict[str, Callable[[], None]],
     mod: GraphModule,
-    test_x: Optional[Tensor],
+    test_x: Tensor | None,
     verbose: bool,
 ):
     """Apply one round of simplifications.

@@ -1,6 +1,6 @@
 """Module that computes the weighted Laplacian via jets and can be simplified."""
 
-from typing import Callable, Tuple
+from typing import Callable
 
 from torch import Tensor, arange, cat, einsum, randn, zeros
 
@@ -50,7 +50,7 @@ class WeightedLaplacian(Laplacian):
         jet_f = jet.jet(f, 2)
         self.jet_f = traceable_vmap(jet_f, self.num_vectors)
 
-    def set_up_taylor_coefficients(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def set_up_taylor_coefficients(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         """Create the Taylor coefficients for the MC-Laplacian computation.
 
         Args:
@@ -164,7 +164,7 @@ class RandomizedWeightedLaplacian(WeightedLaplacian):
         jet_f = jet.jet(f, 2)
         self.jet_f = traceable_vmap(jet_f, self.num_samples)
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         """Compute the MC weighted Laplacian of the function at the input tensor.
 
         Replicates the input tensor, then evaluates the 2-jet of f using
@@ -183,7 +183,7 @@ class RandomizedWeightedLaplacian(WeightedLaplacian):
         # need to divide the weighted Laplacian by number of MC samples
         return F0, F1, F2 / self.num_samples
 
-    def set_up_taylor_coefficients(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def set_up_taylor_coefficients(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         """Create the Taylor coefficients for the weighted MC-Laplacian computation.
 
         Args:

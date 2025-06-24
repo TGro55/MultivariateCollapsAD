@@ -2,7 +2,6 @@
 
 from itertools import product
 from os import makedirs, path
-from typing import Dict, Union
 
 from matplotlib import pyplot as plt
 from pandas import DataFrame, read_csv
@@ -47,7 +46,7 @@ def savepath(name: str, plotdir: str = PLOTDIR, **kwargs) -> str:
     return path.join(plotdir, f"{filename}.pdf")
 
 
-def fix_columns(df: DataFrame, fix: Dict[str, Union[str, int]]) -> DataFrame:
+def fix_columns(df: DataFrame, fix: dict[str, str | int]) -> DataFrame:
     """Fix specific columns of a DataFrame.
 
     Args:

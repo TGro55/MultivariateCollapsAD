@@ -3,7 +3,7 @@
 from collections import defaultdict
 from inspect import signature
 from math import factorial, prod
-from typing import Any, Optional
+from typing import Any, Callable
 
 from torch import Tensor, device, dtype, empty
 from torch.fx import GraphModule, Node
@@ -90,9 +90,7 @@ def sum_vmapped(x: Tensor, pos: int = 0) -> Tensor:
     return x.sum(pos)
 
 
-def rademacher(
-    *shape: int, dtype: Optional[dtype] = None, device: Optional[device] = None
-):
+def rademacher(*shape: int, dtype: dtype | None = None, device: device | None = None):
     """Sample from Rademacher distribution.
 
     Args:
@@ -216,6 +214,48 @@ def print_tensor_constants_and_shapes(mod: GraphModule):
     print(f"Total number of elements in tensor constants: {total}")
 
 
+def separate_args_and_kwargs(
+    f: Callable, args: tuple[Any, ...], kwargs: dict[str, Any]
+) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    """Return mandatory arguments in positional and optional arguments in keyword form.
+
+    This function standardizes the arguments and keyword arguments of a callable to
+    ensure that mandatory arguments are passed positionally and optional arguments are
+    passed as keyword arguments. It uses the signature of the callable to determine
+    which arguments are mandatory and which are optional.
+
+    Args:
+        f: The callable whose signature is to be analyzed.
+        args: Positional arguments passed to the callable.
+        kwargs: Keyword arguments passed to the callable.
+
+    Returns:
+        A tuple containing:
+        - A tuple of positional arguments that are mandatory
+        - A dictionary of optional arguments, where keys are argument names and values
+          are the corresponding values from `kwargs` or their default values if not
+          provided.
+    """
+    sig = signature(f)
+    bound_args = sig.bind(*args, **kwargs)
+
+    positional = tuple(
+        bound_args.arguments[name]
+        for name, param in sig.parameters.items()
+        if name in bound_args.arguments and param.default is param.empty
+    )
+    optional = {
+        name: (
+            bound_args.arguments[name]
+            if name in bound_args.arguments
+            else param.default
+        )
+        for name, param in sig.parameters.items()
+        if param.default is not param.empty
+    }
+    return positional, optional
+
+
 def standardize_signature(node: Node, verbose: bool = False):
     """Standardize the args and kwargs of a node (inplace).
 
@@ -237,28 +277,12 @@ def standardize_signature(node: Node, verbose: bool = False):
     if node.op != "call_function":
         raise ValueError(f"{node=} is not a call_function node {node.op=}.")
 
-    sig = signature(node.target)
-    bound_args = sig.bind(*node.args, **node.kwargs)
-
-    positional = tuple(
-        bound_args.arguments[name]
-        for name, param in sig.parameters.items()
-        if name in bound_args.arguments and param.default is param.empty
-    )
-    optional = {
-        name: (
-            bound_args.arguments[name]
-            if name in bound_args.arguments
-            else param.default
-        )
-        for name, param in sig.parameters.items()
-        if param.default is not param.empty
-    }
-
     if verbose:
         print(f"Standardizing {node=}: {node.args=}, {node.kwargs=} ->", end=" ")
-    node.args = positional
-    node.kwargs = optional
+
+    new_args, new_kwargs = separate_args_and_kwargs(node.target, node.args, node.kwargs)
+    node.args, node.kwargs = new_args, new_kwargs
+
     if verbose:
         print(f"{node.args=}, {node.kwargs=}.")
 
