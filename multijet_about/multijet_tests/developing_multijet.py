@@ -3,11 +3,7 @@
 #Pathing to make imports possible. DOES NOT WORK ;(( 
 import os
 import sys
-parent_directory = os.path.abspath('..')
-parent_2_directory= os.path.dirname(parent_directory)
-
-print(parent_2_directory)
-sys.path.append(parent_2_directory)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 #Imports
 from torch import Tensor, cos, manual_seed, ones_like, rand, sin, zeros_like
@@ -15,8 +11,7 @@ from torch.func import hessian
 from torch.nn import Linear, Sequential, Tanh
 
 #Importing multijet
-# from parent_2_directory import multijet
-from multijet import multijet
+from multijet import multijet 
 
 _ = manual_seed(0)  # make deterministic
 
