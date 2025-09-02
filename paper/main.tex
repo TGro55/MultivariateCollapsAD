@@ -1,0 +1,165 @@
+\documentclass{article}
+
+% use numbers for citations to save space
+\PassOptionsToPackage{numbers, compress, sort}{natbib}
+
+% The authors should use one of these tracks.
+% Before accepting by the NeurIPS conference, select one of the options below.
+% 0. "default" for submission
+% either empty (for submission), 'preprint', or 'final'
+\def\status{preprint}
+\usepackage[\status]{neurips_2025}
+% the "default" option is equal to the "main" option, which is used for the Main Track with double-blind reviewing.
+% 1. "main" option is used for the Main Track
+%  \usepackage[main]{neurips_2025}
+% 2. "position" option is used for the Position Paper Track
+%  \usepackage[position]{neurips_2025}
+% 3. "dandb" option is used for the Datasets & Benchmarks Track
+ % \usepackage[dandb]{neurips_2025}
+% 4. "creativeai" option is used for the Creative AI Track
+%  \usepackage[creativeai]{neurips_2025}
+% 5. "sglblindworkshop" option is used for the Workshop with single-blind reviewing
+ % \usepackage[sglblindworkshop]{neurips_2025}
+% 6. "dblblindworkshop" option is used for the Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop]{neurips_2025}
+
+% After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
+% 1. Main Track
+ % \usepackage[main, final]{neurips_2025}
+% 2. Position Paper Track
+%  \usepackage[position, final]{neurips_2025}
+% 3. Datasets & Benchmarks Track
+ % \usepackage[dandb, final]{neurips_2025}
+% 4. Creative AI Track
+%  \usepackage[creativeai, final]{neurips_2025}
+% 5. Workshop with single-blind reviewing
+%  \usepackage[sglblindworkshop, final]{neurips_2025}
+% 6. Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop, final]{neurips_2025}
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
+% For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
+
+% "preprint" option is used for arXiv or other preprint submissions
+ % \usepackage[preprint]{neurips_2025}
+
+\input{preamble/custom_early.tex}
+\input{preamble/neurips_2025.tex}
+% follow DL notation from the Goodfellow book
+\input{preamble/goodfellow.tex}
+\input{preamble/custom.tex}
+\input{preamble/metadata.tex}
+
+\definecolor{darkgreen}{rgb}{0,0.6,0}
+\newcommand{\AW}[1]{\textcolor{darkgreen}{#1}}
+\newcommand{\colorcTM}{tab-green}
+\newcommand{\colorTM}{tab-orange}
+\newcommand{\colorcTMname}{green}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  Computing partial differential equation (PDE) operators via nested backpropagation is expensive, yet popular, and severely restricts their utility for scientific machine learning.
+  Recent advances, like the forward Laplacian and randomizing Taylor mode automatic differentiation (AD), propose forward schemes to address this.
+  We introduce an optimization technique for Taylor mode that ``collapses''  derivatives by rewriting the computational graph, and demonstrate how to apply it to general linear PDE operators, and randomized Taylor mode.
+  The modifications simply require propagating a sum up the computational graph, which could---or should---be done by a machine learning compiler, without exposing complexity to users.
+  We implement our collapsing procedure and evaluate it on popular PDE operators, confirming it accelerates Taylor mode and outperforms nested backpropagation.
+\end{abstract}
+
+\section{Introduction}\label{sec:introduction}
+\input{sections/introduction.tex}
+
+\section{Background: Introduction to Taylor Mode AD}\label{sec:background}
+\input{sections/background.tex}
+
+\section{Collapsing Taylor Mode AD}\label{sec:methodology}
+\input{sections/method}
+
+\section{Implementation \& Experiments}\label{sec:experiments}
+\input{sections/experiments.tex}
+
+\section{Conclusion}\label{sec:conclusion}
+\input{sections/conclusion.tex}
+
+\input{sections/acknowledgements.tex}
+
+\bibliography{references}
+\bibliographystyle{icml2024.bst}
+
+\clearpage
+\appendix
+
+% Label appendix equations as (A1), (B10) etc.
+\renewcommand\theequation{\thesection\arabic{equation}}
+\renewcommand\thefigure{\thesection\arabic{figure}}
+\renewcommand\thetable{\thesection\arabic{table}}
+
+% modified title header from main page, code extracted from NeurIPS template
+\makeatletter
+\vbox{%
+  \hsize\textwidth
+  \linewidth\hsize
+  \vskip 0.1in
+  \@toptitlebar
+  \centering
+  {\LARGE\bf \@title (Supplementary Material)\par}
+  \@bottomtitlebar
+  \vskip 0.3in \@minus 0.1in
+}
+\makeatother
+
+% APPENDIX TOC
+\startcontents[sections]
+\printcontents[sections]{l}{1}{\setcounter{tocdepth}{2}}
+
+\clearpage
+\section{Fa\`a Di Bruno Formula Cheat Sheet}\label{sec:faa-di-bruno-cheatsheet}
+\input{sections/faa_di_bruno}
+
+\clearpage
+\section{Visual Tour: From Function to Collapsed Taylor Mode}\label{sec:appendix-visual-tour}
+\input{figures/interface_overview}
+
+\clearpage
+\section{Graph Simplifications}\label{sec:graph-simplifications}
+\input{sections/graph_simplifications}
+
+\clearpage
+\section{Exploiting Linearity to Collapse Taylor Mode}
+\input{sections/appendix_linearity_for_taylor}
+
+\section{Details on (Collapsed) Taylor Mode for Arbitrary Mixed Partial Derivatives}\label{sec:appendix_ttc}
+\input{sections/appendix_ttc}
+
+\section{PyTorch Benchmark}
+\label{sec:pytorch-benchmark}
+\input{sections/appendix_torch}
+
+\section{JAX Benchmark}
+\label{sec:jax-benchmark}
+\input{sections/appendix_jax}
+
+\section{Numerical Analysis}
+\label{sec:numerical-analysis}
+\input{sections/appendix_numerical_analysis}
+
+\section{Connections of Collapsed Taylor Mode to Existing Methods}
+\label{sec:connections}
+\input{sections/appendix_connections}
+
+% Include the checklist except for the pre-print version
+\ifthenelse{\equal{\status}{preprint}}{}{
+\newpage
+% This command creates an un-numbered section and adds it to the table of contents
+% (see https://www.reddit.com/r/LaTeX/comments/10pjrwt/comment/j6kvo50/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+\newcommand*{\nsection}[1]{\section*{#1}\addcontentsline{toc}{section}{#1}}
+\nsection{NeurIPS Paper Checklist}
+\input{sections/checklist.tex}
+}
+
+\end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

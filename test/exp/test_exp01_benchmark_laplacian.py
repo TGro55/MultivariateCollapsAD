@@ -1,0 +1,334 @@
+"""Tests for exp01 (Laplacian benchmark)."""
+
+from functools import partial
+from test.test___init__ import report_nonclose, setup_case
+from test.test_bilaplacian import bilaplacian
+from test.test_laplacian import _check_mc_convergence, laplacian
+from test.test_weighted_laplacian import weighted_laplacian
+from typing import Any
+
+from pytest import mark
+from torch import Tensor, manual_seed, sigmoid
+from torch.nn import Linear, Sequential, Tanh
+
+from jet.bilaplacian import RandomizedBilaplacian
+from jet.exp.exp01_benchmark_laplacian.execute import (
+    SUPPORTED_STRATEGIES,
+    bilaplacian_function,
+    laplacian_function,
+    randomized_bilaplacian_function,
+    randomized_laplacian_function,
+    randomized_weighted_laplacian_function,
+    weighted_laplacian_function,
+)
+from jet.laplacian import RandomizedLaplacian
+from jet.weighted_laplacian import (
+    C_func_diagonal_increments,
+    RandomizedWeightedLaplacian,
+)
+
+STRATEGY_IDS = [f"strategy={s}" for s in SUPPORTED_STRATEGIES]
+LAPLACIAN_DISTRIBUTION_IDS = [
+    f"distribution={d}" for d in RandomizedLaplacian.SUPPORTED_DISTRIBUTIONS
+]
+BILAPLACIAN_DISTRIBUTION_IDS = [
+    f"distribution={d}" for d in RandomizedBilaplacian.SUPPORTED_DISTRIBUTIONS
+]
+
+# make generation of test cases deterministic
+manual_seed(0)
+
+EXP01_CASES = [
+    # 5d tanh-activated two-layer MLP
+    {
+        "f": Sequential(
+            Linear(5, 4, bias=False), Tanh(), Linear(4, 1, bias=True), Tanh()
+        ),
+        "shape": (5,),
+        "id": "two-layer-tanh-mlp",
+    },
+    # 5d tanh-activated two-layer MLP with batched input
+    {
+        "f": Sequential(
+            Linear(5, 4, bias=False), Tanh(), Linear(4, 1, bias=True), Tanh()
+        ),
+        "shape": (10, 5),
+        "is_batched": True,
+        "id": "batched-two-layer-tanh-mlp",
+    },
+    # 3d sigmoid(sigmoid) function
+    {"f": lambda x: sigmoid(sigmoid(x)), "shape": (3,), "id": "sigmoid-sigmoid"},
+]
+# set the `is_batched` flag for all cases
+for config in EXP01_CASES:
+    config["is_batched"] = config.get("is_batched", False)
+
+EXP01_IDS = [config["id"] for config in EXP01_CASES]
+
+
+@mark.parametrize("strategy", SUPPORTED_STRATEGIES, ids=STRATEGY_IDS)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_laplacian_functions(config: dict[str, Any], strategy: str):
+    """Test that the benchmarked Laplacian functions produce the correct result.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        strategy: The strategy to test.
+    """
+    f, x, _, is_batched = setup_case(config)
+    lap = laplacian(f, x)
+    lap_func = laplacian_function(f, x, is_batched, strategy)()
+
+    report_nonclose(lap, lap_func)
+
+
+@mark.parametrize(
+    "distribution",
+    RandomizedLaplacian.SUPPORTED_DISTRIBUTIONS,
+    ids=LAPLACIAN_DISTRIBUTION_IDS,
+)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_randomized_laplacian_functions_identical(
+    config: dict[str, Any], distribution: str, num_samples: int = 42
+):
+    """Test that the benchmarked MC-Laplacian functions are identical when seeding.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        distribution: The distribution from which to draw random vectors.
+        num_samples: Number of samples to draw. Default: `42`.
+    """
+    f, x, _, is_batched = setup_case(config)
+
+    laps = {}
+    for strategy in SUPPORTED_STRATEGIES:
+        manual_seed(1)
+        laps[strategy] = randomized_laplacian_function(
+            f, x, is_batched, strategy, distribution, num_samples
+        )()
+
+    first_key = list(laps.keys())[0]
+    for key in laps:
+        report_nonclose(laps[first_key], laps[key])
+
+
+@mark.parametrize("strategy", SUPPORTED_STRATEGIES, ids=STRATEGY_IDS)
+@mark.parametrize(
+    "distribution",
+    RandomizedLaplacian.SUPPORTED_DISTRIBUTIONS,
+    ids=LAPLACIAN_DISTRIBUTION_IDS,
+)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_randomized_laplacian_functions_converge(
+    config: dict[str, Any],
+    strategy: str,
+    distribution: str,
+    max_num_chunks: int = 128,
+    chunk_size: int = 128,
+    target_rel_error: float = 5e-2,
+):
+    """Test that the benchmarked MC-Laplacian functions converge.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        strategy: The strategy to test.
+        distribution: The distribution from which to draw random vectors.
+        max_num_chunks: Maximum number of chunks to accumulate. Default: `128`.
+        chunk_size: Number of samples per chunk. Default: `64`.
+        target_rel_error: Target relative error for convergence. Default: `5e-2`.
+    """
+    f, X, _, is_batched = setup_case(config)
+
+    lap = laplacian(f, X)
+
+    # check convergence of the Monte-Carlo estimator
+    def sample(idx: int) -> Tensor:
+        manual_seed(idx)
+        return randomized_laplacian_function(
+            f, X, is_batched, strategy, distribution, chunk_size
+        )()
+
+    converged = _check_mc_convergence(
+        lap, sample, chunk_size, max_num_chunks, target_rel_error
+    )
+    assert converged, f"MC Laplacian ({strategy}, {distribution}) did not converge."
+
+
+@mark.parametrize("strategy", SUPPORTED_STRATEGIES, ids=STRATEGY_IDS)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_weighted_laplacian_functions(config: dict[str, Any], strategy: str):
+    """Test that the benchmarked weighted Laplacians produce the correct result.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        strategy: The strategy to test.
+    """
+    f, x, _, is_batched = setup_case(config)
+    C_func = partial(C_func_diagonal_increments, is_batched=is_batched)
+    weighted_lap = weighted_laplacian(f, x, is_batched, C_func)
+    weighted_lap_func = weighted_laplacian_function(f, x, is_batched, strategy)()
+
+    report_nonclose(weighted_lap, weighted_lap_func)
+
+
+@mark.parametrize(
+    "distribution",
+    RandomizedWeightedLaplacian.SUPPORTED_DISTRIBUTIONS,
+    ids=LAPLACIAN_DISTRIBUTION_IDS,
+)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_randomized_weighted_laplacian_functions_identical(
+    config: dict[str, Any], distribution: str, num_samples: int = 42
+):
+    """Test that the weighted MC-Laplacian functions are identical when seeding.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        distribution: The distribution from which to draw random vectors.
+        num_samples: Number of samples to draw. Default: `42`.
+    """
+    f, x, _, is_batched = setup_case(config)
+
+    h_dot_cs = {}
+    for strategy in SUPPORTED_STRATEGIES:
+        manual_seed(1)
+        h_dot_cs[strategy] = randomized_weighted_laplacian_function(
+            f, x, is_batched, strategy, distribution, num_samples
+        )()
+
+    first_key = list(h_dot_cs.keys())[0]
+    for key in h_dot_cs:
+        report_nonclose(h_dot_cs[first_key], h_dot_cs[key])
+
+
+@mark.parametrize("strategy", SUPPORTED_STRATEGIES, ids=STRATEGY_IDS)
+@mark.parametrize(
+    "distribution",
+    RandomizedWeightedLaplacian.SUPPORTED_DISTRIBUTIONS,
+    ids=LAPLACIAN_DISTRIBUTION_IDS,
+)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_randomized_weighted_laplacian_functions_converge(
+    config: dict[str, Any],
+    strategy: str,
+    distribution: str,
+    max_num_chunks: int = 128,
+    chunk_size: int = 64,
+    target_rel_error: float = 5e-2,
+):
+    """Test that the benchmarked weighted MC-Laplacian functions converge.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        strategy: The strategy to test.
+        distribution: The distribution from which to draw random vectors.
+        max_num_chunks: Maximum number of chunks to accumulate. Default: `128`.
+        chunk_size: Number of samples per chunk. Default: `64`.
+        target_rel_error: Target relative error for convergence. Default: `5e-2`.
+    """
+    f, X, _, is_batched = setup_case(config)
+
+    C_func = partial(C_func_diagonal_increments, is_batched=is_batched)
+    h_dot_c = weighted_laplacian(f, X, is_batched, C_func)
+
+    # check convergence of the Monte-Carlo estimator
+    def sample(idx: int) -> Tensor:
+        manual_seed(idx)
+        return randomized_weighted_laplacian_function(
+            f, X, is_batched, strategy, distribution, chunk_size
+        )()
+
+    converged = _check_mc_convergence(
+        h_dot_c, sample, chunk_size, max_num_chunks, target_rel_error
+    )
+    assert (
+        converged
+    ), f"MC weighted Laplacian ({strategy}, {distribution}) did not converge."
+
+
+@mark.parametrize("strategy", SUPPORTED_STRATEGIES, ids=STRATEGY_IDS)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_bilaplacian_functions(config: dict[str, Any], strategy: str):
+    """Test that the benchmarked Bi-Laplacians produce the correct result.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        strategy: The strategy to test.
+    """
+    f, x, _, is_batched = setup_case(config)
+    bilap = bilaplacian(f, x, is_batched)
+    bilap_func = bilaplacian_function(f, x, is_batched, strategy)()
+
+    report_nonclose(bilap, bilap_func)
+
+
+@mark.parametrize(
+    "distribution",
+    RandomizedBilaplacian.SUPPORTED_DISTRIBUTIONS,
+    ids=BILAPLACIAN_DISTRIBUTION_IDS,
+)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_randomized_bilaplacian_functions_identical(
+    config: dict[str, Any], distribution: str, num_samples: int = 42
+):
+    """Test that the weighted MC-Bi-Laplacian functions are identical when seeding.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        distribution: The distribution from which to draw random vectors.
+        num_samples: Number of samples to draw. Default: `42`.
+    """
+    f, x, _, is_batched = setup_case(config)
+
+    bilaps = {}
+    for strategy in SUPPORTED_STRATEGIES:
+        manual_seed(1)
+        bilaps[strategy] = randomized_bilaplacian_function(
+            f, x, is_batched, strategy, distribution, num_samples
+        )()
+
+    first_key = list(bilaps.keys())[0]
+    for key in bilaps:
+        report_nonclose(bilaps[first_key], bilaps[key])
+
+
+@mark.parametrize("strategy", SUPPORTED_STRATEGIES, ids=STRATEGY_IDS)
+@mark.parametrize(
+    "distribution",
+    RandomizedBilaplacian.SUPPORTED_DISTRIBUTIONS,
+    ids=BILAPLACIAN_DISTRIBUTION_IDS,
+)
+@mark.parametrize("config", EXP01_CASES, ids=EXP01_IDS)
+def test_randomized_bilaplacian_functions_converge(
+    config: dict[str, Any],
+    strategy: str,
+    distribution: str,
+    max_num_chunks: int = 128,
+    chunk_size: int = 128,
+    target_rel_error: float = 5e-2,
+):
+    """Test that the benchmarked MC-Bi-Laplacian functions converge.
+
+    Args:
+        config: Configuration dictionary of the test case.
+        strategy: The strategy to test.
+        distribution: The distribution from which to draw random vectors.
+        max_num_chunks: Maximum number of chunks to accumulate. Default: `128`.
+        chunk_size: Number of samples per chunk. Default: `128`.
+        target_rel_error: Target relative error for convergence. Default: `5e-2`.
+    """
+    f, X, _, is_batched = setup_case(config)
+
+    bilap = bilaplacian(f, X, is_batched)
+
+    # check convergence of the Monte-Carlo estimator
+    def sample(idx: int) -> Tensor:
+        manual_seed(idx)
+        return randomized_bilaplacian_function(
+            f, X, is_batched, strategy, distribution, chunk_size
+        )()
+
+    converged = _check_mc_convergence(
+        bilap, sample, chunk_size, max_num_chunks, target_rel_error
+    )
+    assert converged, f"MC-Bi-Laplacian ({strategy}, {distribution}) did not converge."

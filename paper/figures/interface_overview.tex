@@ -1,0 +1,473 @@
+\newcommand{\drawgridrectangle}[4]{%
+  \begin{tikzpicture}[scale=#4]
+    \pgfmathsetmacro{\ymax}{#1}
+    \pgfmathsetmacro{\xmax}{#2}
+
+    % Fill the rectangle
+    \fill[#3] (0,0) rectangle (\xmax,\ymax);
+
+    % Draw the border
+    \draw[white, line width=#4*3pt] (0,0) rectangle (\xmax,\ymax);
+
+    % Draw vertical grid lines
+    \pgfmathsetmacro{\xsteps}{#2}
+    \foreach \x in {1,...,\xsteps} {
+      \draw[white, line width=#4*3pt] (\x,0) -- (\x,\ymax);
+    }
+
+    % Draw horizontal grid lines
+    \pgfmathsetmacro{\ysteps}{#1}
+    \foreach \y in {1,...,\ysteps} {
+      \draw[white, line width=#4*7pt] (0,\y) -- (\xmax,\y);
+    }
+  \end{tikzpicture}%
+}
+
+\newsavebox{\function}
+\savebox{\function}{
+  \begin{tikzpicture}
+    \matrix [%
+    matrix of nodes,%
+    ampersand replacement=\&,% to use inside a savebox
+    nodes={anchor=center, align=center},%
+    column sep=5ex,%
+    row sep=1ex,%
+    ] (taylor)
+    {
+      \drawgridrectangle{1}{5}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{3}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{1}{gray!25!white}{0.33}
+      \\[-1.5ex]
+      $\vx_0$ \& $\vh_0$ \& $\vg_0$
+      \\
+    };
+
+    % ===================================================================
+    % DRAW DEPENDENCY ARROWS
+    % ===================================================================
+    \pgfmathsetmacro{\K}{1}
+    \pgfmathsetmacro{\L}{2}
+
+    \foreach \l in {1,...,\L}{
+      \pgfmathsetmacro{\lother}{int(\l+1)}
+      \foreach \k in {1,...,\K} {
+        \pgfmathsetmacro{\row}{int(2*\k-1)}
+        \foreach \kother in {\k,...,\K} {
+          \pgfmathsetmacro{\rowother}{int(2*\kother-1)}
+          \draw[-Stealth, line width=1pt, gray!50!white] (taylor-\row-\l.east) -- (taylor-\rowother-\lother.west);
+        }
+      }
+    }
+
+    % ===================================================================
+    % DRAW ARROW INDICATING DIRECTION OF PROPAGATION
+    % ===================================================================
+    \coordinate (arrowStart) at ($(taylor-1-1.north)+(0,3.5ex)$);
+    \coordinate (arrowEnd) at ($(taylor-1-3.north east)+(0,3.5ex)$);
+    \draw[-Stealth, line width=2pt, black] (arrowStart) to node [midway, fill=white, align=center] {\textbf{Forward} \\ \textbf{propagation}} (arrowEnd);
+
+    % ===================================================================
+    % DRAW DERIVATIVE DEGREE LABELS
+    % ===================================================================
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-1-1] (zero) {0};
+    \node [align=center] (coefficientLabel) at ($(zero)+(0, 5.5ex)$) {\textbf{Derivative}\\\textbf{degree}};
+  \end{tikzpicture}
+}
+
+\newsavebox{\taylor}
+\savebox{\taylor}{
+  \begin{tikzpicture}
+    % ===================================================================
+    % DRAW VECTORS OF DERIVATIVES 0, 1, ..., K
+    % ===================================================================
+    \matrix [%
+    matrix of nodes,%
+    ampersand replacement=\&,% to use inside a savebox
+    nodes={anchor=center, align=center},%
+    column sep=5ex,%
+    row sep=1ex,%
+    ] (taylor)
+    {
+      \drawgridrectangle{1}{5}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{3}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{1}{gray!25!white}{0.33}
+      \\[-1.5ex]
+      $\vx_0$ \& $\vh_0$ \& $\vg_0$
+      \\
+      \drawgridrectangle{1}{5}{gray!50!white}{0.33}
+      \& \drawgridrectangle{1}{3}{gray!50!white}{0.33}
+      \& \drawgridrectangle{1}{1}{gray!50!white}{0.33}
+      \\[-1.5ex]
+      $\vx_1$ \& $\vh_1$ \& $\vg_1$
+      \\[0.5ex]
+      \drawgridrectangle{1}{5}{white}{0.33}
+      \& \drawgridrectangle{1}{3}{white}{0.33}
+      \& \drawgridrectangle{1}{1}{white}{0.33}
+      \\[0.5ex]
+      \\
+      \drawgridrectangle{1}{5}{gray!75!white}{0.33}
+      \& \drawgridrectangle{1}{3}{gray!75!white}{0.33}
+      \& \drawgridrectangle{1}{1}{gray!75!white}{0.33}
+      \\[-1.5ex]
+      $\vx_{K-1}$ \& $\vh_{K-1}$ \& $\vg_{K-1}$
+      \\[0.5ex]
+      \drawgridrectangle{1}{5}{gray}{0.33}
+      \&
+      \drawgridrectangle{1}{3}{gray}{0.33}
+      \&
+      \drawgridrectangle{1}{1}{gray}{0.33}
+      \\[-1.5ex]
+      $\vx_K$ \& $\vh_K$ \& $\vg_K$
+      \\
+    };
+
+    \node at (taylor-5-1) {\vdots};
+    \node at (taylor-5-2) {\vdots};
+    \node at (taylor-5-3) {\vdots};
+
+    % ===================================================================
+    % DRAW DEPENDENCY ARROWS
+    % ===================================================================
+    \pgfmathsetmacro{\K}{5}
+    \pgfmathsetmacro{\L}{2}
+
+    \foreach \l in {1,...,\L}{
+      \pgfmathsetmacro{\lother}{int(\l+1)}
+      \foreach \k in {1,...,\K} {
+        \pgfmathsetmacro{\row}{int(2*\k-1)}
+        \foreach \kother in {\k,...,\K} {
+          \pgfmathsetmacro{\rowother}{int(2*\kother-1)}
+          \draw[-Stealth, line width=1pt, gray!50!white] (taylor-\row-\l.east) -- (taylor-\rowother-\lother.west);
+        }
+      }
+    }
+
+    % ===================================================================
+    % DRAW ARROW INDICATING DIRECTION OF PROPAGATION
+    % ===================================================================
+    \coordinate (arrowStart) at ($(taylor-1-1.north)+(0,3.5ex)$);
+    \coordinate (arrowEnd) at ($(taylor-1-3.north east)+(0,3.5ex)$);
+    \draw[-Stealth, line width=2pt, black] (arrowStart) to node [midway, fill=white, align=center] {\textbf{Forward} \\ \textbf{propagation}} (arrowEnd);
+
+    % ===================================================================
+    % DRAW DERIVATIVE DEGREE LABELS
+    % ===================================================================
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-1-1] (zero) {0};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-3-1] {1};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-5-1] {$\vdots$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-7-1] {$K-1$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-9-1] {$K$};
+    \node [align=center] (coefficientLabel) at ($(zero)+(0, 5.5ex)$) {\textbf{Derivative}\\\textbf{degree}};
+  \end{tikzpicture}
+}
+
+\newsavebox{\vmappedTaylor}
+\savebox{\vmappedTaylor}{
+  \begin{tikzpicture}
+    % ===================================================================
+    % DRAW VECTORS OF DERIVATIVES 0, 1, ..., K
+    % ===================================================================
+    \matrix [%
+    matrix of nodes,%
+    ampersand replacement=\&,% to use inside a savebox
+    nodes={anchor=center, align=center},%
+    column sep=5ex,%
+    row sep=1ex,%
+    ] (taylor)
+    {
+      \drawgridrectangle{4}{5}{gray!25!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!25!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!25!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{0,r}\}$ \& $\{\vh_{0,r}\}$ \& $\{\vg_{0,r}\}$
+      \\
+      \drawgridrectangle{4}{5}{gray!50!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!50!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!50!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{1,r}\}$ \& $\{\vh_{1,r}\}$ \& $\{\vg_{1,r}\}$
+      \\[0.5ex]
+      \drawgridrectangle{1}{5}{white}{0.33}
+      \& \drawgridrectangle{1}{3}{white}{0.33}
+      \& \drawgridrectangle{1}{1}{white}{0.33}
+      \\[0.5ex]
+      \\
+      \drawgridrectangle{4}{5}{gray!75!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!75!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!75!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{K-1,r}\}$ \& $\{\vh_{K-1,r}\}$ \& $\{\vg_{K-1,r}\}$
+      \\[0.5ex]
+      \drawgridrectangle{4}{5}{gray}{0.33}
+      \&
+      \drawgridrectangle{4}{3}{gray}{0.33}
+      \&
+      \drawgridrectangle{4}{1}{gray}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{K,r}\}$ \& $\{\vh_{K,r}\}$ \& $\{\vg_{K,r}\}$
+      \\
+    };
+
+    \node at (taylor-5-1) {\vdots};
+    \node at (taylor-5-2) {\vdots};
+    \node at (taylor-5-3) {\vdots};
+
+    % ===================================================================
+    % DRAW DEPENDENCY ARROWS
+    % ===================================================================
+    \pgfmathsetmacro{\K}{5}
+    \pgfmathsetmacro{\L}{2}
+
+    \foreach \l in {1,...,\L}{
+      \pgfmathsetmacro{\lother}{int(\l+1)}
+      \foreach \k in {1,...,\K} {
+        \pgfmathsetmacro{\row}{int(2*\k-1)}
+        \foreach \kother in {\k,...,\K} {
+          \pgfmathsetmacro{\rowother}{int(2*\kother-1)}
+          \draw[-Stealth, line width=1pt, gray!50!white] (taylor-\row-\l.east) -- (taylor-\rowother-\lother.west);
+        }
+      }
+    }
+
+    % ===================================================================
+    % DRAW ARROW INDICATING DIRECTION OF PROPAGATION
+    % ===================================================================
+    \coordinate (arrowStart) at ($(taylor-1-1.north)+(0,3.5ex)$);
+    \coordinate (arrowEnd) at ($(taylor-1-3.north east)+(0,3.5ex)$);
+    \draw[-Stealth, line width=2pt, black] (arrowStart) to node [midway, fill=white, align=center] {\textbf{Forward} \\ \textbf{propagation}} (arrowEnd);
+
+    % ===================================================================
+    % DRAW DERIVATIVE DEGREE LABELS
+    % ===================================================================
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-1-1] (zero) {0};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-3-1] {1};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-5-1] {$\vdots$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-7-1] {$K-1$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-9-1] {$K$};
+    \node [align=center] (coefficientLabel) at ($(zero)+(0, 5.5ex)$) {\textbf{Derivative}\\\textbf{degree}};
+  \end{tikzpicture}
+}
+
+\newsavebox{\curriedTaylor}
+\savebox{\curriedTaylor}{
+  \begin{tikzpicture}
+    % ===================================================================
+    % DRAW VECTORS OF DERIVATIVES 0, 1, ..., K
+    % ===================================================================
+    \matrix [%
+    matrix of nodes,%
+    ampersand replacement=\&,% to use inside a savebox
+    nodes={anchor=center, align=center},%
+    column sep=5ex,%
+    row sep=1ex,%
+    ] (taylor)
+    {
+      \drawgridrectangle{1}{5}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{3}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{1}{gray!25!white}{0.33}
+      \\[-1.5ex]
+      $\vx_0$ \& $\vh_0$ \& $\vg_0$
+      \\
+      \drawgridrectangle{4}{5}{gray!50!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!50!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!50!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{1,r}\}$ \& $\{\vh_{1,r}\}$ \& $\{\vg_{1,r}\}$
+      \\[0.5ex]
+      \drawgridrectangle{1}{5}{white}{0.33}
+      \& \drawgridrectangle{1}{3}{white}{0.33}
+      \& \drawgridrectangle{1}{1}{white}{0.33}
+      \\[0.5ex]
+      \\
+      \drawgridrectangle{4}{5}{gray!75!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!75!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!75!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{K-1,r}\}$ \& $\{\vh_{K-1,r}\}$ \& $\{\vg_{K-1,r}\}$
+      \\[0.5ex]
+      \drawgridrectangle{4}{5}{gray}{0.33}
+      \&
+      \drawgridrectangle{4}{3}{gray}{0.33}
+      \&
+      \drawgridrectangle{4}{1}{gray}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{K,r}\}$ \& $\{\vh_{K,r}\}$ \& $\{\vg_{K,r}\}$
+      \\
+    };
+
+    \node at (taylor-5-1) {\vdots};
+    \node at (taylor-5-2) {\vdots};
+    \node at (taylor-5-3) {\vdots};
+
+    % ===================================================================
+    % DRAW DEPENDENCY ARROWS
+    % ===================================================================
+    \pgfmathsetmacro{\K}{5}
+    \pgfmathsetmacro{\L}{2}
+
+    \foreach \l in {1,...,\L}{
+      \pgfmathsetmacro{\lother}{int(\l+1)}
+      \foreach \k in {1,...,\K} {
+        \pgfmathsetmacro{\row}{int(2*\k-1)}
+        \foreach \kother in {\k,...,\K} {
+          \pgfmathsetmacro{\rowother}{int(2*\kother-1)}
+          \draw[-Stealth, line width=1pt, gray!50!white] (taylor-\row-\l.east) -- (taylor-\rowother-\lother.west);
+        }
+      }
+    }
+
+    % ===================================================================
+    % DRAW ARROW INDICATING DIRECTION OF PROPAGATION
+    % ===================================================================
+    \coordinate (arrowStart) at ($(taylor-1-1.north)+(0,3.5ex)$);
+    \coordinate (arrowEnd) at ($(taylor-1-3.north east)+(0,3.5ex)$);
+    \draw[-Stealth, line width=2pt, black] (arrowStart) to node [midway, fill=white, align=center] {\textbf{Forward} \\ \textbf{propagation}} (arrowEnd);
+
+    % ===================================================================
+    % DRAW DERIVATIVE DEGREE LABELS
+    % ===================================================================
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-1-1] (zero) {0};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-3-1] {1};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-5-1] {$\vdots$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-7-1] {$K-1$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-9-1] {$K$};
+    \node [align=center] (coefficientLabel) at ($(zero)+(0, 5.5ex)$) {\textbf{Derivative}\\\textbf{degree}};
+  \end{tikzpicture}
+}
+
+\newsavebox{\collapsedTaylor}
+\savebox{\collapsedTaylor}{
+  \begin{tikzpicture}
+    % ===================================================================
+    % DRAW VECTORS OF DERIVATIVES 0, 1, ..., K
+    % ===================================================================
+    \matrix [%
+    matrix of nodes,%
+    ampersand replacement=\&,% to use inside a savebox
+    nodes={anchor=center, align=center},%
+    column sep=5ex,%
+    row sep=1ex,%
+    ] (taylor)
+    {
+      \drawgridrectangle{1}{5}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{3}{gray!25!white}{0.33}
+      \& \drawgridrectangle{1}{1}{gray!25!white}{0.33}
+      \\[-1.5ex]
+      $\vx_0$ \& $\vh_0$ \& $\vg_0$
+      \\
+      \drawgridrectangle{4}{5}{gray!50!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!50!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!50!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{1,r}\}$ \& $\{\vh_{1,r}\}$ \& $\{\vg_{1,r}\}$
+      \\[0.5ex]
+      \drawgridrectangle{1}{5}{white}{0.33}
+      \& \drawgridrectangle{1}{3}{white}{0.33}
+      \& \drawgridrectangle{1}{1}{white}{0.33}
+      \\[0.5ex]
+      \\
+      \drawgridrectangle{4}{5}{gray!75!white}{0.33}
+      \& \drawgridrectangle{4}{3}{gray!75!white}{0.33}
+      \& \drawgridrectangle{4}{1}{gray!75!white}{0.33}
+      \\[-1.5ex]
+      $\{\vx_{K-1,r}\}$ \& $\{\vh_{K-1,r}\}$ \& $\{\vg_{K-1,r}\}$
+      \\[0.5ex]
+      \drawgridrectangle{1}{5}{gray}{0.33}
+      \&
+      \drawgridrectangle{1}{3}{gray}{0.33}
+      \&
+      \drawgridrectangle{1}{1}{gray}{0.33}
+      \\[-1.5ex]
+      $\sum_r \vx_{K,r}$ \& $\sum_r \vh_{K,r}$ \& $\sum_r \vg_{K,r}$
+      \\
+    };
+
+    \node at (taylor-5-1) {\vdots};
+    \node at (taylor-5-2) {\vdots};
+    \node at (taylor-5-3) {\vdots};
+
+    % ===================================================================
+    % DRAW DEPENDENCY ARROWS
+    % ===================================================================
+    \pgfmathsetmacro{\K}{5}
+    \pgfmathsetmacro{\L}{2}
+
+    \foreach \l in {1,...,\L}{
+      \pgfmathsetmacro{\lother}{int(\l+1)}
+      \foreach \k in {1,...,\K} {
+        \pgfmathsetmacro{\row}{int(2*\k-1)}
+        \foreach \kother in {\k,...,\K} {
+          \pgfmathsetmacro{\rowother}{int(2*\kother-1)}
+          \draw[-Stealth, line width=1pt, gray!50!white] (taylor-\row-\l.east) -- (taylor-\rowother-\lother.west);
+        }
+      }
+    }
+
+    % ===================================================================
+    % DRAW ARROW INDICATING DIRECTION OF PROPAGATION
+    % ===================================================================
+    \coordinate (arrowStart) at ($(taylor-1-1.north)+(0,3.5ex)$);
+    \coordinate (arrowEnd) at ($(taylor-1-3.north east)+(0,3.5ex)$);
+    \draw[-Stealth, line width=2pt, black] (arrowStart) to node [midway, fill=white, align=center] {\textbf{Forward} \\ \textbf{propagation}} (arrowEnd);
+
+    % ===================================================================
+    % DRAW DERIVATIVE DEGREE LABELS
+    % ===================================================================
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-1-1] (zero) {0};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-3-1] {1};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-5-1] {$\vdots$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-7-1] {$K-1$};
+    \node [minimum width=8ex, align=center, left=1.5ex of taylor-9-1] {$K$};
+    \node [align=center] (coefficientLabel) at ($(zero)+(0, 5.5ex)$) {\textbf{Derivative}\\\textbf{degree}};
+  \end{tikzpicture}
+}
+
+\begin{figure}[!h]
+  \centering
+  \resizebox{\linewidth}{!}{
+    \begin{tikzpicture}
+      \node [rounded corners, draw=black] (function) {\usebox{\function}};
+      \node [rounded corners, draw=black, anchor=north west, yshift=-1.5cm] (taylor) at (function.south west) {\usebox{\taylor}};
+      \node [rounded corners, draw=black, anchor=north west, xshift=2.5cm] (vmapped) at (taylor.north east) {\usebox{\vmappedTaylor}};
+      \node [rounded corners, draw=tab-orange, anchor=north west, yshift=-1cm] (curried) at (taylor.south west) {\usebox{\curriedTaylor}};
+      \node [rounded corners, draw=tab-green, anchor=north west, yshift=-1cm] (collapsed) at (vmapped.south west) {\usebox{\collapsedTaylor}};
+
+      \node [anchor=north west, xshift=1.5cm, align=left, purple, scale=1.25] at (function.north east) (taylorLabel) {\textbf{Steps:}\\[0.5ex]
+        1. Overload forward pass with Taylor arithmetic
+        \\
+        2. Vectorize (illustration over four directions)
+        \\
+        3. Set primal to $\vx_0$ for all directions, eliminate redundancies
+        \\
+        4. Collapse highest derivative
+      };
+
+      \draw[-Stealth, line width=5pt, purple] (function.south) to node [midway, xshift=1cm, scale=1.75] {\texttt{jet}}
+      node[pos=0, xshift=-20pt, yshift=-20pt] {\tikz[baseline]{\node[draw,circle,inner sep=1pt,scale=1.10]{\text{1.}};}} 
+      (function|-taylor.north);
+      
+      \draw[-Stealth, line width=5pt, purple] (taylor.east) to node [midway, yshift=1cm, scale=1.75] {\texttt{vmap}}
+      node[pos=0, xshift=30pt, yshift=-15pt] {\tikz[baseline]{\node[draw,circle,inner sep=1pt,scale=1.10]{\text{2.}};}}
+      (taylor.east-|vmapped.west);
+
+      \coordinate (arrowStart) at ($(vmapped.west)!0.75!(vmapped.south west)$);
+      \draw[-Stealth, line width=5pt, purple] (arrowStart) to node [midway, yshift=1cm, scale=1.75] {\texttt{jit}}
+      node[pos=0, xshift=-20pt, yshift=-17pt] {\tikz[baseline]     {\node[draw,circle,inner sep=1pt,scale=1.10]{\text{3.}};}}
+      (arrowStart-|curried.east);
+
+      \draw[Stealth-, line width=5pt, purple] (collapsed.west) to node [midway, yshift=1cm, scale=1.75] {\texttt{jit}}
+      node[pos=0, xshift=-25pt, yshift=-18pt] {\tikz[baseline]{\node[draw,circle,inner sep=1pt,scale=1.10]{\text{4.}};}}
+      (collapsed.west-|curried.east);
+
+    \end{tikzpicture}
+  }
+  \caption{ \textbf{Step-by-step transformation of a function into its collapsed Taylor mode.}
+    Collapsed Taylor mode can be implemented via the already existing \texttt{jet} (standard Taylor mode), \texttt{vmap} (vectorization), and \texttt{jit} (graph transformation) interfaces.
+    Therefore, users do not need to learn a new interface to benefit from our proposed method and can simply rely on standard Taylor mode and just-in-time compilation (after incorporating our proposed simplifications).
+    Coloured boxes correspond to our PyTorch implementations of \textcolor{tab-orange}{standard} and \textcolor{tab-green}{collapsed} Taylor mode from our experiments.}
+  \label{fig:interface-overview}
+\end{figure}
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

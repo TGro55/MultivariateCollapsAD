@@ -1,0 +1,699 @@
+To give some intuition on the Fa\`a di Bruno formula, we illustrate \cref{eq:taylor-mode-composition} for higher orders here:
+\vspace{2ex}
+\begin{tiny}
+  \begin{align*}
+    \vx_{0}
+    &\to&
+          \vh_{0}
+          =
+          \vh(\vx_{0})
+    &\to&
+          \vg_{0}
+          =
+          \vg(\vh_{0})
+          =
+    &\vf_{0}
+      =
+      \vf(\vx_{0})
+    \\
+    \vx_{1}
+    &\to&
+          \vh_{1}
+          =
+          \langle \partial \vh, \vx_{1} \rangle
+    &\to&
+          \vg_{1}
+          =
+          \langle \partial \vg, \vh_{1} \rangle
+          =
+    &\vf_{1}
+      =
+      \langle \partial \vf, \vx_{1} \rangle
+    \\
+    \vx_{2}
+    &\to&
+          \vh_{2}
+          =
+          \begin{matrix}
+            \langle \partial^{2} \vh, \vx_{1}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{2} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{2}
+          =
+          \begin{matrix}
+            \langle \partial^{2} \vg, \vh_{1}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{2} \rangle
+          \end{matrix}
+          =
+    &\vf_{2}
+      =
+      \begin{matrix}
+        \langle \partial^{2} \vf, \vx_{1}^{\otimes2} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{2} \rangle
+      \end{matrix}
+    \\
+    \vx_{3}
+    &\to&
+          \vh_{3}
+          =
+          \begin{matrix}
+            \langle \partial^{3} \vh, \vx_{1}^{\otimes3} \rangle
+            \\
+            +
+            3 \langle \partial^{2} \vh, \vx_{1}\otimes \vx_{2} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{3} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{3}
+          =
+          \begin{matrix}
+            \langle \partial^{3} \vg, \vh_{1}^{\otimes3} \rangle
+            \\
+            +
+            3 \langle \partial^{2} \vg, \vh_{1}\otimes \vh_{2} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{3} \rangle
+          \end{matrix}
+          =
+    &\vf_{3}
+      =
+      \begin{matrix}
+        \langle \partial^{3} \vf, \vx_{1}^{\otimes3} \rangle
+        \\
+        +
+        3 \langle \partial^{2} \vf, \vx_{1}\otimes \vx_{2} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{3} \rangle
+      \end{matrix}
+    \\
+    \vx_{4}
+    &\to&
+          \vh_{4}
+          =
+          \begin{matrix}
+            \langle \partial^{4} \vh, \vx_{1}^{\otimes4} \rangle
+            \\
+            +
+            6 \langle \partial^{3} \vh, \vx_{1}^{\otimes2}\otimes \vx_{2} \rangle
+            \\
+            +
+            4 \langle \partial^{2} \vh, \vx_{1}\otimes \vx_{3} \rangle
+            \\
+            +
+            3 \langle \partial^{2} \vh, \vx_{2}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{4} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{4}
+          =
+          \begin{matrix}
+            \langle \partial^{4} \vg, \vh_{1}^{\otimes4} \rangle
+            \\
+            +
+            6 \langle \partial^{3} \vg, \vh_{1}^{\otimes2}\otimes \vh_{2} \rangle
+            \\
+            +
+            4 \langle \partial^{2} \vg, \vh_{1}\otimes \vh_{3} \rangle
+            \\
+            +
+            3 \langle \partial^{2} \vg, \vh_{2}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{4} \rangle
+          \end{matrix}
+          =
+    &\vf_{4}
+      =
+      \begin{matrix}
+        \langle \partial^{4} \vf, \vx_{1}^{\otimes4} \rangle
+        \\
+        +
+        6 \langle \partial^{3} \vf, \vx_{1}^{\otimes2}\otimes \vx_{2} \rangle
+        \\
+        +
+        4 \langle \partial^{2} \vf, \vx_{1}\otimes \vx_{3} \rangle
+        \\
+        +
+        3 \langle \partial^{2} \vf, \vx_{2}^{\otimes2} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{4} \rangle
+      \end{matrix}
+    \\
+    \vx_{5}
+    &\to&
+          \vh_{5}
+          =
+          \begin{matrix}
+            \langle \partial^{5} \vh, \vx_{1}^{\otimes5} \rangle
+            \\
+            +
+            10 \langle \partial^{4} \vh, \vx_{1}^{\otimes3}\otimes \vx_{2} \rangle
+            \\
+            +
+            10 \langle \partial^{3} \vh, \vx_{1}^{\otimes2}\otimes \vx_{3} \rangle
+            \\
+            +
+            15 \langle \partial^{3} \vh, \vx_{1}\otimes \vx_{2}^{\otimes2} \rangle
+            \\
+            +
+            5 \langle \partial^{2} \vh, \vx_{1}\otimes \vx_{4} \rangle
+            \\
+            +
+            10 \langle \partial^{2} \vh, \vx_{2}\otimes \vx_{3} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{5} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{5}
+          =
+          \begin{matrix}
+            \langle \partial^{5} \vg, \vh_{1}^{\otimes5} \rangle
+            \\
+            +
+            10 \langle \partial^{4} \vg, \vh_{1}^{\otimes3}\otimes \vh_{2} \rangle
+            \\
+            +
+            10 \langle \partial^{3} \vg, \vh_{1}^{\otimes2}\otimes \vh_{3} \rangle
+            \\
+            +
+            15 \langle \partial^{3} \vg, \vh_{1}\otimes \vh_{2}^{\otimes2} \rangle
+            \\
+            +
+            5 \langle \partial^{2} \vg, \vh_{1}\otimes \vh_{4} \rangle
+            \\
+            +
+            10 \langle \partial^{2} \vg, \vh_{2}\otimes \vh_{3} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{5} \rangle
+          \end{matrix}
+          =
+    &\vf_{5}
+      =
+      \begin{matrix}
+        \langle \partial^{5} \vf, \vx_{1}^{\otimes5} \rangle
+        \\
+        +
+        10 \langle \partial^{4} \vf, \vx_{1}^{\otimes3}\otimes \vx_{2} \rangle
+        \\
+        +
+        10 \langle \partial^{3} \vf, \vx_{1}^{\otimes2}\otimes \vx_{3} \rangle
+        \\
+        +
+        15 \langle \partial^{3} \vf, \vx_{1}\otimes \vx_{2}^{\otimes2} \rangle
+        \\
+        +
+        5 \langle \partial^{2} \vf, \vx_{1}\otimes \vx_{4} \rangle
+        \\
+        +
+        10 \langle \partial^{2} \vf, \vx_{2}\otimes \vx_{3} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{5} \rangle
+      \end{matrix}
+    \\
+    \vx_{6}
+    &\to&
+          \vh_{6}
+          =
+          \begin{matrix}
+            \langle \partial^{6} \vh, \vx_{1}^{\otimes6} \rangle
+            \\
+            +
+            15 \langle \partial^{5} \vh, \vx_{1}^{\otimes4}\otimes \vx_{2} \rangle
+            \\
+            +
+            20 \langle \partial^{4} \vh, \vx_{1}^{\otimes3}\otimes \vx_{3} \rangle
+            \\
+            +
+            45 \langle \partial^{4} \vh, \vx_{1}^{\otimes2}\otimes \vx_{2}^{\otimes2} \rangle
+            \\
+            +
+            15 \langle \partial^{3} \vh, \vx_{1}^{\otimes2}\otimes \vx_{4} \rangle
+            \\
+            +
+            60 \langle \partial^{3} \vh, \vx_{1}\otimes \vx_{2}\otimes \vx_{3} \rangle
+            \\
+            +
+            15 \langle \partial^{3} \vh, \vx_{2}^{\otimes3} \rangle
+            \\
+            +
+            6 \langle \partial^{2} \vh, \vx_{1}\otimes \vx_{5} \rangle
+            \\
+            +
+            15 \langle \partial^{2} \vh, \vx_{2}\otimes \vx_{4} \rangle
+            \\
+            +
+            10 \langle \partial^{2} \vh, \vx_{3}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{6} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{6}
+          =
+          \begin{matrix}
+            \langle \partial^{6} \vg, \vh_{1}^{\otimes6} \rangle
+            \\
+            +
+            15 \langle \partial^{5} \vg, \vh_{1}^{\otimes4}\otimes \vh_{2} \rangle
+            \\
+            +
+            20 \langle \partial^{4} \vg, \vh_{1}^{\otimes3}\otimes \vh_{3} \rangle
+            \\
+            +
+            45 \langle \partial^{4} \vg, \vh_{1}^{\otimes2}\otimes \vh_{2}^{\otimes2} \rangle
+            \\
+            +
+            15 \langle \partial^{3} \vg, \vh_{1}^{\otimes2}\otimes \vh_{4} \rangle
+            \\
+            +
+            60 \langle \partial^{3} \vg, \vh_{1}\otimes \vh_{2}\otimes \vh_{3} \rangle
+            \\
+            +
+            15 \langle \partial^{3} \vg, \vh_{2}^{\otimes3} \rangle
+            \\
+            +
+            6 \langle \partial^{2} \vg, \vh_{1}\otimes \vh_{5} \rangle
+            \\
+            +
+            15 \langle \partial^{2} \vg, \vh_{2}\otimes \vh_{4} \rangle
+            \\
+            +
+            10 \langle \partial^{2} \vg, \vh_{3}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{6} \rangle
+          \end{matrix}
+          =
+    &\vf_{6}
+      =
+      \begin{matrix}
+        \langle \partial^{6} \vf, \vx_{1}^{\otimes6} \rangle
+        \\
+        +
+        15 \langle \partial^{5} \vf, \vx_{1}^{\otimes4}\otimes \vx_{2} \rangle
+        \\
+        +
+        20 \langle \partial^{4} \vf, \vx_{1}^{\otimes3}\otimes \vx_{3} \rangle
+        \\
+        +
+        45 \langle \partial^{4} \vf, \vx_{1}^{\otimes2}\otimes \vx_{2}^{\otimes2} \rangle
+        \\
+        +
+        15 \langle \partial^{3} \vf, \vx_{1}^{\otimes2}\otimes \vx_{4} \rangle
+        \\
+        +
+        60 \langle \partial^{3} \vf, \vx_{1}\otimes \vx_{2}\otimes \vx_{3} \rangle
+        \\
+        +
+        15 \langle \partial^{3} \vf, \vx_{2}^{\otimes3} \rangle
+        \\
+        +
+        6 \langle \partial^{2} \vf, \vx_{1}\otimes \vx_{5} \rangle
+        \\
+        +
+        15 \langle \partial^{2} \vf, \vx_{2}\otimes \vx_{4} \rangle
+        \\
+        +
+        10 \langle \partial^{2} \vf, \vx_{3}^{\otimes2} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{6} \rangle
+      \end{matrix}
+    \\
+    \vx_{7}
+    &\to&
+          \vh_{7}
+          =
+          \begin{matrix}
+            \langle \partial^{7} \vh, \vx_{1}^{\otimes7} \rangle
+            \\
+            +
+            21 \langle \partial^{6} \vh, \vx_{1}^{\otimes5}\otimes \vx_{2} \rangle
+            \\
+            +
+            35 \langle \partial^{5} \vh, \vx_{1}^{\otimes4}\otimes \vx_{3} \rangle
+            \\
+            +
+            105 \langle \partial^{5} \vh, \vx_{1}^{\otimes3}\otimes \vx_{2}^{\otimes2} \rangle
+            \\
+            +
+            35 \langle \partial^{4} \vh, \vx_{1}^{\otimes3}\otimes \vx_{4} \rangle
+            \\
+            +
+            210 \langle \partial^{4} \vh, \vx_{1}^{\otimes2}\otimes \vx_{2}\otimes \vx_{3} \rangle
+            \\
+            +
+            105 \langle \partial^{4} \vh, \vx_{1}\otimes \vx_{2}^{\otimes3} \rangle
+            \\
+            +
+            21 \langle \partial^{3} \vh, \vx_{1}^{\otimes2}\otimes \vx_{5} \rangle
+            \\
+            +
+            105 \langle \partial^{3} \vh, \vx_{1}\otimes \vx_{2}\otimes \vx_{4} \rangle
+            \\
+            +
+            70 \langle \partial^{3} \vh, \vx_{1}\otimes \vx_{3}^{\otimes2} \rangle
+            \\
+            +
+            105 \langle \partial^{3} \vh, \vx_{2}^{\otimes2}\otimes \vx_{3} \rangle
+            \\
+            +
+            7 \langle \partial^{2} \vh, \vx_{1}\otimes \vx_{6} \rangle
+            \\
+            +
+            21 \langle \partial^{2} \vh, \vx_{2}\otimes \vx_{5} \rangle
+            \\
+            +
+            35 \langle \partial^{2} \vh, \vx_{3}\otimes \vx_{4} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{7} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{7}
+          =
+          \begin{matrix}
+            \langle \partial^{7} \vg, \vh_{1}^{\otimes7} \rangle
+            \\
+            +
+            21 \langle \partial^{6} \vg, \vh_{1}^{\otimes5}\otimes \vh_{2} \rangle
+            \\
+            +
+            35 \langle \partial^{5} \vg, \vh_{1}^{\otimes4}\otimes \vh_{3} \rangle
+            \\
+            +
+            105 \langle \partial^{5} \vg, \vh_{1}^{\otimes3}\otimes \vh_{2}^{\otimes2} \rangle
+            \\
+            +
+            35 \langle \partial^{4} \vg, \vh_{1}^{\otimes3}\otimes \vh_{4} \rangle
+            \\
+            +
+            210 \langle \partial^{4} \vg, \vh_{1}^{\otimes2}\otimes \vh_{2}\otimes \vh_{3} \rangle
+            \\
+            +
+            105 \langle \partial^{4} \vg, \vh_{1}\otimes \vh_{2}^{\otimes3} \rangle
+            \\
+            +
+            21 \langle \partial^{3} \vg, \vh_{1}^{\otimes2}\otimes \vh_{5} \rangle
+            \\
+            +
+            105 \langle \partial^{3} \vg, \vh_{1}\otimes \vh_{2}\otimes \vh_{4} \rangle
+            \\
+            +
+            70 \langle \partial^{3} \vg, \vh_{1}\otimes \vh_{3}^{\otimes2} \rangle
+            \\
+            +
+            105 \langle \partial^{3} \vg, \vh_{2}^{\otimes2}\otimes \vh_{3} \rangle
+            \\
+            +
+            7 \langle \partial^{2} \vg, \vh_{1}\otimes \vh_{6} \rangle
+            \\
+            +
+            21 \langle \partial^{2} \vg, \vh_{2}\otimes \vh_{5} \rangle
+            \\
+            +
+            35 \langle \partial^{2} \vg, \vh_{3}\otimes \vh_{4} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{7} \rangle
+          \end{matrix}
+          =
+    &\vf_{7}
+      =
+      \begin{matrix}
+        \langle \partial^{7} \vf, \vx_{1}^{\otimes7} \rangle
+        \\
+        +
+        21 \langle \partial^{6} \vf, \vx_{1}^{\otimes5}\otimes \vx_{2} \rangle
+        \\
+        +
+        35 \langle \partial^{5} \vf, \vx_{1}^{\otimes4}\otimes \vx_{3} \rangle
+        \\
+        +
+        105 \langle \partial^{5} \vf, \vx_{1}^{\otimes3}\otimes \vx_{2}^{\otimes2} \rangle
+        \\
+        +
+        35 \langle \partial^{4} \vf, \vx_{1}^{\otimes3}\otimes \vx_{4} \rangle
+        \\
+        +
+        210 \langle \partial^{4} \vf, \vx_{1}^{\otimes2}\otimes \vx_{2}\otimes \vx_{3} \rangle
+        \\
+        +
+        105 \langle \partial^{4} \vf, \vx_{1}\otimes \vx_{2}^{\otimes3} \rangle
+        \\
+        +
+        21 \langle \partial^{3} \vf, \vx_{1}^{\otimes2}\otimes \vx_{5} \rangle
+        \\
+        +
+        105 \langle \partial^{3} \vf, \vx_{1}\otimes \vx_{2}\otimes \vx_{4} \rangle
+        \\
+        +
+        70 \langle \partial^{3} \vf, \vx_{1}\otimes \vx_{3}^{\otimes2} \rangle
+        \\
+        +
+        105 \langle \partial^{3} \vf, \vx_{2}^{\otimes2}\otimes \vx_{3} \rangle
+        \\
+        +
+        7 \langle \partial^{2} \vf, \vx_{1}\otimes \vx_{6} \rangle
+        \\
+        +
+        21 \langle \partial^{2} \vf, \vx_{2}\otimes \vx_{5} \rangle
+        \\
+        +
+        35 \langle \partial^{2} \vf, \vx_{3}\otimes \vx_{4} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{7} \rangle
+      \end{matrix}
+    \\
+    \vx_{8}
+    &\to&
+          \vh_{8}
+          =
+          \begin{matrix}
+            \langle \partial^{8} \vh, \vx_{1}^{\otimes8} \rangle
+            \\
+            +
+            28 \langle \partial^{7} \vh, \vx_{1}^{\otimes6}\otimes \vx_{2} \rangle
+            \\
+            +
+            56 \langle \partial^{6} \vh, \vx_{1}^{\otimes5}\otimes \vx_{3} \rangle
+            \\
+            +
+            210 \langle \partial^{6} \vh, \vx_{1}^{\otimes4}\otimes \vx_{2}^{\otimes2} \rangle
+            \\
+            +
+            70 \langle \partial^{5} \vh, \vx_{1}^{\otimes4}\otimes \vx_{4} \rangle
+            \\
+            +
+            560 \langle \partial^{5} \vh, \vx_{1}^{\otimes3}\otimes \vx_{2}\otimes \vx_{3} \rangle
+            \\
+            +
+            420 \langle \partial^{5} \vh, \vx_{1}^{\otimes2}\otimes \vx_{2}^{\otimes3} \rangle
+            \\
+            +
+            56 \langle \partial^{4} \vh, \vx_{1}^{\otimes3}\otimes \vx_{5} \rangle
+            \\
+            +
+            420 \langle \partial^{4} \vh, \vx_{1}^{\otimes2}\otimes \vx_{2}\otimes \vx_{4} \rangle
+            \\
+            +
+            280 \langle \partial^{4} \vh, \vx_{1}^{\otimes2}\otimes \vx_{3}^{\otimes2} \rangle
+            \\
+            +
+            840 \langle \partial^{4} \vh, \vx_{1}\otimes \vx_{2}^{\otimes2}\otimes \vx_{3} \rangle
+            \\
+            +
+            105 \langle \partial^{4} \vh, \vx_{2}^{\otimes4} \rangle
+            \\
+            +
+            28 \langle \partial^{3} \vh, \vx_{1}^{\otimes2}\otimes \vx_{6} \rangle
+            \\
+            +
+            168 \langle \partial^{3} \vh, \vx_{1}\otimes \vx_{2}\otimes \vx_{5} \rangle
+            \\
+            +
+            280 \langle \partial^{3} \vh, \vx_{1}\otimes \vx_{3}\otimes \vx_{4} \rangle
+            \\
+            +
+            210 \langle \partial^{3} \vh, \vx_{2}^{\otimes2}\otimes \vx_{4} \rangle
+            \\
+            +
+            280 \langle \partial^{3} \vh, \vx_{2}\otimes \vx_{3}^{\otimes2} \rangle
+            \\
+            +
+            8 \langle \partial^{2} \vh, \vx_{1}\otimes \vx_{7} \rangle
+            \\
+            +
+            28 \langle \partial^{2} \vh, \vx_{2}\otimes \vx_{6} \rangle
+            \\
+            +
+            56 \langle \partial^{2} \vh, \vx_{3}\otimes \vx_{5} \rangle
+            \\
+            +
+            35 \langle \partial^{2} \vh, \vx_{4}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vh, \vx_{8} \rangle
+          \end{matrix}
+    &\to&
+          \vg_{8}
+          =
+          \begin{matrix}
+            \langle \partial^{8} \vg, \vh_{1}^{\otimes8} \rangle
+            \\
+            +
+            28 \langle \partial^{7} \vg, \vh_{1}^{\otimes6}\otimes \vh_{2} \rangle
+            \\
+            +
+            56 \langle \partial^{6} \vg, \vh_{1}^{\otimes5}\otimes \vh_{3} \rangle
+            \\
+            +
+            210 \langle \partial^{6} \vg, \vh_{1}^{\otimes4}\otimes \vh_{2}^{\otimes2} \rangle
+            \\
+            +
+            70 \langle \partial^{5} \vg, \vh_{1}^{\otimes4}\otimes \vh_{4} \rangle
+            \\
+            +
+            560 \langle \partial^{5} \vg, \vh_{1}^{\otimes3}\otimes \vh_{2}\otimes \vh_{3} \rangle
+            \\
+            +
+            420 \langle \partial^{5} \vg, \vh_{1}^{\otimes2}\otimes \vh_{2}^{\otimes3} \rangle
+            \\
+            +
+            56 \langle \partial^{4} \vg, \vh_{1}^{\otimes3}\otimes \vh_{5} \rangle
+            \\
+            +
+            420 \langle \partial^{4} \vg, \vh_{1}^{\otimes2}\otimes \vh_{2}\otimes \vh_{4} \rangle
+            \\
+            +
+            280 \langle \partial^{4} \vg, \vh_{1}^{\otimes2}\otimes \vh_{3}^{\otimes2} \rangle
+            \\
+            +
+            840 \langle \partial^{4} \vg, \vh_{1}\otimes \vh_{2}^{\otimes2}\otimes \vh_{3} \rangle
+            \\
+            +
+            105 \langle \partial^{4} \vg, \vh_{2}^{\otimes4} \rangle
+            \\
+            +
+            28 \langle \partial^{3} \vg, \vh_{1}^{\otimes2}\otimes \vh_{6} \rangle
+            \\
+            +
+            168 \langle \partial^{3} \vg, \vh_{1}\otimes \vh_{2}\otimes \vh_{5} \rangle
+            \\
+            +
+            280 \langle \partial^{3} \vg, \vh_{1}\otimes \vh_{3}\otimes \vh_{4} \rangle
+            \\
+            +
+            210 \langle \partial^{3} \vg, \vh_{2}^{\otimes2}\otimes \vh_{4} \rangle
+            \\
+            +
+            280 \langle \partial^{3} \vg, \vh_{2}\otimes \vh_{3}^{\otimes2} \rangle
+            \\
+            +
+            8 \langle \partial^{2} \vg, \vh_{1}\otimes \vh_{7} \rangle
+            \\
+            +
+            28 \langle \partial^{2} \vg, \vh_{2}\otimes \vh_{6} \rangle
+            \\
+            +
+            56 \langle \partial^{2} \vg, \vh_{3}\otimes \vh_{5} \rangle
+            \\
+            +
+            35 \langle \partial^{2} \vg, \vh_{4}^{\otimes2} \rangle
+            \\
+            +
+            \langle \partial \vg, \vh_{8} \rangle
+          \end{matrix}
+          =
+    &\vf_{8}
+      =
+      \begin{matrix}
+        \langle \partial^{8} \vf, \vx_{1}^{\otimes8} \rangle
+        \\
+        +
+        28 \langle \partial^{7} \vf, \vx_{1}^{\otimes6}\otimes \vx_{2} \rangle
+        \\
+        +
+        56 \langle \partial^{6} \vf, \vx_{1}^{\otimes5}\otimes \vx_{3} \rangle
+        \\
+        +
+        210 \langle \partial^{6} \vf, \vx_{1}^{\otimes4}\otimes \vx_{2}^{\otimes2} \rangle
+        \\
+        +
+        70 \langle \partial^{5} \vf, \vx_{1}^{\otimes4}\otimes \vx_{4} \rangle
+        \\
+        +
+        560 \langle \partial^{5} \vf, \vx_{1}^{\otimes3}\otimes \vx_{2}\otimes \vx_{3} \rangle
+        \\
+        +
+        420 \langle \partial^{5} \vf, \vx_{1}^{\otimes2}\otimes \vx_{2}^{\otimes3} \rangle
+        \\
+        +
+        56 \langle \partial^{4} \vf, \vx_{1}^{\otimes3}\otimes \vx_{5} \rangle
+        \\
+        +
+        420 \langle \partial^{4} \vf, \vx_{1}^{\otimes2}\otimes \vx_{2}\otimes \vx_{4} \rangle
+        \\
+        +
+        280 \langle \partial^{4} \vf, \vx_{1}^{\otimes2}\otimes \vx_{3}^{\otimes2} \rangle
+        \\
+        +
+        840 \langle \partial^{4} \vf, \vx_{1}\otimes \vx_{2}^{\otimes2}\otimes \vx_{3} \rangle
+        \\
+        +
+        105 \langle \partial^{4} \vf, \vx_{2}^{\otimes4} \rangle
+        \\
+        +
+        28 \langle \partial^{3} \vf, \vx_{1}^{\otimes2}\otimes \vx_{6} \rangle
+        \\
+        +
+        168 \langle \partial^{3} \vf, \vx_{1}\otimes \vx_{2}\otimes \vx_{5} \rangle
+        \\
+        +
+        280 \langle \partial^{3} \vf, \vx_{1}\otimes \vx_{3}\otimes \vx_{4} \rangle
+        \\
+        +
+        210 \langle \partial^{3} \vf, \vx_{2}^{\otimes2}\otimes \vx_{4} \rangle
+        \\
+        +
+        280 \langle \partial^{3} \vf, \vx_{2}\otimes \vx_{3}^{\otimes2} \rangle
+        \\
+        +
+        8 \langle \partial^{2} \vf, \vx_{1}\otimes \vx_{7} \rangle
+        \\
+        +
+        28 \langle \partial^{2} \vf, \vx_{2}\otimes \vx_{6} \rangle
+        \\
+        +
+        56 \langle \partial^{2} \vf, \vx_{3}\otimes \vx_{5} \rangle
+        \\
+        +
+        35 \langle \partial^{2} \vf, \vx_{4}^{\otimes2} \rangle
+        \\
+        +
+        \langle \partial \vf, \vx_{8} \rangle
+      \end{matrix}
+  \end{align*}
+\end{tiny}
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

@@ -1,0 +1,232 @@
+Taylor mode AD (or, simply, Taylor mode) computes higher-order derivatives---as needed, \eg, for PDE operators---through propagation of Taylor coefficients according to the chain rule.
+
+\input{figures/taylor_signature}
+
+\paragraph{Scalar case.}
+To illustrate Taylor mode, consider the scalar function $f: \sR \to \sR$ and extend the input variable $x$ to a path $x(t)$ with $x(0) = x_0$, whose form is a univariate Taylor polynomial of degree $K$, $\smash{x(t) = \sum_{k=0}^K \frac{t^k}{k!} x_k}$ with $x_k$ the $k$-th Taylor coefficient.
+If $f$ is smooth enough, we can evaluate Taylor coefficients of the transformed path $\smash{f(x(t)) = \sum_{k=0}^K \frac{t^k}{k!} f_k}$ with $\smash{f_k \coloneqq \frac{\mathrm{d}^k}{\mathrm{d}t^k} f(x(t)) |_{t=0}}$.
+The chain rule provides the coefficients' propagation rules.
+\Eg, for degree $K=3$ we get
+\begin{align}
+  \label{eq:taylor-mode-scalar}
+  \begin{matrix*}[l]
+    f_0 = f(x_0)\,,
+    \\[0.75ex]
+    f_1 = \partial f(x_0) x_1\,,
+  \end{matrix*}
+  \qquad
+  \begin{matrix*}[l]
+    f_2 = \partial^2 f(x_0)x_1^2 + \partial f(x_0) x_2\,,
+    \\[0.75ex]
+    f_3
+    = \partial^3 f(x_0)x_1^3 + 3 \partial^2 f(x_0) x_1 x_2 + \partial f(x_0) x_3\,.
+  \end{matrix*}
+\end{align}
+\citet{faa1857note} provided the general formula for $f_k$, and \citet{fraenkel1978formulae} extended it to the multivariate case \cite[see also][]{arbogast1800calcul,hardy2006combinatorics}.
+It serves as foundation for Taylor mode to compute higher-order derivatives \citep[\eg,][\S13]{griewank2008evaluating}:
+setting $x_1 = 1, x_2 = x_3 = 0$ yields $f_1 = \partial f(x_0), f_2 = \partial^2 f(x_0), f_3 = \partial^3 f(x_0)$.
+We call the univariate Taylor polynomial of a function $x(t)$ of degree $K$, represented by the coefficients $(x_0, \dots, x_K)$, the \emph{$K$-jet of $x$}, following the terminology of JAX's Taylor mode \cite{bettencourt2019taylor}.
+
+\paragraph{Notation for multivariate case.}
+We consider the general case of computing higher-order derivatives, \eg PDE operators, of a vector-to-vector function $\vf: \sR^D \to \sR^C$.
+This requires additional notation to generalize \cref{eq:taylor-mode-scalar}.
+Given $K$ vectors $\vv_1, \dots, \vv_K \in \sR^D$, we write their tensor product as
+\begin{equation*}
+  \otimes_{k=1}^K \vv_k = \vv_1 \otimes \ldots \otimes \vv_K
+  \in ( \sR^D )^{\otimes K}
+  \quad
+  \text{with entries}
+  \quad
+  \left[\otimes_{k=1}^K \vv_k\right]_{d_1, \dots, d_K}
+  = [\vv_1]_{d_1} \cdot \ldots \cdot [\vv_K]_{d_K}
+\end{equation*}
+for $d_1, \dots, d_K \in \{1, \dots, D\}$, and compactly write $\vv^{\otimes K} = \otimes_{k=1}^K \vv$.
+We define the inner product of two tensors $\smash{\tA, \tB \in (\sR^{D})^{\otimes K}}$ as the Euclidean inner product of their flattened versions
+\begin{align}\label{eq:derivative-tensor-scalar-product}
+  \textstyle % Comment out this line if we have enough space
+  \left\langle
+  \tA, \tB
+  \right\rangle
+  \coloneqq
+  \sum_{d_1}
+  \sum_{d_2}
+  \dots
+  \sum_{d_K}
+  \left[\tA\right]_{d_1, d_2, \dots, d_K}
+  \left[\tB\right]_{d_1, d_2, \dots, d_K} \in \sR\,.
+\end{align}
+We allow broadcasting in \cref{eq:derivative-tensor-scalar-product}: if one tensor has more dimensions but matching trailing dimensions, we take the inner product for each component of the leading dimensions.
+This allows to express contractions with derivative tensors of vector-valued functions, \eg,
+contracting the $k$-th derivative tensor $\partial^k \vf(\vx_0) \in \sR^C \times (\sR^D)^{\otimes k}$, such that $\langle \tA, \partial^k \vf(\vx_0) \rangle \in \sR^C$. 
+
+\paragraph{Multivariate case \& composition.}
+Evaluating the $K$-jet of $\vf$ at $\vx_0 \in \sR^D$ starts with the extension of $\vx_0$ to a smooth path $\vx: \sR \to \sR^D$ with $\vx(0) = \vx_0$.
+Formally, the $K$-jet of $\vf$ is defined as 
+\begin{align*}
+  \textstyle % Comment out this line if we have enough space
+  J^K \vf : \sR \to \sR^C\,,
+  \quad (J^K \vf)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vf_k
+  \quad \text{with} \quad
+  \vf_k := \frac{\mathrm{d}^k}{\mathrm{d}t^k} \vf(\vx(t)) |_{t=0}
+\end{align*}
+and requires the $K$-jet of $\vx$, $(J^K \vx)(t) := \sum_{k=0}^K \frac{t^k}{k!} \vx_k$.
+As we are interested in the coefficients, we will slightly abuse the $K$-jet as mapping $(\vx_0, \dots, \vx_K) \mapsto (\vf_0, \dots, \vf_K)$  (see \cref{fig:utp} for an illustration). 
+
+As is common for AD, propagating the coefficients is broken down into 
+composing $\vf$ of atomic functions with known derivatives and the chain rule.
+In the simplest case, let $\vf = \vg \circ \vh: \sR^D \to \sR^I \to \sR^C$ for two elemental functions $\vg, \vh$.
+Given the input $K$-jet for $\vx$, the coefficients $\vh_k = \smash{\frac{\mathrm{d}^k}{\mathrm{d}t^k}\vh(\vx(t))} |_{t=0}$ follow from the generalized Faà di Bruno formula (spelled out for some $k$s in \cref{sec:faa-di-bruno-cheatsheet})
+\begin{align}
+  \label{eq:faa-di-bruno}
+  % \textstyle % Comment out this line if we have enough space
+  \vh_k
+  =
+  \sum_{\sigma \in \partitioning(k)}
+  \nu(\sigma)
+  \left<
+  \partial^{|\sigma|} \vh,
+  \tensorprod{s \in \sigma} \vx_s
+  \right>
+  \quad
+  \text{with}
+  \quad
+  \nu(\sigma)
+  =
+  \frac{k!}{
+    \left(
+      \prod_{s \in \sigma
+      }
+      n_s!
+    \right)
+    \left(
+      \prod_{s \in \sigma}
+      s!
+    \right)
+  }\,.
+\end{align}
+Here, $\partitioning(k)$ is the integer partitioning of $k$ (a set of sets), $\nu$ is a multiplicity function, and $n_s$ counts occurrences of $s$ in a set $\sigma$ (\eg $n_1(\{1,1,3\}) = 2$ and $n_3 = 1$).
+Propagating the $\vh_k$s through $\vg$ results in the $K$-jet for $\vf$.
+In summary, the propagation scheme is (with $\vx_k \in \sR^D$, $\vh_k \in \sR^I$, $\vf_k \in \sR^C$)
+\begin{align}\label{eq:taylor-mode-composition}
+  \begin{split}
+    &\begin{pmatrix*}
+      \vx_0
+      \\
+      \vx_1
+      \\
+      \vx_2
+      \\
+      \vdots
+      \\
+      \vx_K
+    \end{pmatrix*}
+      \overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
+      \begin{pmatrix*}[l]
+        \vh_0 \!=\!  \vh(\vx_0)
+        \\
+        \vh_1 \!=\!  \left<
+        \partial \vh(\vx_0),
+        \vx_1
+        \right>
+        \\
+        \vh_2 \!=\! \left<
+        \partial^2 \vh(\vx_0),
+        \vx_1^{\otimes 2}
+        \right>
+        \!+\!
+        \left <
+        \partial \vh(\vx_0),
+        \vx_2
+        \right>
+        \\
+        \vdots
+        \\
+        \vh_K \!=\!
+        \displaystyle \sum_{
+        \mathclap{
+        \sigma \in \partitioning(K)
+        }
+        }
+        \nu(\sigma) \left<
+        \partial^{|\sigma|} \vh(\vx_0),
+        \tensorprod{s \in \sigma} \vx_s
+        \right>\!\!\!
+      \end{pmatrix*}
+    \\
+    &\overset{\text{(\ref{eq:faa-di-bruno})}}{\to}
+      \left(\!\!\!
+      \begin{array}{l}
+        \vg_0 \!=\!  \vg(\vh_0)
+        \\
+        \vg_1 \!=\! \left<
+        \partial \vg(\vh_0),
+        \vh_1
+        \right>
+        \\
+        \vg_2 \!=\! \left<
+        \partial^2 \vg(\vh_0),
+        \vh_1^{\otimes 2}\right>
+        \!+\!
+        \left< \partial \vg(\vh_0),
+        \vh_2
+        \right>
+        \\
+        \vdots
+        \\
+        \vg_K \!=\!
+        \displaystyle\sum_{
+        \mathclap{
+        \sigma \in \partitioning(K)
+        }
+        }
+        \nu(\sigma) \left<
+        \partial^{|\sigma|} \vg(\vh_0),
+        \tensorprod{s \in \sigma} \vh_s
+        \right>
+      \end{array}
+      \!\!\!\!
+      \right)
+      =
+      \left(\!\!\!
+      \begin{array}{l}
+        \vf_0 \!=\!  \vf(\vx_0)
+        \\
+        \vf_1 \!=\! \left<
+        \partial \vf(\vx_0),
+        \vx_1
+        \right>
+        \\
+        \vf_2 \!=\! \left<
+        \partial^2 \vf(\vx_0),
+        \vx_1^{\otimes 2}
+        \right>
+        \!+\!
+        \left< \partial \vf(\vx_0),
+        \vx_2
+        \right>
+        \\
+        \vdots
+        \\
+        \vf_K \!=\!
+        \displaystyle\sum_{
+        \mathclap{
+        \sigma \in \partitioning(K)
+        }
+        }
+        \nu(\sigma) \left<
+        \partial^{|\sigma|} \vf(\vx_0),
+        \tensorprod{s \in \sigma} \vx_s
+        \right>
+      \end{array}
+      \!\!\!\!
+      \right)
+  \end{split}
+\end{align}
+which describes the forward propagation of a \emph{single} $K$-jet.
+However, computing popular PDE operators requires propagating \emph{multiple} $K$-jets in parallel, then summing their results.
+We propose to pull this accumulation inside Taylor mode's propagation scheme, thereby collapsing it.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

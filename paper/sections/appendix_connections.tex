@@ -1,0 +1,168 @@
+Here, we make the connection of collapsed Taylor mode to the forward Laplacian \cite{li2023forward} and the randomized estimation of the Laplacian via Hutchinson's trace estimator \cite{hutchinson1989stochastic} from \cite{shi2024stochastic} explicit.
+
+\subsection{Connection to Randomized Laplacian via Hutchinson's Trace Estimator}
+
+For simplicity, we consider a vector-to-scalar function $g: \sR^{D} \to \sR, \vx \mapsto g(\vx)$ (the general vector-to-vector case is straightforward but requires more notation) whose Laplacian is
+\begin{align*}
+  \Delta g(\vx) =
+  \Tr( \nabla^2 g(\vx) )
+  =
+  \sum_{d=1}^{D} [\nabla^2 g(\vx)]_{d,d}
+  =
+  \sum_{d=1}^{D} \ve_d^{\top} \nabla^2g(\vx) \ve_d\,,
+\end{align*}
+with $\nabla^2 g(\vx) \in \sR^{D \times D}$ the Hessian of $f$ evaluated at $\vx$.
+Because the Laplacian can be expressed as trace of the Hessian, we can use Hutchinson's trace estimator \cite{hutchinson1989stochastic} to estimate it via Hessian-vector products with random vectors.
+Specifically, for any matrix $\mA \in \sR^{D \times D}$ and a distribution $p(\rvv)$ over a vector $\rvv$ with unit covariance ($\E[\rvv \rvv^{\top}] = \mI_D$) we can use the cyclic property of the trace and linearity of the expectation to write
+\begin{align*}
+  \Tr(\mA)
+  =
+  \Tr(\mA \mI_D)
+  =
+  \Tr( \mA \E[\rvv \rvv^{\top}])
+  =
+  \E[\Tr( \mA \rvv \rvv^{\top})]
+  =
+  \E[\Tr( \rvv^{\top} \mA \rvv)]\,.
+\end{align*}
+Then, we can compute an unbiased estimate of the right hand side by drawing $S$ vectors $\vv_1, \vv_2, \dots, \vv_S \sim p(\rvv)$ and evaluating the Monte-Carlo estimator
+\begin{align*}
+  \Tr(\mA)
+  \approx
+  \frac{1}{S} \sum_{s=1}^{S} \vv_s^{\top} \mA \vv_s\,.
+\end{align*}
+Applied to the Hessian, we can estimate the Laplacian of $f$ as
+\begin{align*}
+  \Delta f(\vx)
+  \approx&
+           \frac{1}{S} \sum_{s=1}^{S} \vv_s^{\top} \nabla^2 g(\vx) \vv_s\,.
+           \shortintertext{Using our tensor notation, we can rewrite this into a sum of terms involving $\left\langle \partial^2f(\vx), \vv_s^{\otimes 2} \right\rangle$, which can be computed with \textcolor{tab-orange}{\textbf{vanilla Taylor mode}} using $S$ 2-jets (see \Cref{eq:taylor-mode-composition}):}
+           =&
+              \frac{1}{S} \sum_{s=1}^{S} \sum_{i,j=1}^D [\partial^2g(\vx)]_{i,j} [\vv_s]_i [\vv_s]_j
+              =
+              \frac{1}{S} \sum_{s=1}^{S} \left\langle \partial^2g(\vx), \vv_s^{\otimes 2} \right\rangle\,.
+              \shortintertext{Instead of propagating then summing the 2-jets, we can also sum the vectors and then propagate the sum, which is our proposed \textcolor{tab-green}{\textbf{collapsed Taylor mode}}:}
+              =& \frac{1}{S} \left\langle \partial^2g(\vx), \sum_{s=1}^{S} \vv_s^{\otimes 2} \right\rangle\,.
+\end{align*}
+
+\subsection{Connection to the Forward Laplacian}
+We start by writing out the propagation rules of the forward Laplacian (Equations (5-7) in \citet{li2023forward}) for a function $f = g \circ \vh$ with $g: \sR^C \to \sR$ whose input we denote by $\vh_0 \in \sR^C$.
+The forward propagation consumes $\vh_0 = \vh(\vx_0)$, the Jacobian $\nabla_{\vx_0} \vh_0 = \nabla_{\vx_0} \vh(\vx_0) \in \sR^{D \times C}$, and the Laplacian $\Delta_{\vx_0} \vh_0 = \Delta_{\vx_0} \vh(\vx_0) \in \sR^C$:
+\begin{align*}
+  \begin{pmatrix}
+    \vh_0
+    &\!\! \in \sR^C
+    \\
+    \nabla_{\vx_0} \vh_0
+    &\!\! \in \sR^{D \times C}
+    \\
+    \Delta_{\vx_0} \vh_0
+    &\!\! \in \sR^C
+  \end{pmatrix}
+  \!
+  \to
+  \!
+  \begin{pmatrix}
+    g_0 = g(\vh_0)
+    &\!\! \in \sR
+    \\
+    \nabla_{\vx_0} g_0 = (\nabla_{\vx_0}\vh_0) (\nabla_{\vh_0} g_0)
+    &\!\! \in \sR^D
+    \\
+    \Delta_{\vx_0} g_0 = (\nabla_{\vh_0}g_0)^{\top} \Delta \vh_0
+    +
+    \Tr \left(
+    (\nabla_{\vx_0} \vh_0)^{\top} (\nabla_{\vx_0} \vh_0) \nabla_{\vh_0} g_0
+    \right)
+    &\!\! \in \sR
+  \end{pmatrix}\,.
+\end{align*}
+Let us rewrite this in terms of rows of the Jacobian $[\nabla_{\vx_0} \vh_0]_{d,:} \in \sR^{C}$:
+\begin{align*}
+  \begin{pmatrix}
+    \vh_0
+    \\
+    \left\{ [\nabla_{\vx_0} \vh_0]_{d,:} \right\}_{d=1}^D
+    \\
+    \Delta_{\vx_0} \vh_0
+  \end{pmatrix}
+  \to
+  \begin{pmatrix}
+    g_0 = g(\vh_0)
+    \\
+    \left\{
+    [\nabla_{\vx_0} g_0]_{d,:} = [\nabla_{\vx_0}\vh_0]_{d,:} (\nabla_{\vh_0} g_0)
+    \right\}_{d=1}^{D}
+    \\
+    \Delta_{\vx_0} g_0
+    =
+    (\nabla_{\vh_0}g_0)^{\top} \Delta \vh_0
+    +
+    \sum_{d=1}^D
+    [\nabla_{\vx_0} \vh_0]_{d,:} \nabla^2_{\vh_0} g_0 [\nabla_{\vx_0} \vh_0]_{d,:}^{\top}
+  \end{pmatrix}\,.
+\end{align*}
+In our tensor notation, this translates to
+\begin{align*}
+  \begin{pmatrix}
+    \vh_0
+    \\
+    \left\{ [\nabla_{\vx_0} \vh_0]_{d,:} \right\}_{d=1}^D
+    \\
+    \Delta_{\vx_0} \vh_0
+  \end{pmatrix}
+  \to
+  \begin{pmatrix}
+    g_0 = g(\vh_0)
+    \\
+    \left\{
+    [\nabla_{\vx_0} g_0]_{d,:} = \left\langle \partial g(\vh_0), [\nabla_{\vx_0}\vh_0]_{d,:} \right\rangle
+    \right\}_{d=1}^{D}
+    \\
+    \Delta_{\vx_0} g_0
+    =
+    \left\langle \partial g(\vh_0),
+    \Delta \vh_0
+    \right\rangle
+    +
+    \sum_{d=1}^D
+    \left\langle
+    \partial g(\vh_0), [\nabla_{\vx_0} \vh_0]_{d,:}^{\otimes 2}
+    \right\rangle
+  \end{pmatrix}\,.
+\end{align*}
+To obtain the connection to Taylor mode, we define $[\nabla_{\vx_0} \vh_0]_{d,:} = \vh_{1, d}$ and $\Delta_{\vx_0} \vh_0 = \sum_d \vh_{2,d}$ and $[\nabla_{\vx_0} g_0]_{d,:} = g_{1,d}$ and $\Delta_{\vx_0} g_0 = \sum_d g_{2,d}$, which allows us to rewrite the forward Laplacian as
+\begin{align*}
+  \begin{pmatrix}
+    \vh_0
+    \\
+    \left\{ \vh_{1,d} \right\}_{d=1}^D
+    \\
+    \sum_d \vh_{2,d}
+  \end{pmatrix}
+  \to
+  \begin{pmatrix}
+    g_0 = g(\vh_0)
+    \\
+    \left\{
+    g_{1,d} = \left\langle \partial g(\vh_0), \vh_{1,d} \right\rangle
+    \right\}_{d=1}^{D}
+    \\
+    \sum_d g_{2,d}
+    =
+    \left\langle \partial g(\vh_0),
+    \sum_d \vh_{2,d}
+    \right\rangle
+    +
+    \sum_{d=1}^D
+    \left\langle
+    \partial g(\vh_0), \vh_{1,d}^{\otimes 2}
+    \right\rangle
+  \end{pmatrix}\,.
+\end{align*}
+This yields our collapsed Taylor mode propagation: the first equation is simply the forward pass, the second equation propagates the first-order derivatives along $D$ directions, and the last equation propagates the collapsed second-order derivatives, as described by setting $K=2$ in \Cref{eq:faa-di-bruno-expanded}.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

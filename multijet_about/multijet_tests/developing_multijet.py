@@ -4,7 +4,7 @@
 import os
 import sys
 parent_directory = os.path.abspath('..')
-parent_2_directory = os.path.dirname(parent_directory) + "\multijet"
+parent_2_directory= os.path.dirname(parent_directory)
 
 print(parent_2_directory)
 sys.path.append(parent_2_directory)
@@ -12,16 +12,17 @@ sys.path.append(parent_2_directory)
 #Imports
 from torch import Tensor, cos, manual_seed, ones_like, rand, sin, zeros_like
 from torch.func import hessian
-from torch.nn import Linear, Sequential
+from torch.nn import Linear, Sequential, Tanh
 
-#from CollapsAD.multijet import multijet
-from parent_2_directory import multijet
+#Importing multijet
+# from parent_2_directory import multijet
+from multijet import multijet
 
 _ = manual_seed(0)  # make deterministic
 
 #Scalar-to-Scalar function
 f = sin
-k = (2,)    #Different to jet, since we deal with usually deal with tuples.
+k = (2,)    #Different to jet, since we usually deal with tuples.
 f_multijet = multijet(f, k)
 
 # Set up the Taylor coefficients to compute the second derivative
@@ -53,10 +54,10 @@ else:
 #Vector-to-Scalar function
 D = 3
 
-f = Sequential(Linear(3, 1), sin())
+f = Sequential(Linear(D, 1), Tanh())
 f_multijets = []
 partial = [0 for i in range(D)]
-for i in range(3):
+for i in range(D):
     partial[i-1] = 0
     partial[i] = 2
     f_multijets.append(multijet(f,tuple(partial)))
@@ -73,7 +74,7 @@ d2_diag = zeros_like(x)
 for d in range(D):
     x1 = zeros_like(x)
     x1[d] = 1.0  # d-th canonical basis vector
-    f0, f1, f2 = f_multijet[d](x0, x1, x2)
+    f0, f1, f2 = f_multijets[d](x0, x1, x2)
     d2_diag[d] = f2
 
 # %%
@@ -85,6 +86,6 @@ d2f = hessian(f)(x)  # has shape [1, D, D]
 hessian_diag = d2f.squeeze(0).diag()
 
 if d2_diag.allclose(hessian_diag):
-    print("Taylor mode Hessian diagonal matches functorch Hessian diagonal!")
+    print("Multivariate Taylor mode Hessian diagonal matches functorch Hessian diagonal!")
 else:
     raise ValueError(f"{d2_diag} does not match {hessian_diag}!")

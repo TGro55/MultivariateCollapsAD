@@ -1,0 +1,9 @@
+name: jet
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.12.6
+  - pip=25.0
+  - pip:
+    - -e ."[lint,test,exp]"

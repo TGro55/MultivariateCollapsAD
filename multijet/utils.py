@@ -178,8 +178,13 @@ def create_multi_idx_list(K: tuple[int,...]):
 
     #Loop to yield the multi-indices
     for i in range(prod([(idx+1) for idx in K])-1):
-        to_be_yielded = tuple(previous)                 #Currently also yields the trivial multi-index 
-                                                        #(0,...,0), which is probably not necessary.
+
+        #Trivial multi-index (0,...,0) must not be yielded
+        if i == 0:
+            previous = increase_idx(previous)
+            continue
+        
+        to_be_yielded = tuple(previous)                 
         yield to_be_yielded
         previous = increase_idx(previous)
     

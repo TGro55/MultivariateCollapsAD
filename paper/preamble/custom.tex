@@ -1,0 +1,142 @@
+% ===================================================================
+% MATH
+% ===================================================================
+\usepackage{nicefrac} % fractions that fit into inline text
+\usepackage{dsfont} % for \mathds command
+\usepackage[%
+exponent-product=\ensuremath{\cdot},%
+group-minimum-digits={3}%
+]{siunitx} % \num command for pretty-formatting large numbers
+\usepackage{xstring} % for string comparison
+\newcommand{\mathemph}[1]{{\color{maincolor} #1}}
+
+% ===================================================================
+% REFERENCES
+% ===================================================================
+\usepackage{cleveref} % automatically adds type of reference, MUST BE LOADED AFTER AMSMATH
+\crefname{section}{\S\!\!}{\S\!\!} % use paragraph symbol for Section
+\crefname{appendix}{\S\!\!}{\S\!\!} % use paragraph symbol for Appendix
+
+% ===================================================================
+% TODOS, COMMENTS & WRITING
+% ===================================================================
+\usepackage{todonotes} % for TODOs, loads xcolor with []
+\usepackage{comment} % for comment environment
+\usepackage{enumitem} % modifying itemize environments
+\usepackage{xspace}
+\newcommand*{\ie}{i.e.\@\xspace}
+\newcommand*{\iid}{i.i.d.\@\xspace}
+\newcommand*{\wrt}{w.r.t.\@\xspace}
+\newcommand*{\eg}{e.g.\@\xspace}
+\newcommand*{\Ie}{I.e.\@\xspace}
+\newcommand*{\Eg}{E.g.\@\xspace}
+
+\usepackage{catchfile} % for reading files
+
+% Extracts ... from a file of content `... (yyy x)'
+\newcommand{\inputMetricOnly}[1]{%
+  \unskip
+  \CatchFileDef{\filecontent}{#1}{}% Read the file content into \filecontent
+  \StrBefore{\filecontent}{(}[\metricOnly]% Extract content before the first parenthesis
+  {%
+    \sisetup{%
+      % scientific-notation=true,%
+      round-mode=figures,%
+      round-precision=2,%
+      detect-weight, % for bolding to work
+      tight-spacing=true, % less space around \cdot
+    }%
+    \ \metricOnly% Print the processed content
+    \unskip
+  }%
+  \unskip%
+}
+
+% ===================================================================
+% FIGURES & COLORS
+% ===================================================================
+\usepackage{wrapfig} % side-wrap text next to a figure
+\usepackage{subcaption} % \subfigure environment
+\usepackage{tabularx} % tables with automatic line break
+\captionsetup[subfigure]{% subfigure captions are left-aligned
+  justification=justified,%
+  singlelinecheck=false,%
+}%
+\usepackage{tikz} % for drawings in LaTeX
+\usetikzlibrary{
+  arrows.meta, % for prettier arrows
+  matrix, % for matrix of nodes
+  positioning, % for relative node positioning
+  calc, % for position calculations
+  plotmarks, % for pgfplots markers
+}
+\usepackage{pgfplots} % for drawing axis plots
+
+% VECTOR INSTITUTE PRIMARY COLORS
+\definecolor{VectorBlack}{RGB}{34, 34, 34}
+\definecolor{VectorGray}{RGB}{239, 238, 237}
+% VECTOR INSTITUTE SECONDARY COLORS
+\definecolor{VectorBlue}{RGB}{59, 69, 227}
+\definecolor{VectorPink}{RGB}{253, 8, 238}
+\definecolor{VectorOrange}{RGB}{250, 173, 26}
+\definecolor{VectorTeal}{RGB}{82, 199, 222}
+
+% PAPER COLOR THEME
+\colorlet{maincolor}{VectorBlue}
+\colorlet{secondcolor}{VectorPink}
+\colorlet{thirdcolor}{VectorOrange}
+\colorlet{fourthcolor}{VectorTeal}
+\colorlet{fifthcolor}{VectorGray}
+
+% MATPLOTLIB COLORS
+\definecolor{tab-orange}{rgb}{1.0, 0.498, 0.055}
+\definecolor{tab-blue}{rgb}{0.121, 0.466, 0.705}
+\definecolor{tab-green}{rgb}{0.173, 0.627, 0.173}
+% NOTE We overwrite the MATPLOTLIB default colors because they are not
+% colorblind friendly. We use the scheme from
+% https://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3,
+% which has green, orange, purple
+\definecolor{colorbrewer-green}{RGB}{27, 158, 119}
+\colorlet{tab-green}{colorbrewer-green}
+\definecolor{colorbrewer-orange}{RGB}{217, 95, 2}
+\colorlet{tab-orange}{colorbrewer-orange}
+\definecolor{colorbrewer-blue}{RGB}{117, 112, 179}
+\colorlet{tab-blue}{colorbrewer-blue}
+
+% ===================================================================
+% LINKS & REFERENCES
+% ===================================================================
+\hypersetup{%
+  colorlinks,
+  citecolor = maincolor,%
+  linkcolor = maincolor,%
+  urlcolor = secondcolor,%
+}%
+
+% ===================================================================
+% SPECIAL SYMBOLS
+% ===================================================================
+\usepackage{pifont} % for check and cross marks
+% commands from https://tex.stackexchange.com/a/42620
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+% ===================================================================
+% ALGORITHMS
+% ===================================================================
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ===================================================================
+% TABLES
+% ===================================================================
+\usepackage{multirow}
+\usepackage{array} % vertically centered table cells
+\usepackage{makecell} % table cells with multiple lines of text
+% figure at bottom, footnote below (https://tex.stackexchange.com/a/324719)
+\usepackage[bottom]{footmisc}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../main"
+%%% End:

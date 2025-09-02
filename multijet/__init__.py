@@ -115,7 +115,7 @@ def _replace_operations_with_multivariate_taylor(  # noqa: C901
     # find the input node and insert nodes for the Taylor coefficients
     (x,) = [node for node in graph.nodes if node.op == "placeholder"]
     with graph.inserting_after(x):
-        vs = [graph.placeholder(name=f"v{i}") for i in reversed(range(1,prod(add(tensor(list(k)), 1))+1))][::-1] #Different from jet ##using tensor is probably unnecessary..
+        vs = [graph.placeholder(name=f"v{i}") for i in reversed(range(1,prod(add(tensor(list(k)), 1))))][::-1] #Different from jet ##using tensor is probably unnecessary..
 
     # find the nodes that consume the original input, replace each with a new node whose
     # argument is the tuple of original input and Taylor coefficients
