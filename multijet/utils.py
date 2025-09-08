@@ -42,11 +42,9 @@ def multi_partitions(k: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
             for k in smd:
                 multi_set_copy.remove(k)
             if len(multi_set_copy) != 0:
-                for k in range(1,len(multi_set_copy)+1):
+                for k in range(i,len(multi_set_copy)+1):
                     for j in multi_partitions(set_to_idx(multi_set_copy),k):
                         yield [smd] + j
-            else:
-                yield [smd] + j
 
 def multi_partition_refined(unrefined_multi_partitions):
     """Makes the multi-partitions from above unique and adds the final (trivial) multi-partition
@@ -99,7 +97,7 @@ def multi_partition_refined(unrefined_multi_partitions):
 def complete_multi_partitions(K: tuple[int,...]):
     """Combines the two functions of above. 
     They currently do the job AND give out the trivial partition [[K]] 
-    as the final item, which is probably ok. Probably needs be improved
+    as the final item, which should be  ok. Probably needs be improved
     in the future though.
     """
     return multi_partition_refined(multi_partitions(K))
@@ -159,7 +157,7 @@ def create_multi_idx_list(K: tuple[int,...]):
 
     #Constructer of next multi-index
     def increase_idx(curr, position=0):
-        """Recursive function to increase multi-index correctly, i.e. it makes sure that 'k <= K'.
+        """Recursive function to increase multi-index correctly, i.e. it makes sure that 'k <= K' component-wise.
 
         Args:
             curr: List of integers representing the multi-index as it currently is.
@@ -176,10 +174,10 @@ def create_multi_idx_list(K: tuple[int,...]):
             rev_curr[position] = 0
             return increase_idx(rev_curr[::-1],position + 1)
 
-    #Loop to yield the multi-indices
+    # Loop to yield the multi-indices
     for i in range(prod([(idx+1) for idx in K])-1):
 
-        #Trivial multi-index (0,...,0) must not be yielded
+        # Trivial multi-index (0,...,0) is not yielded
         if i == 0:
             previous = increase_idx(previous)
             continue
@@ -188,7 +186,7 @@ def create_multi_idx_list(K: tuple[int,...]):
         yield to_be_yielded
         previous = increase_idx(previous)
     
-    #Final yield
+    # Final yield
     yield K
 
 def multiplicity(sigma: list[list[[int, ...], ...], ...]) -> float:

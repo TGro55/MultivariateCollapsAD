@@ -2,8 +2,9 @@
 
 from typing import Callable
 from warnings import warn
+from math import prod
 
-from torch import add, prod, tensor, zeros_like
+from torch import tensor, zeros_like
 from torch.fx import Graph, GraphModule, Node
 
 from multijet.operations import MAPPING
@@ -105,7 +106,7 @@ def _replace_operations_with_multivariate_taylor(  # noqa: C901
         with graph.inserting_before(output_node):
             trivial_node = graph.call_function(
                 lambda *args: tuple(
-                    args[0] if i == 0 else zeros_like(args[0]) for i in range(prod(add(tensor(list(k)), 1))+1) #Different from jet
+                    args[0] if i == 0 else zeros_like(args[0]) for i in range(prod([(idx+1) for idx in k])+1) #Different from jet
                 ),
                 args=(out_tensor,),
             )
@@ -115,7 +116,7 @@ def _replace_operations_with_multivariate_taylor(  # noqa: C901
     # find the input node and insert nodes for the Taylor coefficients
     (x,) = [node for node in graph.nodes if node.op == "placeholder"]
     with graph.inserting_after(x):
-        vs = [graph.placeholder(name=f"v{i}") for i in reversed(range(1,prod(add(tensor(list(k)), 1))))][::-1] #Different from jet ##using tensor is probably unnecessary..
+        vs = [graph.placeholder(name=f"v{i}") for i in reversed(range(1,prod([(idx+1) for idx in k])))][::-1] #Different from jet 
 
     # find the nodes that consume the original input, replace each with a new node whose
     # argument is the tuple of original input and Taylor coefficients

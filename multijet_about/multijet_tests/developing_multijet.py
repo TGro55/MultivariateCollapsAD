@@ -1,6 +1,6 @@
 """Testing code for development of multijet"""
 
-#Pathing to make imports possible. DOES NOT WORK ;(( 
+#Pathing to make imports possible. 
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -17,7 +17,7 @@ _ = manual_seed(0)  # make deterministic
 
 #Scalar-to-Scalar function
 f = sin
-k = (2,)    #Different to jet, since we usually deal with tuples.
+k = (2,)    #Different to jet, since we deal with tuples now.
 f_multijet = multijet(f, k)
 
 # Set up the Taylor coefficients to compute the second derivative
@@ -50,9 +50,9 @@ else:
 D = 3
 
 f = Sequential(Linear(D, 1), Tanh())
-f_multijets = []
+f_multijets = [] 
 partial = [0 for i in range(D)]
-for i in range(D):
+for i in range(D):      #Multiple multijets are now necessary, since they take tuples as input
     partial[i-1] = 0
     partial[i] = 2
     f_multijets.append(multijet(f,tuple(partial)))
