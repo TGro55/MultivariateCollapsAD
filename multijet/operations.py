@@ -41,10 +41,10 @@ def _multivariate_faa_di_bruno(vs: tuple[Primal, ...], K: tuple[int, ...], dn: d
             if dn[len(sigma)] is None:
                 continue
 
-            vs_count = {set_to_idx(i): sigma.count(i) for i in sigma}
+            vs_count = {set_to_idx(i,len(K)): sigma.count(i) for i in sigma}
             vs_contract = [
-                vs[find_list_idx(i,K)-1] ** count if count > 1 else vs[find_list_idx(i,K)-1]
-                for i, count in vs_count.items()
+                vs[find_list_idx(j,K)-1] ** count if count > 1 else vs[find_list_idx(j,K)-1] #latter gives tuple index out of range error, for (2,0,2) implementation. I dont understand. :/
+                for j, count in vs_count.items()
             ]
             term = vs_contract[0]
             for v in vs_contract[1:]:

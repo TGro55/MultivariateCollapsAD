@@ -69,7 +69,7 @@ d2_diag = zeros_like(x)
 for d in range(D):
     x1 = zeros_like(x)
     x1[d] = 1.0  # d-th canonical basis vector
-    f0, f1, f2 = f_multijets[d](x0, x1, x2)
+    f0, f1, f2 = f_multijets[d](x0, x1, x2) # 'd' can be replaced with 0 and it still works. To be investigated!
     d2_diag[d] = f2
 
 # %%
@@ -84,3 +84,48 @@ if d2_diag.allclose(hessian_diag):
     print("Multivariate Taylor mode Hessian diagonal matches functorch Hessian diagonal!")
 else:
     raise ValueError(f"{d2_diag} does not match {hessian_diag}!")
+
+# Is there a difference between (2,2) and (2,0,2) representing the derivative \partial^2x \partial^2y (f)? There seems to be!
+from multijet.utils import create_multi_idx_list
+y = rand(D)
+y0 = y
+y1 = zeros_like(y)
+
+# First (2,0,2)
+
+f_multijet_2_0_2 = multijet(f,(2,0,2))
+nec_derivs = []
+for i in create_multi_idx_list((2,0,2)):
+    nec_derivs.append(i)
+derivs = [y1 for i in range(len(nec_derivs)+1)]
+for idx, partial in enumerate(nec_derivs):
+    if sum(partial) == 0:
+        derivs[idx+1] = y0
+    elif sum(partial) == 1:
+        y1[partial.index(1)] =  1.0
+        derivs[idx+1] = y1
+        y1[partial.index(1)] = 0
+
+solution_2_0_2 = f_multijet_2_0_2(*derivs)[-1]
+
+# Second (2,2)
+f_mulitjet_2_2 = multijet(f,(2,2))
+nec_derivs = []
+for i in create_multi_idx_list((2,2)):
+    nec_derivs.append(i)
+print(nec_derivs)
+derivs = [y1 for i in range(len(nec_derivs)+1)]
+print(len(derivs))
+for idx, partial in enumerate(nec_derivs):
+    if sum(partial) == 0:
+        derivs[idx+1] = y0
+    elif sum(partial) == 1:
+        y1[partial.index(1)] =  1.0
+        derivs[idx+1] = y1
+        y1[partial.index(1)] = 0
+
+solution_2_2 = f_mulitjet_2_2(*derivs)[-1]
+
+# print(solution_2_2 - solution_2_0_2)
+
+

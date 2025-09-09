@@ -1,4 +1,4 @@
-"""Trace-able vmap of a function.
+ """Trace-able vmap of a function.
 
 Assume we have a PyTorch function f: x ↦ f(x).
 We can compute torch.vmap(f): {x} ↦ {f(x)}.

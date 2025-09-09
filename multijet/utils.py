@@ -13,7 +13,7 @@ Value = Tensor
 PrimalAndCoefficients = tuple[Primal, ...]
 ValueAndCoefficients = tuple[Value, ...]
 
-def multi_partitions(k: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
+def multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
     """Compute the integer partitions of a positive integer.
 
     Args:
@@ -26,7 +26,7 @@ def multi_partitions(k: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
     
     #Find original multi-set
     multi_set = []
-    for idx, count in enumerate(k):
+    for idx, count in enumerate(K):
         for i in range(0,count):
             multi_set.append(idx+1)
 
@@ -43,7 +43,7 @@ def multi_partitions(k: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
                 multi_set_copy.remove(k)
             if len(multi_set_copy) != 0:
                 for k in range(i,len(multi_set_copy)+1):
-                    for j in multi_partitions(set_to_idx(multi_set_copy),k):
+                    for j in multi_partitions(set_to_idx(multi_set_copy,len(K)),k):
                         yield [smd] + j
 
 def multi_partition_refined(unrefined_multi_partitions):
@@ -102,17 +102,18 @@ def complete_multi_partitions(K: tuple[int,...]):
     """
     return multi_partition_refined(multi_partitions(K))
 
-def set_to_idx(multi_set: list[int, ...]):
+def set_to_idx(multi_set: list[int, ...], maxlen):
     """Turn multi-set into multi_index
 
     Args:
         multi_set : List of non-negative integers.
+        maxlen : Positive integer representing the length the output should have.
     
     Returns:
         multi_idx : Tuple of integers representing the multi-set as a multi_idx.
     """
     multi_idx = []
-    for i in range(max(multi_set)):
+    for i in range(maxlen):
         multi_idx.append(0)
     
     for i in set(multi_set):
