@@ -8,38 +8,9 @@ from torch import tensor, zeros_like
 from torch.fx import Graph, GraphModule, Node
 
 from multijet.operations import MAPPING
-from multijet.tracing import capture_graph
-from multijet.utils import Primal, PrimalAndCoefficients, Value, ValueAndCoefficients
-
-def analyze_dependencies(graph: Graph) -> tuple[set[Node], set[Node]]:
-    """Determine nodes that depend on placeholders or only on constants.
-
-    Args:
-        graph: The graph to analyze.
-
-    Returns:
-        A tuple containing two sets:
-        - The first set contains nodes that depend on placeholder nodes.
-        - The second set contains nodes that depend only on constants.
-
-    Raises:
-        RuntimeError: If the dependencies cannot be determined for a node.
-    """
-    placeholder_nodes = {node for node in graph.nodes if node.op == "placeholder"}
-    constant_nodes = {node for node in graph.nodes if node.op == "get_attr"}
-
-    for node in graph.nodes:
-        if node.op in ["placeholder", "get_attr"]:
-            continue
-
-        if any(n in placeholder_nodes for n in node.all_input_nodes):
-            placeholder_nodes.add(node)
-        elif all(n in constant_nodes for n in node.all_input_nodes):
-            constant_nodes.add(node)
-        else:
-            raise RuntimeError(f"Could not detect dependencies for {node=}.\n{graph}")
-
-    return placeholder_nodes, constant_nodes
+from jet.tracing import capture_graph
+from jet.utils import Primal, PrimalAndCoefficients, Value, ValueAndCoefficients
+from jet import analyze_dependencies
 
 def multijet(
     f: Callable[[Primal], Value], k: tuple[int,...], verbose: bool = False

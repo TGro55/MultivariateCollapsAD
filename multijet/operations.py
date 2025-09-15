@@ -10,22 +10,24 @@ from torch.nn.functional import linear
 
 import multijet.utils
 from multijet.utils import (
-    Primal,
-    PrimalAndCoefficients,
-    Value,
-    ValueAndCoefficients,
     multi_partitions,
-    multi_partition_refined,
-    complete_multi_partitions,
     create_multi_idx_list,
     set_to_idx,
     find_list_idx,
     multiplicity,
 )
+from jet.utils import(
+   Primal,
+    PrimalAndCoefficients,
+    Value,
+    ValueAndCoefficients, 
+)
 
 
 def _multivariate_faa_di_bruno(vs: tuple[Primal, ...], K: tuple[int, ...], dn: dict[int, Primal]) -> list[Value]:
-    """Apply Faà di Bruno's formula for elementwise functions.
+    """Apply Faà di Bruno's formula for elementwise functions. 
+    The formula is taken from M. Hardy's 'Combinatorics of Partial Derivatives',
+    found here: "https://arxiv.org/pdf/math/0601149".
 
     Args:
         vs: The incoming Taylor coefficients.
@@ -37,15 +39,16 @@ def _multivariate_faa_di_bruno(vs: tuple[Primal, ...], K: tuple[int, ...], dn: d
     """
     vs_out = []
     for k in create_multi_idx_list(K):
-        for idx, sigma in enumerate(complete_multi_partitions(k)):
+        for idx, sigma in enumerate(multi_partitions(k)):
             if dn[len(sigma)] is None:
                 continue
 
             vs_count = {set_to_idx(i,len(K)): sigma.count(i) for i in sigma}
             vs_contract = [
-                vs[find_list_idx(j,K)-1] ** count if count > 1 else vs[find_list_idx(j,K)-1] #latter gives tuple index out of range error, for (2,0,2) implementation. I dont understand. :/
+                vs[find_list_idx(j,K)-1] ** count if count > 1 else vs[find_list_idx(j,K)-1] 
                 for j, count in vs_count.items()
-            ]
+                ]
+
             term = vs_contract[0]
             for v in vs_contract[1:]:
                 term = mul(term, v)
@@ -145,7 +148,7 @@ def multijet_tanh(
     tanh_x = tanh(x)
     dtanh = {0: tanh_x}
 
-    # Derivative Degree
+    # Derivative Degree 
     deriv_degree = sum(list(K))
 
     # Use the explicit form of the derivative polynomials for tanh from "Derivative
@@ -259,7 +262,7 @@ def multijet_linear(
         raise NotImplementedError(f"Not implemented for {is_taylor=}.")
 
     return tuple(
-        linear(s[k], weight, bias=bias if k == 0 else None) for k in range(sum(list(K)) + 1)
+        linear(s[k], weight, bias=bias if k == 0 else None) for k in range(prod([(idx+1) for idx in K]))
     )
 
 def multijet_pow(
@@ -331,11 +334,11 @@ def multijet_add(
     coeff1, coeff2 = is_taylor
 
     if (coeff1, coeff2) == (True, True):
-        return tuple(s1[k] + s2[k] for k in range(sum(list(K) + 1)))
+        return tuple(s1[k] + s2[k] for k in range(prod([(idx+1) for idx in K])))
     elif (coeff1, coeff2) == (True, False):
-        return (s1[0] + s2,) + tuple(s1[k] for k in range(1, sum(list(K)) + 1))
+        return (s1[0] + s2,) + tuple(s1[k] for k in range(1, prod([(idx+1) for idx in K])))
     elif (coeff1, coeff2) == (False, True):
-        return (s2[0] + s1,) + tuple(s2[k] for k in range(1, sum(list(K)) + 1))
+        return (s2[0] + s1,) + tuple(s2[k] for k in range(1, prod([(idx+1) for idx in K])))
 
 
 def multijet_sub(
@@ -359,11 +362,11 @@ def multijet_sub(
     (coeff1, coeff2) = is_taylor
 
     if (coeff1, coeff2) == (True, True):
-        return tuple(s1[k] - s2[k] for k in range(sum(list(K)) + 1))
+        return tuple(s1[k] - s2[k] for k in range(prod([(idx+1) for idx in K])))
     elif (coeff1, coeff2) == (True, False):
-        return (s1[0] - s2,) + tuple(s1[k] for k in range(1, sum(list(K)) + 1))
+        return (s1[0] - s2,) + tuple(s1[k] for k in range(1, prod([(idx+1) for idx in K])))
     elif (coeff1, coeff2) == (False, True):
-        return (s1 - s2[0],) + tuple(-s2[k] for k in range(1, sum(list(K)) + 1))
+        return (s1 - s2[0],) + tuple(-s2[k] for k in range(1, prod([(idx+1) for idx in K])))
 
 def multijet_mul(
     s1: Primal | PrimalAndCoefficients,
@@ -371,7 +374,9 @@ def multijet_mul(
     K: tuple[int, ...],
     is_taylor: tuple[bool, ...],
 ) -> ValueAndCoefficients:
-    """Multivariate Taylor-mode arithmetic for multiplication of two variables. NOT YET FINISHED
+    """Multivariate Taylor-mode arithmetic for multiplication of two variables.
+    The formula is taken from M. Hardy's 'Combinatorics of Partial Derivatives',
+    found here: "https://arxiv.org/pdf/math/0601149".
 
     Args:
         s1: The first primal and its Taylor coefficients.
@@ -397,9 +402,9 @@ def multijet_mul(
         return s_out
 
     elif (coeff1, coeff2) == (True, False):
-        return tuple(s2 * s1[k] for k in range(sum(list(K)) + 1))
+        return tuple(s2 * s1[k] for k in range(prod([(idx+1) for idx in K])))
     elif (coeff1, coeff2) == (False, True):
-        return tuple(s1 * s2[k] for k in range(sum(list(K)) + 1))
+        return tuple(s1 * s2[k] for k in range(prod([(idx+1) for idx in K])))
 
 MAPPING = {
     sin: multijet_sin,
