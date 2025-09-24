@@ -41,6 +41,7 @@ def _multivariate_faa_di_bruno(
     """
     vs_out = []
     for k in create_multi_idx_list(K):
+        vs_out.append(0)
         for idx, sigma in enumerate(multi_partitions(k)):
             if dn[len(sigma)] is None:
                 continue
@@ -63,7 +64,9 @@ def _multivariate_faa_di_bruno(
             nu = multiplicity(sigma)
             # avoid multiplication by one
             term = nu * term if nu != 1.0 else term
-            vs_out.append(term if idx == 0 else vs_out.pop(-1) + term)
+            vs_out.append(vs_out.pop(-1) + term)  # Taken out 'term if idx == 0 else'.
+            # This is done because the order of multi_partitions isn't quite clear
+            # and this may lead to problems with initializing the latest entry, when encountering 'dn is None' cases.
     return vs_out
 
 
