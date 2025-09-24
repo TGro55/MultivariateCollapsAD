@@ -16,16 +16,18 @@ from multijet.utils import (
     find_list_idx,
     multiplicity,
 )
-from jet.utils import(
-   Primal,
+from jet.utils import (
+    Primal,
     PrimalAndCoefficients,
     Value,
-    ValueAndCoefficients, 
+    ValueAndCoefficients,
 )
 
 
-def _multivariate_faa_di_bruno(vs: tuple[Primal, ...], K: tuple[int, ...], dn: dict[int, Primal]) -> list[Value]:
-    """Apply Faà di Bruno's formula for elementwise functions. 
+def _multivariate_faa_di_bruno(
+    vs: tuple[Primal, ...], K: tuple[int, ...], dn: dict[int, Primal]
+) -> list[Value]:
+    """Apply Faà di Bruno's formula for elementwise functions.
     The formula is taken from M. Hardy's 'Combinatorics of Partial Derivatives',
     found here: "https://arxiv.org/pdf/math/0601149".
 
@@ -43,11 +45,15 @@ def _multivariate_faa_di_bruno(vs: tuple[Primal, ...], K: tuple[int, ...], dn: d
             if dn[len(sigma)] is None:
                 continue
 
-            vs_count = {set_to_idx(i,len(K)): sigma.count(i) for i in sigma}
+            vs_count = {set_to_idx(i, len(K)): sigma.count(i) for i in sigma}
             vs_contract = [
-                vs[find_list_idx(j,K)-1] ** count if count > 1 else vs[find_list_idx(j,K)-1] 
+                (
+                    vs[find_list_idx(j, K) - 1] ** count
+                    if count > 1
+                    else vs[find_list_idx(j, K) - 1]
+                )
                 for j, count in vs_count.items()
-                ]
+            ]
 
             term = vs_contract[0]
             for v in vs_contract[1:]:
@@ -55,10 +61,11 @@ def _multivariate_faa_di_bruno(vs: tuple[Primal, ...], K: tuple[int, ...], dn: d
             term = mul(term, dn[len(sigma)])
 
             nu = multiplicity(sigma)
-            #avoid multiplication by one
+            # avoid multiplication by one
             term = nu * term if nu != 1.0 else term
             vs_out.append(term if idx == 0 else vs_out.pop(-1) + term)
-    return vs_out 
+    return vs_out
+
 
 def multijet_sin(
     s: PrimalAndCoefficients, K: tuple[int, ...], is_taylor: tuple[bool, ...]
@@ -81,7 +88,7 @@ def multijet_sin(
     # pre-compute derivatives
     sin_x = sin(x)
     dsin = {0: sin_x}
-    for k in range(1, sum(list(K))+1):
+    for k in range(1, sum(list(K)) + 1):
         if k == 1:
             dsin[k] = cos(x)
         elif k in {2, 3}:
@@ -92,6 +99,7 @@ def multijet_sin(
     vs_out = _multivariate_faa_di_bruno(vs, K, dsin)
 
     return (sin_x, *vs_out)
+
 
 def multijet_cos(
     s: PrimalAndCoefficients, K: tuple[int, ...], is_taylor: tuple[bool, ...]
@@ -126,6 +134,7 @@ def multijet_cos(
 
     return (cos_x, *vs_out)
 
+
 def multijet_tanh(
     s: PrimalAndCoefficients, K: tuple[int, ...], is_taylor: tuple[bool, ...]
 ) -> ValueAndCoefficients:
@@ -148,7 +157,7 @@ def multijet_tanh(
     tanh_x = tanh(x)
     dtanh = {0: tanh_x}
 
-    # Derivative Degree 
+    # Derivative Degree
     deriv_degree = sum(list(K))
 
     # Use the explicit form of the derivative polynomials for tanh from "Derivative
@@ -181,6 +190,7 @@ def multijet_tanh(
     vs_out = _multivariate_faa_di_bruno(vs, K, dtanh)
 
     return (tanh_x, *vs_out)
+
 
 def multijet_sigmoid(
     s: PrimalAndCoefficients, K: tuple[int, ...], is_taylor: tuple[bool, ...]
@@ -235,11 +245,12 @@ def multijet_sigmoid(
 
     return (sigmoid_x, *vs_out)
 
+
 def multijet_linear(
     s: PrimalAndCoefficients,
     weight: Tensor,
     bias: Tensor | None = None,
-    K: tuple[int, ...]=None,
+    K: tuple[int, ...] = None,
     is_taylor: tuple[bool, ...] = (True, False, False),
 ) -> ValueAndCoefficients:
     """Multivariate Taylor-mode arithmetic for the linear function.
@@ -262,8 +273,10 @@ def multijet_linear(
         raise NotImplementedError(f"Not implemented for {is_taylor=}.")
 
     return tuple(
-        linear(s[k], weight, bias=bias if k == 0 else None) for k in range(prod([(idx+1) for idx in K]))
+        linear(s[k], weight, bias=bias if k == 0 else None)
+        for k in range(prod([(idx + 1) for idx in K]))
     )
+
 
 def multijet_pow(
     s: PrimalAndCoefficients,
@@ -313,6 +326,7 @@ def multijet_pow(
 
     return (pow_x, *vs_out)
 
+
 def multijet_add(
     s1: Primal | PrimalAndCoefficients | float | int,
     s2: Primal | PrimalAndCoefficients | float | int,
@@ -334,11 +348,15 @@ def multijet_add(
     coeff1, coeff2 = is_taylor
 
     if (coeff1, coeff2) == (True, True):
-        return tuple(s1[k] + s2[k] for k in range(prod([(idx+1) for idx in K])))
+        return tuple(s1[k] + s2[k] for k in range(prod([(idx + 1) for idx in K])))
     elif (coeff1, coeff2) == (True, False):
-        return (s1[0] + s2,) + tuple(s1[k] for k in range(1, prod([(idx+1) for idx in K])))
+        return (s1[0] + s2,) + tuple(
+            s1[k] for k in range(1, prod([(idx + 1) for idx in K]))
+        )
     elif (coeff1, coeff2) == (False, True):
-        return (s2[0] + s1,) + tuple(s2[k] for k in range(1, prod([(idx+1) for idx in K])))
+        return (s2[0] + s1,) + tuple(
+            s2[k] for k in range(1, prod([(idx + 1) for idx in K]))
+        )
 
 
 def multijet_sub(
@@ -362,11 +380,16 @@ def multijet_sub(
     (coeff1, coeff2) = is_taylor
 
     if (coeff1, coeff2) == (True, True):
-        return tuple(s1[k] - s2[k] for k in range(prod([(idx+1) for idx in K])))
+        return tuple(s1[k] - s2[k] for k in range(prod([(idx + 1) for idx in K])))
     elif (coeff1, coeff2) == (True, False):
-        return (s1[0] - s2,) + tuple(s1[k] for k in range(1, prod([(idx+1) for idx in K])))
+        return (s1[0] - s2,) + tuple(
+            s1[k] for k in range(1, prod([(idx + 1) for idx in K]))
+        )
     elif (coeff1, coeff2) == (False, True):
-        return (s1 - s2[0],) + tuple(-s2[k] for k in range(1, prod([(idx+1) for idx in K])))
+        return (s1 - s2[0],) + tuple(
+            -s2[k] for k in range(1, prod([(idx + 1) for idx in K]))
+        )
+
 
 def multijet_mul(
     s1: Primal | PrimalAndCoefficients,
@@ -391,20 +414,25 @@ def multijet_mul(
     (coeff1, coeff2) = is_taylor
 
     if (coeff1, coeff2) == (True, True):
-        s_out = (s1[0]*s2[0],)
+        s_out = (s1[0] * s2[0],)
         for k in create_multi_idx_list(K):
-            term = s1[0]*s2[find_list_idx(k,K)]
+            term = s1[0] * s2[find_list_idx(k, K)]
             for j in create_multi_idx_list(k):
-                term_j = prod([comb(k[i], j[i], exact=True) for i in range(len(K))]) * s1[find_list_idx(j,K)] * s2[find_list_idx(tuple([k[i]-j[i] for i in range(len(K))]),K)]
+                term_j = (
+                    prod([comb(k[i], j[i], exact=True) for i in range(len(K))])
+                    * s1[find_list_idx(j, K)]
+                    * s2[find_list_idx(tuple([k[i] - j[i] for i in range(len(K))]), K)]
+                )
                 term = term + term_j
             s_out = s_out + (term,)
 
         return s_out
 
     elif (coeff1, coeff2) == (True, False):
-        return tuple(s2 * s1[k] for k in range(prod([(idx+1) for idx in K])))
+        return tuple(s2 * s1[k] for k in range(prod([(idx + 1) for idx in K])))
     elif (coeff1, coeff2) == (False, True):
-        return tuple(s1 * s2[k] for k in range(prod([(idx+1) for idx in K])))
+        return tuple(s1 * s2[k] for k in range(prod([(idx + 1) for idx in K])))
+
 
 MAPPING = {
     sin: multijet_sin,

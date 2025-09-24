@@ -3,10 +3,18 @@
 # For now, this program only tests derivatives with respect to one variable
 
 # Make imports possible
-import os
-import sys
+# import os
+# import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+import sys
+import os
+
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+print(project_root)
+sys.path.insert(0, project_root)
 
 from pytest import mark
 from torch import Tensor, cos, manual_seed, rand, sigmoid, sin, tanh, tensor
