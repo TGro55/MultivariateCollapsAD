@@ -21,6 +21,8 @@ from jet.utils import (
     PrimalAndCoefficients,
     Value,
     ValueAndCoefficients,
+    replicate,
+    sum_vmapped,
 )
 
 
@@ -437,6 +439,68 @@ def multijet_mul(
         return tuple(s1 * s2[k] for k in range(prod([(idx + 1) for idx in K])))
 
 
+def multijet_replicate(
+    s: PrimalAndCoefficients,
+    times: int,
+    pos: int = 0,
+    K=None,
+    is_taylor: tuple[bool, ...] = (False, False, False),
+) -> ValueAndCoefficients:
+    """Multivariate Taylor-mode arithmetic for the replicate function.
+
+    Args:
+        s: The primal and its Taylor coefficients.
+        times: The number of times to replicate the tensor.
+        pos: The position along which to replicate.
+        K: Multi-index representing the highest partial derivative.
+        is_taylor: A tuple indicating which arguments are Taylor coefficients (`True`)
+            and which are constants (`False`).
+
+    Returns:
+        The value and its Taylor coefficients.
+
+    Raises:
+        NotImplementedError: If `is_taylor` is not one of the supported configurations.
+    """
+    if is_taylor not in [(True, False, False), (True, False)]:
+        raise NotImplementedError(f"{is_taylor=} is not implemented.")
+
+    return tuple(
+        replicate(s[k], times, pos) for k in range(prod([(idx + 1) for idx in K]))
+    )
+
+
+def multijet_sum_vmapped(
+    s: PrimalAndCoefficients,
+    pos: int = 0,
+    K=None,
+    is_taylor: tuple[bool, ...] = (False, False),
+) -> ValueAndCoefficients:
+    """Multivariate Taylor-mode arithmetic for the sum_vmapped function.
+
+    Args:
+        s: The primal and its Taylor coefficients.
+        pos: The position along which to sum.
+        K: Multi-index representing the highest partial derivative.
+        is_taylor: A tuple indicating which arguments are Taylor coefficients (`True`)
+            and which are constants (`False`).
+
+    Returns:
+        The value and its Taylor coefficients.
+
+    Raises:
+        NotImplementedError: If `is_taylor` is not `(True, False)` or `(True,)`.
+    """
+    if is_taylor not in [(True, False), (True,)]:
+        raise NotImplementedError(
+            f"Got {is_taylor=}. Only supports (True, False) and (True,)."
+        )
+
+    return tuple(
+        sum_vmapped(s[k], pos=pos) for k in range(prod([(idx + 1) for idx in K]))
+    )
+
+
 MAPPING = {
     sin: multijet_sin,
     cos: multijet_cos,
@@ -448,4 +512,6 @@ MAPPING = {
     operator.sub: multijet_sub,
     operator.mul: multijet_mul,
     mul: multijet_mul,
+    replicate: multijet_replicate,
+    sum_vmapped: multijet_sum_vmapped,
 }

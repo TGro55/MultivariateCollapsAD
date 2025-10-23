@@ -1,4 +1,8 @@
-"""Testing code for development of multijet"""
+"""Testing code for development of multijet
+
+Note: By now, this file has become overcrowded. I think it can serve for now as an introduction to how the multijet
+was developed. Also, there are still some issues with it that show up in the latter half of this file, that somewhat
+need addressing."""
 
 # Pathing to make imports possible.
 import os
@@ -7,16 +11,26 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Imports
-from torch import Tensor, cos, manual_seed, ones_like, rand, sin, zeros_like
+from torch import cos, manual_seed, ones_like, rand, sin, zeros_like
 from torch.func import hessian
 from torch.nn import Linear, Sequential, Tanh
+import torch.nn as nn
 
 # Importing multijet
 from multijet import multijet
-import copy
+from multijet.Bilaplacian_with_sym import Bilaplacian as Bilaplacian_multijets_sym
+from multijet.Bilaplacian import Bilaplacian as Bilaplacian_with_multijets
+from multijet.utils import create_multi_idx_list, find_list_idx
+
+# Importing jet
+from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets
+
+# For nodes creation
+import copy  ## Probalby unnecessary..
 
 _ = manual_seed(0)  # make deterministic
 
+## First some general testing
 # Scalar-to-Scalar function
 f = sin
 k = (2,)  # Different to jet, since we deal with tuples now.
@@ -93,8 +107,8 @@ if d2_diag.allclose(hessian_diag):
 else:
     raise ValueError(f"{d2_diag} does not match {hessian_diag}!")
 
-# There is no difference between (2,2) and (2,0,2) representing the derivative. Only the shape of the multijet is important.
-from multijet.utils import create_multi_idx_list
+print("-" * 50)
+## There is no difference between (2,2) and (2,0,2) representing the derivative. Only the shape of the multijet is important.
 
 # Setting up Taylor coefficients
 y = rand(D)
@@ -130,24 +144,132 @@ if solution_2_0_2.allclose(solution_2_2):
         "Indeed! multijet started with (2,2) and (2,0,2) give same output given same input nodes.\n"
     )
 
-# Now to see, if we can succesfully compute the bilaplacian using multijets.
+print("-" * 50)
+## Some multi-jets are more general than others and may be used to compute instinctively different mixed partials.
+## Here some comparisons:
 
-# Imports
-from jet.bilaplacian import Bilaplacian
 
-# We remain with the same simple function to test
+## Some modules for testing
+# Sine
+class Sine(nn.Module):
+    def forward(self, x):
+        return sin(x)
+
+
+# Cos
+class Cos(nn.Module):
+    def forward(self, x):
+        return cos(x)
+
+
+# Cube
+class Cube(nn.Module):
+    def forward(self, x):
+        return x**3
+
+
+# Function
+f = Sequential(Linear(3, 1), Sine())
+
+# Derivative Direction
+direction = 1
+
+# Point of interest
+y = rand(D)
+y0 = y
+y1 = zeros_like(y)
+
+## Checking (1,1,1,1)-multijet against (4,) multijet with "same" inputs
+# 4-multijet first
+nodes = [y0]
+for _ in range(4):
+    nodes.append(copy.deepcopy(y1))
+nodes[1][direction - 1] = 1.0
+
+f_multijet_4_result = multijet(f, (4,))(*nodes)[-1]
+
+# (1,1,1,1)-multijet second
+nodes = [copy.deepcopy(y1) for _ in range(2**4)]
+nodes[0] = y0
+for k in create_multi_idx_list((1, 1, 1, 1)):
+    if sum(k) == 1:
+        nodes[find_list_idx(k, (1, 1, 1, 1))][direction - 1] = 1.0
+f_multijet_1_1_1_1_result = multijet(f, (1, 1, 1, 1))(*nodes)[-1]
+
+# Comparing
+if f_multijet_4_result.allclose(f_multijet_1_1_1_1_result):
+    print("(1,1,1,1) and (4,) give the same result.")
+else:
+    print(
+        f"Differing results.\n4-multijet result is {f_multijet_4_result}, while (1,1,1,1)-multijet result is {f_multijet_1_1_1_1_result}."
+    )
+
+## Checking (2,1,1)-multijet against (2,2)-multijet
+# Two directions now
+direction1 = 1
+direction2 = 2
+
+# (2,2)-multijet
+nodes = [y0]
+for _ in range(8):
+    nodes.append(copy.deepcopy(y1))
+nodes[1][direction1 - 1] = 1.0
+nodes[3][direction2 - 1] = 1.0
+
+f_multijet_2_2_result = multijet(f, (2, 2))(*nodes)[-1]
+
+# (2,1,1)-multijet
+nodes = [y0]
+for _ in range(11):
+    nodes.append(copy.deepcopy(y1))
+nodes[1][direction1 - 1] = 1.0
+nodes[2][direction1 - 1] = 1.0
+nodes[4][direction2 - 1] = 1.0
+
+f_multijet_2_1_1_result = multijet(f, (2, 1, 1))(*nodes)[-1]
+
+# Comparing
+if f_multijet_2_2_result.allclose(f_multijet_2_1_1_result):
+    print("(2,2) and (2,1,1) give the same result.")
+else:
+    print(
+        f"Differing results.\n(2,2)-multijet result is {f_multijet_2_2_result}, while (2,1,1)-multijet result is {f_multijet_2_1_1_result}."
+    )
+
+## Checking (4,)-multijet against (2,2)-multijet
+# (2,2)-multijet
+nodes = [y0]
+for _ in range(8):
+    nodes.append(copy.deepcopy(y1))
+nodes[1][direction - 1] = 1.0
+nodes[3][direction - 1] = 1.0
+
+f_multijet_2_2_same = multijet(f, (2, 2))(*nodes)[-1]
+
+# Comparing
+if f_multijet_2_2_same.allclose(f_multijet_4_result):
+    print("(2,2) and (4,) give the same result.")
+else:
+    print(
+        f"Differing results.\n(2,2)-multijet result is {f_multijet_2_2_same}, while (2,1,1)-multijet result is {f_multijet_4_result}."
+    )
+
+print("-" * 50)
+## Now to see, if we can succesfully compute the bilaplacian using multijets.
+# We remain with a simple function to test
 D = 3
-f = Sequential(Linear(D, 1), Tanh())
+f = Sequential(Linear(3, 1), Tanh())
 
 # Bilaplacian using multijets
 # Taylor coefficients
 y0 = rand(D)
 y = zeros_like(y0)
 
+# The following is a manual intuitive computation of the Bilaplacian using multijets
 to_be_summed = []
 
 for d in range(D):
-    y_list = [copy.deepcopy(y) for i in range(5)]
+    y_list = [copy.deepcopy(y) for _ in range(5)]
     y_list[0] = y0
     y[d] = 1.0
     y_list[1] = copy.deepcopy(y)
@@ -158,7 +280,7 @@ for d1 in range(D):
     for d2 in range(D):
         if d1 == d2:
             continue
-        y_list = [copy.deepcopy(y) for i in range(9)]
+        y_list = [copy.deepcopy(y) for _ in range(9)]
         y_list[0] = y0
 
         # First non-zero node
@@ -174,39 +296,74 @@ for d1 in range(D):
         # Calculate the multijet
         to_be_summed.append(multijet(f, (2, 2))(*y_list)[-1])
 
-# Imports for checking correctness
+manual_result = sum(to_be_summed)
 
-result = sum(to_be_summed)
+jet_f = Bilaplacian_with_jets(f, y0, False)
 
-jet_f = Bilaplacian(f, y0, False)
+result_jet_f = jet_f(y0)
 
-result_jet_f = jet_f.forward(y0)
-
-if result_jet_f.allclose(result):
-    print("Bilplacian from jet and multijet coincide!\n")
+if result_jet_f.allclose(manual_result):
+    print("Bilaplacian from jet and manual multijet coincide!\n")
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {result_jet_f}.\nResult from using multijets is {result}."
+        f"Result from using jets is {result_jet_f}.\nResult from using multijets is {manual_result}."
     )  # Currently seems to be off by a factor of 2..
 
-# Comparing jet with multijet results
-from jet import jet
+print("Now comparing Bilaplacian modules.")
 
-jet_4_f = jet(f, 4)
+# Different test function, as there seems to be different erros ocurring
+test_func = Sequential(Linear(3, 1), Tanh(), Cube())
+x_dummy = rand(3)
 
-to_be_compared1 = []
-to_be_compared2 = []
-for d in range(D):
-    y_list = [copy.deepcopy(y) for i in range(5)]
-    y_list[0] = y0
-    y[d] = 1.0
-    y_list[1] = copy.deepcopy(y)
-    y[d] = 0
-    to_be_compared1.append(multijet(f, (4,))(*y_list)[-1])
-    to_be_compared2.append(jet_4_f(*y_list)[-1])
+jet_bilaplace = Bilaplacian_with_jets(test_func, x_dummy, is_batched=False)(x_dummy)
+multijet_bilaplace = Bilaplacian_multijets_sym(test_func, x_dummy, is_batched=False)(
+    x_dummy
+)
+
+if jet_bilaplace.allclose(multijet_bilaplace):
+    print("Bilaplacian from jet and multijet coincide!\n")
+else:
+    print("Differing Results.")
+    print(
+        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets is {multijet_bilaplace}."
+    )  # Different Functions lead to different errors. Often multijet-result is 2^8 that of jet-result..
 
 print("-" * 50)
-for idx, cont in enumerate(to_be_compared1):
-    if cont.allclose(to_be_compared2[idx]):
-        print("YES! " * (idx + 1))
+print("Now comparing jet-bilaplacian with Ver2 of Bilaplacian-multijets.")
+
+multijet_bilaplace_ver_2 = Bilaplacian_with_multijets(
+    test_func, x_dummy, is_batched=False
+)(x_dummy)
+
+if jet_bilaplace.allclose(multijet_bilaplace_ver_2):
+    print("Bilaplacian from jet and multijet coincide!\n")
+else:
+    print("Differing Results.")
+    print(
+        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets_ver_2 is {multijet_bilaplace_ver_2}."
+    )
+
+print("-" * 50)
+
+print("Now comparing Bilaplacian that uses symmetry with manual result.")
+other_comparison = Bilaplacian_multijets_sym(f, y0, False)(y0)
+if manual_result.allclose(other_comparison):
+    print("Manual and multijet-Module results are the same.")
+else:
+    print("Differing results.")
+    print(f"Manual result is {manual_result}. Module result is {other_comparison}.")
+
+print("-" * 50)
+
+print("Now comparing manual result to jet.")
+manuel_jet_comparison = Bilaplacian_with_jets(f, y0, False)(y0)
+if manual_result.allclose(manuel_jet_comparison):
+    print("Manual and -jet-Module results are the same.")
+else:
+    print("Differing results.")
+    print(
+        f"Manual result is {manual_result}. Module result is {manuel_jet_comparison}."
+    )
+
+print("-" * 50)

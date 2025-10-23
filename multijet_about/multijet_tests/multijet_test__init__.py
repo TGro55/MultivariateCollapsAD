@@ -5,13 +5,12 @@ import os
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-print(project_root)
 sys.path.insert(0, project_root)
 
 import jet
 import multijet
+import jet.utils
 
-from pytest import mark
 from torch import Tensor, cos, manual_seed, rand, sigmoid, sin, tanh, tensor, zeros_like
 from torch.nn import Linear, Module, Sequential, Tanh
 from torch.nn.functional import linear
@@ -25,12 +24,12 @@ from jet.utils import (
 )
 from jet.tracing import capture_graph
 from multijet.utils import find_list_idx, create_multi_idx_list
-
-
-from typing import Any, Callable
-from itertools import combinations
 from test.test___init__ import f_multiply, setup_case, compare_jet_results
 from utils import compute_deriv_tensor
+
+from pytest import mark
+from typing import Any, Callable
+from itertools import combinations
 
 
 # We check against the already established jet-module
@@ -110,7 +109,11 @@ JET_CASES = [
     {"f": lambda x: x - 2.0, "shape": (5,), "id": "sub-2.0"},
     # multiplication of a tensor and a float
     {"f": lambda x: x * 3.0, "shape": (5,), "id": "mul-3.0"},
-    # {"f": lambda x: jet.utils.replicate(x, 6), "shape": (5,), "id": "replicate-6"}, ##Not implemented
+    {
+        "f": lambda x: jet.utils.replicate(x, 6),
+        "shape": (5,),
+        "id": "replicate-6",
+    },  ## Cannot currently be captured for some reason.. (TraceError)
     # 2d sin(sin) function
     {"f": lambda x: sin(sin(x)), "shape": (2,), "id": "sin-sin"},
     # 2d tanh(tanh) function
@@ -151,7 +154,11 @@ JET_CASES = [
     # multiplication two variables
     {"f": f_multiply, "shape": (5,), "id": "multiply-variables"},
     # sum_vmapped
-    # {"f": lambda x: jet.utils.sum_vmapped(x), "shape": (3, 5), "id": "sum_vmapped-3"}, ##Not implemented
+    {
+        "f": lambda x: jet.utils.sum_vmapped(x),
+        "shape": (3, 5),
+        "id": "sum_vmapped-3",
+    },
 ]
 
 # set the `is_batched` flag for all cases
@@ -195,17 +202,9 @@ def test_symbolic_trace_jet(config: dict[str, Any], k: int):
     capture_graph(multijet_f)
 
 
-def f_multiply_summed(x: Tensor) -> Tensor:
-    """Test function for multiplication of two variables.
-
-    Args:
-        x: Input tensor.
-
-    Returns:
-        Tensor resulting from the multiplication of sin(x) and cos(sin(x)).
-    """
-    y = sin(x)
-    return sin(y) * sum(cos(y))
+class Cube(Module):
+    def forward(self, x):
+        return x**3
 
 
 # Altered list from above
@@ -234,7 +233,7 @@ JET_CASES = [
     {"f": lambda x: x - 2.0, "shape": (5,), "id": "sub-2.0"},
     # multiplication of a tensor and a float
     {"f": lambda x: x * 3.0, "shape": (5,), "id": "mul-3.0"},
-    # {"f": lambda x: jet.utils.replicate(x, 6), "shape": (5,), "id": "replicate-6"}, ##Not implemented
+    # {"f": lambda x: jet.utils.replicate(x, 6), "shape": (5,), "id": "replicate-6"},
     # 2d sin(sin) function
     {"f": lambda x: sin(sin(x)), "shape": (2,), "id": "sin-sin"},
     # 2d tanh(tanh) function
@@ -257,6 +256,12 @@ JET_CASES = [
         "shape": (5,),
         "id": "two-layer-tanh-mlp",
     },
+    # Tanh-Linear-Cube-Layer
+    {
+        "f": Sequential(Tanh(), Linear(4, 1), Cube()),
+        "shape": (4,),
+        "id": "tanh-linear-cube-layer",
+    },
     # 5d tanh-activated two-layer MLP with batched input
     # {
     #     "f": Sequential(
@@ -277,7 +282,7 @@ JET_CASES = [
     # multiplication of variables with summation
     # {"f": f_multiply_summed, "shape": (5,), "id": "multiply-variables-summed"},
     # sum_vmapped
-    # {"f": lambda x: jet.utils.sum_vmapped(x), "shape": (3, 5), "id": "sum_vmapped-3"}, ##Not implemented
+    # {"f": lambda x: jet.utils.sum_vmapped(x), "shape": (3, 5), "id": "sum_vmapped-3"},
 ]
 
 # set the `is_batched` flag for all cases
@@ -286,7 +291,7 @@ for config in JET_CASES:
 
 JET_CASES_IDS = [config["id"] for config in JET_CASES]
 
-K_MAX = 3
+K_MAX = 3  # Should probably be capped here, as K_MAX=4 makes derivative tensors of degree 4 and takes a long time to evaluate
 K = list(range(1, K_MAX + 1))
 K_IDS = [f"{k=}" for k in K]
 
