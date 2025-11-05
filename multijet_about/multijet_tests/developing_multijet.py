@@ -258,7 +258,7 @@ print("-" * 50)
 ## Now to see, if we can succesfully compute the bilaplacian using multijets.
 # We remain with a simple function to test
 D = 3
-f = Sequential(Linear(3, 1), Tanh())
+f = Sequential(Linear(D, 1), Tanh())
 
 # Bilaplacian using multijets
 # Taylor coefficients
@@ -298,23 +298,35 @@ for d1 in range(D):
 
 manual_result = sum(to_be_summed)
 
-jet_f = Bilaplacian_with_jets(f, y0, False)
+print("-" * 50)
 
-result_jet_f = jet_f(y0)
-
-if result_jet_f.allclose(manual_result):
-    print("Bilaplacian from jet and manual multijet coincide!\n")
+print("Now comparing Bilaplacian that uses symmetry with manual result.")
+other_comparison = Bilaplacian_multijets_sym(f, y0, False)(y0)
+if manual_result.allclose(other_comparison):
+    print("Manual and multijet-Module results are the same.")
 else:
-    print("Differing Results.")
+    print("Differing results.")
+    print(f"Manual result is {manual_result}. Module result is {other_comparison}.")
+
+print("-" * 50)
+
+print("Now comparing manual result to jet.")
+manuel_jet_comparison = Bilaplacian_with_jets(f, y0, False)(y0)
+if manual_result.allclose(manuel_jet_comparison):
+    print("Manual and -jet-Module results are the same.")
+else:
+    print("Differing results.")
     print(
-        f"Result from using jets is {result_jet_f}.\nResult from using multijets is {manual_result}."
-    )  # Currently seems to be off by a factor of 2..
+        f"Manual result is {manual_result}. Module result is {manuel_jet_comparison}."
+    )
+
+print("-" * 50)
+
 
 print("Now comparing Bilaplacian modules.")
-
 # Different test function, as there seems to be different erros ocurring
-test_func = Sequential(Linear(3, 1), Tanh(), Cube())
-x_dummy = rand(3)
+test_func = Sequential(Linear(D, 1), Tanh(), Cube())
+x_dummy = rand(D)
 
 jet_bilaplace = Bilaplacian_with_jets(test_func, x_dummy, is_batched=False)(x_dummy)
 multijet_bilaplace = Bilaplacian_multijets_sym(test_func, x_dummy, is_batched=False)(
@@ -342,28 +354,6 @@ else:
     print("Differing Results.")
     print(
         f"Result from using jets is {jet_bilaplace}.\nResult from using multijets_ver_2 is {multijet_bilaplace_ver_2}."
-    )
-
-print("-" * 50)
-
-print("Now comparing Bilaplacian that uses symmetry with manual result.")
-other_comparison = Bilaplacian_multijets_sym(f, y0, False)(y0)
-if manual_result.allclose(other_comparison):
-    print("Manual and multijet-Module results are the same.")
-else:
-    print("Differing results.")
-    print(f"Manual result is {manual_result}. Module result is {other_comparison}.")
-
-print("-" * 50)
-
-print("Now comparing manual result to jet.")
-manuel_jet_comparison = Bilaplacian_with_jets(f, y0, False)(y0)
-if manual_result.allclose(manuel_jet_comparison):
-    print("Manual and -jet-Module results are the same.")
-else:
-    print("Differing results.")
-    print(
-        f"Manual result is {manual_result}. Module result is {manuel_jet_comparison}."
     )
 
 print("-" * 50)

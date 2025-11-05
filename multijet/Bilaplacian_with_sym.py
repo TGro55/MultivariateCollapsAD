@@ -98,7 +98,7 @@ class Bilaplacian(Module):
         X3 = zeros(D, *self.x_shape, **self.x_kwargs)
         X4 = zeros(D, *self.x_shape, **self.x_kwargs)
 
-        X1 = 4 * eye(D, **self.x_kwargs)
+        X1 = eye(D, **self.x_kwargs)
         if self.is_batched:
             X1 = X1.reshape(D, 1, *self.x_shape[1:])
             # copy without using more memory
