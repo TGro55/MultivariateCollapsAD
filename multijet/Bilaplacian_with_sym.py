@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from torch import Tensor, eye, zeros, vmap
+from torch import Tensor, eye, zeros
 from torch.nn import Module
 
 import jet
