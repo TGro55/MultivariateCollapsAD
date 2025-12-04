@@ -12,22 +12,37 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Imports
-from torch import cos, manual_seed, ones_like, rand, sin, zeros_like
-from torch.func import hessian
-from torch.nn import Linear, Sequential, Tanh
-import torch.nn as nn
+from torch import (
+    cos,  # noqa: E402
+    manual_seed,  # noqa: E402
+    ones_like,  # noqa: E402
+    rand,  # noqa: E402
+    sin,  # noqa: E402
+    zeros_like,  # noqa: E402
+)
+from torch.func import hessian  # noqa: E402
+from torch.nn import (
+    Linear,  # noqa: E402
+    Sequential,  # noqa: E402
+    Tanh,  # noqa: E402
+)
+import torch.nn as nn  # noqa: E402
 
 # Importing multijet
-from multijet import multijet
-from multijet.Bilaplacian_with_sym import Bilaplacian as Bilaplacian_multijets_sym
-from multijet.Bilaplacian import Bilaplacian as Bilaplacian_with_multijets
-from multijet.utils import create_multi_idx_list, find_list_idx
+from multijet import multijet  # noqa: E402
+from multijet.Bilaplacian_with_sym import (
+    Bilaplacian as Bilaplacian_multijets_sym,
+)  # noqa: E402
+from multijet.Bilaplacian import (
+    Bilaplacian as Bilaplacian_with_multijets,
+)  # noqa: E402
+from multijet.utils import create_multi_idx_list, find_list_idx  # noqa: E402
 
 # Importing jet
-from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets
+from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets  # noqa: E402
 
 # For nodes creation
-import copy  # Probalby unnecessary..
+import copy  # noqa: E402 # Probalby unnecessary..
 
 _ = manual_seed(0)  # make deterministic
 
@@ -160,7 +175,7 @@ class Sine(nn.Module):
     """Class to applay Sin to tensor in Sequential."""
 
     def forward(self, x):
-        """Computes Sin(x)"""
+        """Computes Sin(x)."""
         return sin(x)
 
 
@@ -169,7 +184,7 @@ class Cos(nn.Module):
     """Class to apply Cos to tensor in Sequential."""
 
     def forward(self, x):
-        """Computes Cos(x)"""
+        """Computes Cos(x)."""
         return cos(x)
 
 

@@ -7,7 +7,12 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Imports
-from torch import cos, manual_seed, rand, sin
+from torch import (
+    cos,  # noqa: E402
+    manual_seed,  # noqa: E402
+    rand,  # noqa: E402
+    sin,  # noqa: E402
+)
 from torch.nn import Linear, Sequential, Tanh  # noqa: E402  # noqa: E402  # noqa: E402
 import torch.nn as nn  # noqa: E402
 

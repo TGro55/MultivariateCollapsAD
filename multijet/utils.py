@@ -1,7 +1,8 @@
 """Utility functions for computing multijets.
 
 Note: The functions in this file aid in computing partial derivatives according to the
-Mutlivariate Faà Di Bruno formula from M. Hardy's 'Combinatorics of Partial Derivatives',
+Multivariate Faà Di Bruno formula from M. Hardy's
+'Combinatorics of Partial Derivatives',
 found here: "https://arxiv.org/pdf/math/0601149".
 To explain some terms:
 A multi-index refers to a specific partial derivative, e.g. (2,) refers to the second
@@ -10,10 +11,10 @@ for two unkown directions i,j.
 To a given multi-index the associated multi-set is just a list containing the entry
 positions of the multi-index exactly as many times, as the entry value says, e.g. for
 the multi-index (2,0,2) the associated multi-set is [1,1,3,3].
-A partition of a multi-set is called a multi-partition, it is a list of lists, such that
-if you were to take the union of the lists interpreted as sets and remember repeats, you
-again obtain the multi-set, e.g. for (2,0,2) the multi-set is [1,1,3,3] and a possible
-multi-partition is [[1],[1,3,3]].
+A partition of a multi-set is called a multi-partition, it is a list of lists, such
+that if you were to take the union of the lists interpreted as sets and remember
+repeats, you again obtain the multi-set, e.g. for (2,0,2) the multi-set is [1,1,3,3]
+and a possible multi-partition is [[1],[1,3,3]].
 """
 
 from math import factorial, prod
@@ -21,7 +22,7 @@ from itertools import combinations
 import copy
 
 
-def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: C901 #TODO
+def yield_multi_partitions(K: tuple[int, ...], min_size: int = 1):  # noqa: C901 #TODO
     """Compute the multi-partitions of a multi-index (with possible repeats).
 
     E.g. For the multi-index (1,0,2), at mimimum, this function yields the following:
@@ -34,17 +35,16 @@ def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: C901 #TODO
     Yields:
         List of lists of integers representing the possible multi-index partitions.
     """
-
     # Find original multi-set
     multi_set = []
     for idx, count in enumerate(K):
         for _ in range(0, count):
             multi_set.append(idx + 1)
 
-    if len(multi_set) == I:
+    if len(multi_set) == min_size:
         yield [multi_set]
 
-    for i in range(I, len(multi_set) // 2 + 1):
+    for i in range(min_size, len(multi_set) // 2 + 1):
         summands = []
         for elem in sorted(set(combinations(multi_set, i))):
             summands.append(list(elem))
@@ -61,29 +61,33 @@ def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: C901 #TODO
 
 
 def refine_multi_partitions(unrefined_multi_partitions):
-    """Eliminates repeats in list of multi-partitions from 'yield_multi_partitions()' and
-    if necessary, adds the trivial partition, not yielded by 'yield multi_partitions()'.
+    """Built to clean up output from 'yield_multi_partitions()'.
 
-    E.g. Given you have the two multi-partitions [[1,1],[2,2]] and [[2,2],[1,1]] in a
-    list of a possible multi-partitions of the mult-set [1,1,2,2], they are repeats of
-    each other and only one of them will be in the final list, which is returned.
+    Eliminates repeats in list of multi-partitions from
+    'yield_multi_partitions()'
+    and if necessary, adds the trivial partition, not yielded by
+    'yield multi_partitions()'.
+    E.g. Given you have the two multi-partitions [[1,1],[2,2]] and [[2,2],[1,1]]
+    in a list of a possible multi-partitions of the mult-set [1,1,2,2], they are
+    repeats of each other and only one of them will be in the final list, which
+    is returned.
 
     Args:
-        unrefined_mulit_partitions : List of Lists of Lists of non-negative integers
+        unrefined_mulit_partitions : List of Lists of Lists of non-negative
+            integers
         representing possible multi-partitions of a multi-set but with repeats
 
     Returns:
         hope: List of Lists of Lists of non-negative integers representing
         possible multi-partitions of a multi-set WTIHOUT repeats.
     """
-
     # Kill doubles
     results = []
     for multpart in unrefined_multi_partitions:
         part = []
         for elem in multpart:
             part.append(tuple(sorted(elem)))
-        results.append(tuple(sorted(tuple(part))))
+        results.append(tuple(sorted(part)))
     refining = tuple(sorted(results))
     refined = set(refining)
 
@@ -123,13 +127,13 @@ def multi_partitions(K: tuple[int, ...]):
     """Combines the two functions of above.
 
     Currently, to compute multi-partitions to a given multi-set,
-    'yield_multi_partitions()' first generates multi-partitions to a given multi-set, but
-    with repreats, i.e. for the multi-index (2,2) it will give out [[1,1], [2,2]] and
-    [[2,2], [1,1]] as two different multi-partitions, when they are really the same, and
-    'refine_mulit_partitions()' afterwards, takes care of the repeats and also yields the
-    multi-partition possibly not taken care of by 'yield_mulit_partitions()', which is at
-    most the trivial partition, to a multi-index, i.e. for (2,2) the multi-partition
-    [[1,1,2,2]].
+    'yield_multi_partitions()' first generates multi-partitions to a given multi-
+    set, but with repreats, i.e. for the multi-index (2,2) it will give out
+    [[1,1], [2,2]] and [[2,2], [1,1]] as two different multi-partitions, when they
+    are really the same, and 'refine_mulit_partitions()' afterwards, takes care of
+    the repeats and also yields the multi-partition possibly not taken care of by
+    'yield_mulit_partitions()', which is at most the trivial partition, to a multi-
+    index, i.e. for (2,2) the multi-partition [[1,1,2,2]].
 
     Args:
         k: Tuple of non-negative integers representing a multi-index.
@@ -172,8 +176,8 @@ def find_list_idx(k: tuple[int, ...], K: tuple[int, ...]):
 
     Args:
         k : Tuple of non-negative integers, to be found the list index/entry of.
-        K : Tuple of non-negative integers, maximal multi-index and the end of the
-            multi-jet.
+        K : Tuple of non-negative integers, maximal multi-index and the end of
+            the multi-jet.
 
     Returns:
         Index/entry of k in the K-multi-jet list.
@@ -193,8 +197,9 @@ def find_list_idx(k: tuple[int, ...], K: tuple[int, ...]):
 
 
 def create_multi_idx_list(K: tuple[int, ...]):
-    """Make a list of multi-indices smaller or equal to given multi-index list, except
-    for the trivial multi-index.
+    """Make a list of multi-indices smaller or equal to given multi-index list.
+
+    Except for the trivial multi-index!
 
     E.g. To the multi-index (1,0,2), this yields:
     (0,0,1), (0,0,2), (1,0,0), (1,0,1), (1,0,2),
@@ -212,8 +217,9 @@ def create_multi_idx_list(K: tuple[int, ...]):
 
     # Constructer of next multi-index
     def increase_idx(curr, position=0):
-        """Recursive function to increase multi-index correctly, i.e. it makes sure
-        that 'k <= K' component-wise.
+        """Recursive function to increase multi-index correctly.
+
+        I.e. it makes sure that 'k <= K' component-wise.
 
         Args:
             curr: List of integers representing the multi-index as it currently is.
@@ -248,8 +254,10 @@ def create_multi_idx_list(K: tuple[int, ...]):
 
 
 def multiplicity(sigma: list[list[int, ...], ...]) -> float:
-    """Compute the coefficient of a summand in Faa di Bruno's formula taken from
-    M. Hardy's 'Combinatorics of Partial Derivatives' found here:
+    """Compute the coefficient of a summand in Faa di Bruno's formula.
+
+    Faa di Bruno's formula is taken from M. Hardy's 'Combinatorics of
+    Partial Derivatives' found here:
     "https://arxiv.org/pdf/math/0601149".
 
     Args:

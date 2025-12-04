@@ -1,6 +1,4 @@
-"""Implements computing the Bi-Laplacian operator with Multivariate Taylor mode
-with a more general idea.
-"""
+"""Bilaplacian operator with Multivariate Taylor mode with a more general idea."""
 
 from typing import Callable
 

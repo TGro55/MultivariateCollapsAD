@@ -20,7 +20,7 @@ from torch import (
     tanh,  # noqa: E402
     tensor,  # noqa: E402
     zeros_like,  # noqa: E402
-)
+)  # noqa: E402
 
 # noqa: E402
 from torch.nn import Linear, Module, Sequential, Tanh  # noqa: E402
@@ -31,14 +31,14 @@ from jet.utils import (
     PrimalAndCoefficients,  # noqa: E402
     Value,  # noqa: E402
     integer_partitions,  # noqa: E402
-)
+)  # noqa: E402
 from jet.tracing import capture_graph  # noqa: E402
 from multijet.utils import create_multi_idx_list  # noqa: E402
 from test.test___init__ import (
     f_multiply,  # noqa: E402
     setup_case,  # noqa: E402
     compare_jet_results,  # noqa: E402
-)
+)  # noqa: E402
 from utils import compute_deriv_tensor  # noqa: E402
 
 from pytest import mark  # noqa: E402
@@ -372,5 +372,6 @@ def test_mixed_partials(config: dict[str, Any], k: int):
         derivative_tensor_sol = derivative_tensor.transpose(0, -1)[
             tuple(index)
         ]  # The way the jacobian is constructed this transposition is needed,
-        # if input and output dimensions are not the same and the output dimension is not 1.
+        # if input and output dimensions are not the same and the output
+        # dimension is not 1.
         assert multijet_sol.allclose(derivative_tensor_sol, rtol=1e-5, atol=1e-8)

@@ -59,7 +59,8 @@ class Bilaplacian(Module):
         Returns:
             The Bi-Laplacian. Has the same shape as f(x).
         """
-        # Two lists of Taylor Coefficients. First is a 4-multijet. Second is a 2-2-multijet.
+        # Two lists of Taylor Coefficients.
+        # First is a 4-multijet. Second is a 2-2-multijet.
         C1, C2 = self.set_up_taylor_coefficients(x)
 
         # 4-multijet summand
