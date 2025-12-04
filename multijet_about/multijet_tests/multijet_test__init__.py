@@ -7,29 +7,43 @@ import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, project_root)
 
-import jet
-import multijet
-import jet.utils
+import jet  # noqa: E402
+import multijet  # noqa: E402
+import jet.utils  # noqa: E402
 
-from torch import Tensor, cos, manual_seed, rand, sigmoid, sin, tanh, tensor, zeros_like
-from torch.nn import Linear, Module, Sequential, Tanh
-from torch.nn.functional import linear
+from torch import (
+    cos,  # noqa: E402
+    manual_seed,  # noqa: E402
+    rand,  # noqa: E402
+    sigmoid,  # noqa: E402
+    sin,  # noqa: E402
+    tanh,  # noqa: E402
+    tensor,  # noqa: E402
+    zeros_like,  # noqa: E402
+)
+
+# noqa: E402
+from torch.nn import Linear, Module, Sequential, Tanh  # noqa: E402
+from torch.nn.functional import linear  # noqa: E402
 
 from jet.utils import (
-    Primal,
-    PrimalAndCoefficients,
-    Value,
-    ValueAndCoefficients,
-    integer_partitions,
+    Primal,  # noqa: E402
+    PrimalAndCoefficients,  # noqa: E402
+    Value,  # noqa: E402
+    integer_partitions,  # noqa: E402
 )
-from jet.tracing import capture_graph
-from multijet.utils import find_list_idx, create_multi_idx_list
-from test.test___init__ import f_multiply, setup_case, compare_jet_results
-from utils import compute_deriv_tensor
+from jet.tracing import capture_graph  # noqa: E402
+from multijet.utils import create_multi_idx_list  # noqa: E402
+from test.test___init__ import (
+    f_multiply,  # noqa: E402
+    setup_case,  # noqa: E402
+    compare_jet_results,  # noqa: E402
+)
+from utils import compute_deriv_tensor  # noqa: E402
 
-from pytest import mark
-from typing import Any, Callable
-from itertools import combinations
+from pytest import mark  # noqa: E402
+from typing import Any, Callable  # noqa: E402
+from itertools import combinations  # noqa: E402
 
 
 # We check against the already established jet-module
@@ -50,13 +64,16 @@ def create_multijet_input(
     K: tuple[int, ...], directions: dict[int, int], input: Primal
 ):
     """Creates multijet inputs given input directions.
-    E.g. for the multijet (2,2) with directions {3: 2, 5: 2} and an input vector of size 5, this will return a list
-    of input vectors the size of 5, of which the (0,1) multijet-entry will be tensor([0., 0., 1.0, 0., 0.,]) and the
-    (1,0) entry will be tensor([0., 0., 0., 0., 1.0,]), while the other entries are just zero tensors.
+    E.g. for the multijet (2,2) with directions {3: 2, 5: 2} and an input vector of
+    size 5, this will return a list of input vectors the size of 5, of which the
+    (0,1) multijet-entry will be tensor([0., 0., 1.0, 0., 0.,]) and the (1,0) entry
+    will be tensor([0., 0., 0., 0., 1.0,]), while the other entries are just zero
+    tensors.
 
     Args:
         K : Tuple of non-negative integers representing the endpoint of the multijet.
-        directions : Dictionary, with keys as directions and derivative degree of the direction as items.
+        directions : Dictionary, with keys as directions and derivative degree of the
+        direction as items.
         input: Primal, to understand the shape of the input.
 
     Returns:
@@ -113,7 +130,7 @@ JET_CASES = [
         "f": lambda x: jet.utils.replicate(x, 6),
         "shape": (5,),
         "id": "replicate-6",
-    },  ## Cannot currently be captured for some reason.. (TraceError)
+    },  # Cannot currently be captured for some reason.. (TraceError)
     # 2d sin(sin) function
     {"f": lambda x: sin(sin(x)), "shape": (2,), "id": "sin-sin"},
     # 2d tanh(tanh) function
@@ -291,7 +308,8 @@ for config in JET_CASES:
 
 JET_CASES_IDS = [config["id"] for config in JET_CASES]
 
-K_MAX = 3  # Should probably be capped here, as K_MAX=4 makes derivative tensors of degree 4 and takes a long time to evaluate
+K_MAX = 3  # Should probably be capped here, as K_MAX=4 makes derivative
+# tensors of degree 4 and takes a long time to evaluate
 K = list(range(1, K_MAX + 1))
 K_IDS = [f"{k=}" for k in K]
 
@@ -349,5 +367,6 @@ def test_mixed_partials(config: dict[str, Any], k: int):
         # Check against derivative tensor entry
         derivative_tensor_sol = derivative_tensor.transpose(0, -1)[
             tuple(index)
-        ]  # The way the jacobian is constructed this transposition is needed, if input and output dimensions are not the same and the output dimension is not 1.
+        ]  # The way the jacobian is constructed this transposition is needed,
+        # if input and output dimensions are not the same and the output dimension is not 1.
         assert multijet_sol.allclose(derivative_tensor_sol, rtol=1e-5, atol=1e-8)

@@ -1,8 +1,10 @@
-"""Implements computing the Bi-Laplacian operator with Multivariate Taylor mode with a more general idea."""
+"""Implements computing the Bi-Laplacian operator with Multivariate Taylor mode
+with a more general idea.
+"""
 
 from typing import Callable
 
-from torch import Tensor, eye, zeros, vmap, vstack
+from torch import Tensor, zeros, vstack
 from torch.nn import Module
 
 import jet
@@ -27,12 +29,12 @@ class Bilaplacian(Module):
 
         Args:
             f: The function whose Bi-Laplacian is computed.
-            dummy_x: The input on which the Bi-Laplacian is computed. It is only used to
-                infer meta-data of the function input that `torch.fx` is not capable
-                of determining at the moment.
-            is_batched: Whether the function and its input are batched. In this case,
-                we can use that computations can be carried out independently along
-                the leading dimension of tensors.
+            dummy_x: The input on which the Bi-Laplacian is computed. It is
+            only used to infer meta-data of the function input that `torch.fx`
+            is not capable of determining at the moment.
+            is_batched: Whether the function and its input are batched. In
+            this case, we can use that computations can be carried out inde-
+            pendently along the leading dimension of tensors.
         """
         super().__init__()
         # data that needs to be inferred explicitly from a dummy input
@@ -57,7 +59,8 @@ class Bilaplacian(Module):
         Returns:
             The Bi-Laplacian. Has the same shape as f(x).
         """
-        # Two lists of Taylor Coefficients. First is a 4-multijet. Second is a 2-2-multijet.
+        # Two lists of Taylor Coefficients.
+        # First is a 4-multijet. Second is a 2-2-multijet.
         C1 = self.set_up_taylor_coefficients(x)
 
         # 2-2-multijet summand
@@ -105,11 +108,6 @@ class Bilaplacian(Module):
                 counter += 1
         assert counter == D**2
         diff_X01 = vstack(components)
-
-        # Trying stuff
-        # print(X01)
-        # print(X10)
-        # print(diff_X01)
 
         if self.is_batched:
             X01 = X01.reshape(D**2, 1, *self.x_shape[1:])

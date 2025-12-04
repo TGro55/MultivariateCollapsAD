@@ -1,6 +1,7 @@
 """Implements a module that computes the Laplacian via multijets and can be simplified.
 
-Note: This module should be equivalent to the exact Laplacian form jet.laplacian. It was created to confirm just this.
+Note: This module should be equivalent to the exact Laplacian form jet.laplacian. It
+was created to specifically to check this.
 """
 
 from typing import Callable

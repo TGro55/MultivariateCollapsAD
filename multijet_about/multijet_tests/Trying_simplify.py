@@ -7,17 +7,13 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Imports
-from torch import Tensor, cos, manual_seed, rand, sin
+from torch import cos, manual_seed, rand, sin
 from torch.nn import Linear, Sequential, Tanh
 import torch.nn as nn
 
 # General jet imports
-import jet
 from jet.simplify import simplify
 from jet.tracing import capture_graph
-
-# General multijet imports
-import multijet
 
 # Bilaplacians
 from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets
@@ -26,7 +22,7 @@ from multijet.Bilaplacian import Bilaplacian as Bilaplacian_with_multijets
 _ = manual_seed(0)  # make deterministic
 
 
-## Functions for testing
+# Functions for testing
 # Sine
 class Sine(nn.Module):
     def forward(self, x):
@@ -65,7 +61,8 @@ if jet_bilaplace.allclose(multijet_bilaplace(x_dummy)):
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets is {multijet_bilaplace}."
+        f"Result from using jets is {jet_bilaplace}."
+        + f"\nResult from using multijets is {multijet_bilaplace}."
     )
 
 print("--" * 50)
@@ -78,7 +75,8 @@ if jet_bilaplace.allclose(mod_traced_eval):
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets is {mod_traced_eval}."
+        f"Result from using jets is {jet_bilaplace}."
+        + f"\nResult from using multijets is {mod_traced_eval}."
     )
 
 print("---" * 50)
@@ -91,7 +89,8 @@ if jet_bilaplace.allclose(mod_standard_eval):
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets is {mod_standard_eval}."
+        f"Result from using jets is {jet_bilaplace}."
+        + f"\nResult from using multijets is {mod_standard_eval}."
     )
 
 print("---" * 50)
@@ -105,7 +104,8 @@ if jet_bilaplace.allclose(mod_collapsed_eval):
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets is {mod_collapsed_eval}."
+        f"Result from using jets is {jet_bilaplace}."
+        + f"\nResult from using multijets is {mod_collapsed_eval}."
     )
 
 # Node comparison

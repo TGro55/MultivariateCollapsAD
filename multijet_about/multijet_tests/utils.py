@@ -18,6 +18,8 @@ def compute_deriv_tensor(func, inp, order):
 
     for _ in range(order):
         prev_func = current_func
-        current_func = lambda x, f=prev_func: jacobian(f, x, create_graph=True)
+        current_func = lambda x, f=prev_func: jacobian(
+            f, x, create_graph=True
+        )  # noqa: E731
 
     return current_func(inp)

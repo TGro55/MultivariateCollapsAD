@@ -1,27 +1,27 @@
-"""Utility functions for computing multijets."""
+"""Utility functions for computing multijets.
 
-# Note: The functions in this file aid in computing partial derivatives according to the Mutlivariate Faà Di Bruno formula
-# from M. Hardy's 'Combinatorics of Partial Derivatives', found here: "https://arxiv.org/pdf/math/0601149".
-# To explain some terms:
-# A multi-index refers to a specific partial derivative, e.g. (2,) refers to the second derivative in an unknown direction
-# or (2,2) refers to the derivative ∂⁴f(x) / ∂xᵢ²∂xⱼ² for two unkown directions i,j.
-# To a given multi-index the associated multi-set is just a list containing the entry positions of the multi-index exactly
-# as many times, as the entry value says, e.g. for the multi-index (2,0,2) the associated multi-set is [1,1,3,3].
-# A partition of a multi-set is called a multi-partition, it is a list of lists, such that if you were to take the union
-# of the lists interpreted as sets and remember repeats, you again obtain the multi-set, e.g. for (2,0,2) the multi-set
-# is [1,1,3,3] and a possible multi-partition is [[1],[1,3,3]].
-
-from torch import Tensor
+Note: The functions in this file aid in computing partial derivatives according to the
+Mutlivariate Faà Di Bruno formula from M. Hardy's 'Combinatorics of Partial Derivatives',
+found here: "https://arxiv.org/pdf/math/0601149".
+To explain some terms:
+A multi-index refers to a specific partial derivative, e.g. (2,) refers to the second
+derivative in an unknown direction or (2,2) refers to the derivative ∂⁴f(x) / ∂xᵢ²∂xⱼ²
+for two unkown directions i,j.
+To a given multi-index the associated multi-set is just a list containing the entry
+positions of the multi-index exactly as many times, as the entry value says, e.g. for
+the multi-index (2,0,2) the associated multi-set is [1,1,3,3].
+A partition of a multi-set is called a multi-partition, it is a list of lists, such that
+if you were to take the union of the lists interpreted as sets and remember repeats, you
+again obtain the multi-set, e.g. for (2,0,2) the multi-set is [1,1,3,3] and a possible
+multi-partition is [[1],[1,3,3]].
+"""
 
 from math import factorial, prod
 from itertools import combinations
 import copy
 
-# Imports from jet
-from jet.utils import Primal, PrimalAndCoefficients, Value, ValueAndCoefficients
 
-
-def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
+def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: C901 #TODO
     """Compute the multi-partitions of a multi-index (with possible repeats).
     E.g. For the multi-index (1,0,2), at mimimum, this function yields the following:
     [[1],[2],[2]], [[1],[2,2]], [[2], [1,2]], [[1,2,2]]
@@ -37,7 +37,7 @@ def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: E741 #TODO
     # Find original multi-set
     multi_set = []
     for idx, count in enumerate(K):
-        for i in range(0, count):
+        for _ in range(0, count):
             multi_set.append(idx + 1)
 
     if len(multi_set) == I:
@@ -67,8 +67,8 @@ def refine_multi_partitions(unrefined_multi_partitions):
     each other and only one of them will be in the final list, which is returned.
 
     Args:
-        unrefined_mulit_partitions : List of Lists of Lists of non-negative integers repre-
-        senting possible multi-partitions of a multi-set but with repeats
+        unrefined_mulit_partitions : List of Lists of Lists of non-negative integers
+        representing possible multi-partitions of a multi-set but with repeats
 
     Returns:
         hope: List of Lists of Lists of non-negative integers representing
@@ -81,11 +81,8 @@ def refine_multi_partitions(unrefined_multi_partitions):
         part = []
         for elem in multpart:
             part.append(tuple(sorted(elem)))
-        # print(part)
         results.append(tuple(sorted(tuple(part))))
-        # print(results)
     refining = tuple(sorted(results))
-    # print(refining)
     refined = set(refining)
 
     # Return to set structure
@@ -111,7 +108,8 @@ def refine_multi_partitions(unrefined_multi_partitions):
     for elem in part:
         trivial.append(elem[0])
 
-    # Check if trivial partition is already in multi_partitions (mistake happens for multi-partitions of (1,)-type)
+    # Check if trivial partition is already in multi_partitions
+    # (mistake happens for multi-partitions of (1,)-type)
     trivial_check = (tuple(trivial),)
     if trivial_check not in refined:
         results.append([trivial])
@@ -123,18 +121,20 @@ def multi_partitions(K: tuple[int, ...]):
     """Combines the two functions of above.
 
     Currently, to compute multi-partitions to a given multi-set,
-    'yield_multi_partitions()' first generates multi-partitions to a given multi-set, but with
-    repreats, i.e. for the multi-index (2,2) it will give out [[1,1], [2,2]] and [[2,2], [1,1]]
-    as two different multi-partitions, when they are really the same, and
-    'refine_mulit_partitions()' afterwards, takes care of the repeats and also yields the multi-
-    partition possibly not taken care of by 'yield_mulit_partitions()', which is at most the
-    trivial partition, to a multi-index, i.e. for (2,2) the multi-partition [[1,1,2,2]].
+    'yield_multi_partitions()' first generates multi-partitions to a given multi-set, but
+    with repreats, i.e. for the multi-index (2,2) it will give out [[1,1], [2,2]] and
+    [[2,2], [1,1]] as two different multi-partitions, when they are really the same, and
+    'refine_mulit_partitions()' afterwards, takes care of the repeats and also yields the
+    multi-partition possibly not taken care of by 'yield_mulit_partitions()', which is at
+    most the trivial partition, to a multi-index, i.e. for (2,2) the multi-partition
+    [[1,1,2,2]].
 
     Args:
         k: Tuple of non-negative integers representing a multi-index.
 
     Returns:
-        List of Lists of Lists of non-negative integers, representing all possible multi-partitions to a given multi-index.
+        List of Lists of Lists of non-negative integers, representing all possible
+        multi-partitions to a given multi-index.
     """
     return refine_multi_partitions(yield_multi_partitions(K))
 
@@ -155,7 +155,7 @@ def set_to_idx(multi_set: list[int, ...], maxlen):
         multi_idx : Tuple of integers representing the multi-set as a multi_idx.
     """
     multi_idx = []
-    for i in range(maxlen):
+    for _ in range(maxlen):
         multi_idx.append(0)
 
     for i in set(multi_set):
@@ -169,7 +169,8 @@ def find_list_idx(k: tuple[int, ...], K: tuple[int, ...]):
 
     Args:
         k : Tuple of non-negative integers, to be found the list index/entry of.
-        K : Tuple of non-negative integers, maximal multi-index and the end of the multi-jet.
+        K : Tuple of non-negative integers, maximal multi-index and the end of the
+            multi-jet.
 
     Returns:
         Index/entry of k in the K-multi-jet list.
@@ -199,14 +200,16 @@ def create_multi_idx_list(K: tuple[int, ...]):
         K : Tuple of non-negative integers, representing a multi-index.
 
     Yields:
-        List of tuples of non-negative integers, which are smaller or equal to input multi-index.
+        List of tuples of non-negative integers, which are smaller or equal to input
+        multi-index.
     """
     # Starting mult-index
     previous = [0 for idx in K]
 
     # Constructer of next multi-index
     def increase_idx(curr, position=0):
-        """Recursive function to increase multi-index correctly, i.e. it makes sure that 'k <= K' component-wise.
+        """Recursive function to increase multi-index correctly, i.e. it makes sure
+        that 'k <= K' component-wise.
 
         Args:
             curr: List of integers representing the multi-index as it currently is.
@@ -240,12 +243,14 @@ def create_multi_idx_list(K: tuple[int, ...]):
         yield K
 
 
-def multiplicity(sigma: list[list[[int, ...], ...], ...]) -> float:
-    """Compute the coefficient of a summand in Faa di Bruno's formula taken from M. Hardy's 'Combinatorics
-    of Partial Derivatives' found here: "https://arxiv.org/pdf/math/0601149".
+def multiplicity(sigma: list[list[int, ...], ...]) -> float:
+    """Compute the coefficient of a summand in Faa di Bruno's formula taken from
+    M. Hardy's 'Combinatorics of Partial Derivatives' found here:
+    "https://arxiv.org/pdf/math/0601149".
 
     Args:
-        sigma: List of lists of non-negative integers representing a multi-partition of a multi-index.
+        sigma: List of lists of non-negative integers representing a multi-partition
+        of a multi-index.
 
     Returns:
         Multiplicity of sigma.

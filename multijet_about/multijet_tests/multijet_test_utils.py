@@ -12,7 +12,7 @@ from multijet.utils import (
     set_to_idx,
     find_list_idx,
     multiplicity,
-)
+)  # noqa: E402
 
 
 def test_multi_partitions():

@@ -4,8 +4,8 @@ from typing import Callable
 from warnings import warn
 from math import prod
 
-from torch import tensor, zeros_like
-from torch.fx import Graph, GraphModule, Node
+from torch import zeros_like
+from torch.fx import GraphModule, Node
 
 from multijet.operations import MAPPING
 from jet.tracing import capture_graph
@@ -25,8 +25,8 @@ def multijet(
             Default: `False`.
 
     Returns:
-        The overloaded function that computes the function and its sub-box of partial derivatives
-        from the input tensor and its sub-box of partial derivatives.
+        The overloaded function that computes the function and its sub-box of partial
+        derivatives from the input tensor and its sub-box of partial derivatives.
     """
     mod = capture_graph(f)
 

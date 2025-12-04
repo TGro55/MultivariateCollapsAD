@@ -1,8 +1,9 @@
 """Testing code for development of multijet
 
-Note: By now, this file has become overcrowded. I think it can serve for now as an introduction to how the multijet
-was developed. Also, there are still some issues with it that show up in the latter half of this file, that somewhat
-need addressing."""
+Note: By now, this file has become overcrowded. I think it can serve for now as an
+introduction to how the multijet was developed. Also, there are still some issues
+with it that show up in the latter half of this file, that somewhat need addressing.
+"""
 
 # Pathing to make imports possible.
 import os
@@ -26,11 +27,11 @@ from multijet.utils import create_multi_idx_list, find_list_idx
 from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets
 
 # For nodes creation
-import copy  ## Probalby unnecessary..
+import copy  # Probalby unnecessary..
 
 _ = manual_seed(0)  # make deterministic
 
-## First some general testing
+# First some general testing
 # Scalar-to-Scalar function
 f = sin
 k = (2,)  # Different to jet, since we deal with tuples now.
@@ -102,13 +103,15 @@ hessian_diag = d2f.squeeze(0).diag()
 
 if d2_diag.allclose(hessian_diag):
     print(
-        "Multivariate Taylor mode Hessian diagonal matches functorch Hessian diagonal!\n"
+        "Multivariate Taylor mode Hessian diagonal matches functorch"
+        + " Hessian diagonal!\n"
     )
 else:
     raise ValueError(f"{d2_diag} does not match {hessian_diag}!")
 
 print("-" * 50)
-## There is no difference between (2,2) and (2,0,2) representing the derivative. Only the shape of the multijet is important.
+# There is no difference between (2,2) and (2,0,2) representing the derivative.
+# Only the shape of the multijet is important.
 
 # Setting up Taylor coefficients
 y = rand(D)
@@ -141,15 +144,17 @@ solution_2_2 = f_mulitjet_2_2(*derivs)[-1]
 
 if solution_2_0_2.allclose(solution_2_2):
     print(
-        "Indeed! multijet started with (2,2) and (2,0,2) give same output given same input nodes.\n"
+        "Indeed! multijet started with (2,2) and (2,0,2)"
+        + " give same output given same input nodes.\n"
     )
 
 print("-" * 50)
-## Some multi-jets are more general than others and may be used to compute instinctively different mixed partials.
-## Here some comparisons:
+# Some multi-jets are more general than others and may be used to
+# compute instinctively different mixed partials.
+# Here some comparisons:
 
 
-## Some modules for testing
+# Some modules for testing
 # Sine
 class Sine(nn.Module):
     def forward(self, x):
@@ -179,7 +184,7 @@ y = rand(D)
 y0 = y
 y1 = zeros_like(y)
 
-## Checking (1,1,1,1)-multijet against (4,) multijet with "same" inputs
+# Checking (1,1,1,1)-multijet against (4,) multijet with "same" inputs
 # 4-multijet first
 nodes = [y0]
 for _ in range(4):
@@ -201,10 +206,11 @@ if f_multijet_4_result.allclose(f_multijet_1_1_1_1_result):
     print("(1,1,1,1) and (4,) give the same result.")
 else:
     print(
-        f"Differing results.\n4-multijet result is {f_multijet_4_result}, while (1,1,1,1)-multijet result is {f_multijet_1_1_1_1_result}."
+        f"Differing results.\n4-multijet result is {f_multijet_4_result},"
+        + f" while (1,1,1,1)-multijet result is {f_multijet_1_1_1_1_result}."
     )
 
-## Checking (2,1,1)-multijet against (2,2)-multijet
+# Checking (2,1,1)-multijet against (2,2)-multijet
 # Two directions now
 direction1 = 1
 direction2 = 2
@@ -233,10 +239,11 @@ if f_multijet_2_2_result.allclose(f_multijet_2_1_1_result):
     print("(2,2) and (2,1,1) give the same result.")
 else:
     print(
-        f"Differing results.\n(2,2)-multijet result is {f_multijet_2_2_result}, while (2,1,1)-multijet result is {f_multijet_2_1_1_result}."
+        f"Differing results.\n(2,2)-multijet result is {f_multijet_2_2_result},"
+        + f" while (2,1,1)-multijet result is {f_multijet_2_1_1_result}."
     )
 
-## Checking (4,)-multijet against (2,2)-multijet
+# Checking (4,)-multijet against (2,2)-multijet
 # (2,2)-multijet
 nodes = [y0]
 for _ in range(8):
@@ -251,11 +258,12 @@ if f_multijet_2_2_same.allclose(f_multijet_4_result):
     print("(2,2) and (4,) give the same result.")
 else:
     print(
-        f"Differing results.\n(2,2)-multijet result is {f_multijet_2_2_same}, while (2,1,1)-multijet result is {f_multijet_4_result}."
+        f"Differing results.\n(2,2)-multijet result is {f_multijet_2_2_same},"
+        + f" while (2,1,1)-multijet result is {f_multijet_4_result}."
     )
 
 print("-" * 50)
-## Now to see, if we can succesfully compute the bilaplacian using multijets.
+# Now to see, if we can succesfully compute the bilaplacian using multijets.
 # We remain with a simple function to test
 D = 3
 f = Sequential(Linear(D, 1), Tanh())
@@ -338,8 +346,10 @@ if jet_bilaplace.allclose(multijet_bilaplace):
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets is {multijet_bilaplace}."
-    )  # Different Functions lead to different errors. Often multijet-result is 2^8 that of jet-result..
+        f"Result from using jets is {jet_bilaplace}."
+        + f"\nResult from using multijets is {multijet_bilaplace}."
+    )  # Different Functions lead to different errors.
+    # Often multijet-result is 2^8 that of jet-result..
 
 print("-" * 50)
 print("Now comparing jet-bilaplacian with Ver2 of Bilaplacian-multijets.")
@@ -353,7 +363,8 @@ if jet_bilaplace.allclose(multijet_bilaplace_ver_2):
 else:
     print("Differing Results.")
     print(
-        f"Result from using jets is {jet_bilaplace}.\nResult from using multijets_ver_2 is {multijet_bilaplace_ver_2}."
+        f"Result from using jets is {jet_bilaplace}."
+        + f"\nResult from using multijets_ver_2 is {multijet_bilaplace_ver_2}."
     )
 
 print("-" * 50)
