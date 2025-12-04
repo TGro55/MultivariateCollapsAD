@@ -1,10 +1,10 @@
-"""Utilities for testing multijet"""
+"""Utilities for testing multijet."""
 
 from torch.autograd.functional import jacobian
 
 
 def compute_deriv_tensor(func, inp, order):
-    """Iteratively computes higher-order derivative tensors
+    """Iteratively computes higher-order derivative tensors.
 
     Args:
         func: Function to differentiate.

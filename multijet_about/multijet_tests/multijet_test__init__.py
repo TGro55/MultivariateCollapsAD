@@ -48,6 +48,7 @@ from itertools import combinations  # noqa: E402
 
 # We check against the already established jet-module
 def check_multijet(f: Callable[[Primal], Value], arg: PrimalAndCoefficients):
+    """Compares multijet-result with jet-result."""
     x, vs = arg
     k = len(vs)
 
@@ -64,6 +65,7 @@ def create_multijet_input(
     K: tuple[int, ...], directions: dict[int, int], input: Primal
 ):
     """Creates multijet inputs given input directions.
+
     E.g. for the multijet (2,2) with directions {3: 2, 5: 2} and an input vector of
     size 5, this will return a list of input vectors the size of 5, of which the
     (0,1) multijet-entry will be tensor([0., 0., 1.0, 0., 0.,]) and the (1,0) entry
@@ -220,7 +222,10 @@ def test_symbolic_trace_jet(config: dict[str, Any], k: int):
 
 
 class Cube(Module):
+    """Class to check Cubing operation."""
+
     def forward(self, x):
+        """Cubes input."""
         return x**3
 
 
@@ -317,8 +322,7 @@ K_IDS = [f"{k=}" for k in K]
 @mark.parametrize("k", K, ids=K_IDS)
 @mark.parametrize("config", JET_CASES, ids=JET_CASES_IDS)
 def test_mixed_partials(config: dict[str, Any], k: int):
-    """Test wether the multijet computes the correct end-points"""
-
+    """Test wether the multijet computes the correct end-points."""
     f = config["f"]
     shape = config["shape"]
 

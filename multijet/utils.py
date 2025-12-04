@@ -23,6 +23,7 @@ import copy
 
 def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: C901 #TODO
     """Compute the multi-partitions of a multi-index (with possible repeats).
+
     E.g. For the multi-index (1,0,2), at mimimum, this function yields the following:
     [[1],[2],[2]], [[1],[2,2]], [[2], [1,2]], [[1,2,2]]
 
@@ -62,6 +63,7 @@ def yield_multi_partitions(K: tuple[int, ...], I: int = 1):  # noqa: C901 #TODO
 def refine_multi_partitions(unrefined_multi_partitions):
     """Eliminates repeats in list of multi-partitions from 'yield_multi_partitions()' and
     if necessary, adds the trivial partition, not yielded by 'yield multi_partitions()'.
+
     E.g. Given you have the two multi-partitions [[1,1],[2,2]] and [[2,2],[1,1]] in a
     list of a possible multi-partitions of the mult-set [1,1,2,2], they are repeats of
     each other and only one of them will be in the final list, which is returned.
@@ -141,6 +143,7 @@ def multi_partitions(K: tuple[int, ...]):
 
 def set_to_idx(multi_set: list[int, ...], maxlen):
     """Turn multi-set into multi_index.
+
     E.g. Given the multi-set [1,3,3], this function turns that into a multi-index,
     like
     (1,0,2) or (1,0,2,0) or (1,0,2,0,...,0)
@@ -192,6 +195,7 @@ def find_list_idx(k: tuple[int, ...], K: tuple[int, ...]):
 def create_multi_idx_list(K: tuple[int, ...]):
     """Make a list of multi-indices smaller or equal to given multi-index list, except
     for the trivial multi-index.
+
     E.g. To the multi-index (1,0,2), this yields:
     (0,0,1), (0,0,2), (1,0,0), (1,0,1), (1,0,2),
     but does not yield (0,0,0).

@@ -1,4 +1,4 @@
-"""Module to test simplifying using the existing simplify function"""
+"""Module to test simplifying using the existing simplify function."""
 
 # Pathing to make imports possible.
 import os
@@ -8,16 +8,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 
 # Imports
 from torch import cos, manual_seed, rand, sin
-from torch.nn import Linear, Sequential, Tanh
-import torch.nn as nn
+from torch.nn import Linear, Sequential, Tanh  # noqa: E402  # noqa: E402  # noqa: E402
+import torch.nn as nn  # noqa: E402
 
 # General jet imports
-from jet.simplify import simplify
-from jet.tracing import capture_graph
+from jet.simplify import simplify  # noqa: E402
+from jet.tracing import capture_graph  # noqa: E402
 
 # Bilaplacians
-from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets
-from multijet.Bilaplacian import Bilaplacian as Bilaplacian_with_multijets
+from jet.bilaplacian import Bilaplacian as Bilaplacian_with_jets  # noqa: E402
+from multijet.Bilaplacian import Bilaplacian as Bilaplacian_with_multijets  # noqa: E402
 
 _ = manual_seed(0)  # make deterministic
 
@@ -25,18 +25,27 @@ _ = manual_seed(0)  # make deterministic
 # Functions for testing
 # Sine
 class Sine(nn.Module):
+    """Class to apply Sin function in Sequential."""
+
     def forward(self, x):
+        """Computes Sin(x)."""
         return sin(x)
 
 
 # Cos
 class Cos(nn.Module):
+    """Class to apply Cos function in Sequential."""
+
     def forward(self, x):
+        """Computes Cos(x)."""
         return cos(x)
 
 
 class Cube(nn.Module):
+    """Class to Cube a tensor."""
+
     def forward(self, x):
+        """Computes x^3."""
         return x**3
 
 

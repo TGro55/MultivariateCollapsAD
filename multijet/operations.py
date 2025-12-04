@@ -29,6 +29,7 @@ def _multivariate_faa_di_bruno(
     vs: tuple[Primal, ...], K: tuple[int, ...], dn: dict[int, Primal]
 ) -> list[Value]:
     """Apply Faà di Bruno's formula for elementwise functions.
+
     The formula is taken from M. Hardy's 'Combinatorics of Partial Derivatives',
     found here: "https://arxiv.org/pdf/math/0601149".
 
@@ -403,6 +404,7 @@ def multijet_mul(
     is_taylor: tuple[bool, ...],
 ) -> ValueAndCoefficients:
     """Multivariate Taylor-mode arithmetic for multiplication of two variables.
+
     The formula is taken from M. Hardy's 'Combinatorics of Partial Derivatives',
     found here: "https://arxiv.org/pdf/math/0601149".
 

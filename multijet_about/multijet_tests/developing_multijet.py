@@ -1,4 +1,4 @@
-"""Testing code for development of multijet
+"""Testing code for development of multijet.
 
 Note: By now, this file has become overcrowded. I think it can serve for now as an
 introduction to how the multijet was developed. Also, there are still some issues
@@ -157,19 +157,28 @@ print("-" * 50)
 # Some modules for testing
 # Sine
 class Sine(nn.Module):
+    """Class to applay Sin to tensor in Sequential."""
+
     def forward(self, x):
+        """Computes Sin(x)"""
         return sin(x)
 
 
 # Cos
 class Cos(nn.Module):
+    """Class to apply Cos to tensor in Sequential."""
+
     def forward(self, x):
+        """Computes Cos(x)"""
         return cos(x)
 
 
 # Cube
 class Cube(nn.Module):
+    """Class to cube tensors in Sequential."""
+
     def forward(self, x):
+        """Cubes a tensor."""
         return x**3
 
 

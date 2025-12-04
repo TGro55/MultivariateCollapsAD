@@ -1,4 +1,4 @@
-"""Test `multijet.utils`.`"""
+"""Tests `multijet.utils`."""
 
 # Make imports possible
 import os
@@ -7,20 +7,17 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from multijet.utils import (
-    multi_partitions,
-    create_multi_idx_list,
-    set_to_idx,
-    find_list_idx,
-    multiplicity,
+    multi_partitions,  # noqa: E402
+    create_multi_idx_list,  # noqa: E402
+    set_to_idx,  # noqa: E402
+    find_list_idx,  # noqa: E402
+    multiplicity,  # noqa: E402
 )  # noqa: E402
 
 
 def test_multi_partitions():
+    """Tests 'multi_partitions' function."""
 
-    # def assert_loop(to_test, multi_idx):
-    #     partitions = multi_partitions(multi_idx)
-    #     for elem in to_test:
-    #         assert elem in partitions
     def assert_loop(to_test, multi_idx):
         partitions = multi_partitions(multi_idx)
         to_be_compared_1 = []
@@ -96,6 +93,7 @@ def test_multi_partitions():
 
 
 def test_set_to_idx():
+    """Tests 'set_to_idx' function."""
     assert set_to_idx([1], len((1,))) == (1,)
     assert set_to_idx([1], len((2,))) == (1,)
     assert set_to_idx([1, 2, 2], len((2, 2))) == (1, 2)
@@ -104,6 +102,7 @@ def test_set_to_idx():
 
 
 def test_find_list_idx():
+    """Tests 'find_list_idx function."""
     assert find_list_idx((0,), (1,)) == 0
     assert find_list_idx((1,), (2,)) == 1
     assert find_list_idx((0, 0, 3), (1, 0, 3)) == 3
@@ -112,6 +111,7 @@ def test_find_list_idx():
 
 
 def test_create_multi_idx_list():
+    """Tests 'create_multi_idx_list' function."""
     assert list(create_multi_idx_list((1,))) == [(1,)]
     assert list(create_multi_idx_list((2,))) == [(1,), (2,)]
     assert list(create_multi_idx_list((2, 2))) == [
@@ -149,6 +149,7 @@ def test_create_multi_idx_list():
 
 
 def test_multiplicity():
+    """Tests 'multiplicity' function."""
     assert multiplicity([[1]]) == 1
     assert multiplicity([[1], [1]]) == 1
     assert multiplicity([[1], [1, 2]]) == 2
