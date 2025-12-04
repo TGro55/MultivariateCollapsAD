@@ -33,12 +33,12 @@ MARKERS = {
 }
 COLORS = {
     "hessian_trace": BLUE,
-    "jet_naive": ORANGE,
-    "jet_simplified": GREEN,
-    "multijet_naive": PINK,
-    "multijet_simplified": NEONGREEN,
-    "multijet_sym_naive": PINK,
-    "multijet_sym_simplified": NEONGREEN,
+    "jet_naive": PINK,
+    "jet_simplified": NEONGREEN,
+    "multijet_naive": ORANGE,
+    "multijet_simplified": GREEN,
+    "multijet_sym_naive": ORANGE,
+    "multijet_sym_simplified": GREEN,
 }
 LINESTYLES = {
     "hessian_trace": "-",
