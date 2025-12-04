@@ -1,0 +1,29 @@
+[33md24586d[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{0}: rebase (pick): forgot to track some files
+[33me030980[m HEAD@{1}: rebase (pick): For tests and explanations
+[33m78f0dab[m HEAD@{2}: rebase (pick): first attempt at multijet with sin
+[33me476dff[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/Multivariate[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{3}: rebase (start): checkout master
+[33m672e706[m[33m ([m[1;32mSpellingMistakes[m[33m)[m HEAD@{4}: checkout: moving from master to SpellingMistakes
+[33me476dff[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/Multivariate[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{5}: checkout: moving from SpellingMistakes to master
+[33m672e706[m[33m ([m[1;32mSpellingMistakes[m[33m)[m HEAD@{6}: rebase (abort): returning to refs/heads/SpellingMistakes
+[33m5a9490e[m HEAD@{7}: rebase (pick): forgot to track some files
+[33mf478e62[m HEAD@{8}: rebase (pick): For tests and explanations
+[33ma617844[m HEAD@{9}: rebase (pick): first attempt at multijet with sin
+[33me476dff[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/Multivariate[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{10}: rebase (start): checkout master
+[33m672e706[m[33m ([m[1;32mSpellingMistakes[m[33m)[m HEAD@{11}: commit: formatting changes
+[33mda1f8e7[m HEAD@{12}: rebase (abort): returning to refs/heads/SpellingMistakes
+[33m14265fd[m HEAD@{13}: rebase (pick): forgot to track some files
+[33m3d1c822[m HEAD@{14}: rebase (pick): For tests and explanations
+[33mfd910f7[m HEAD@{15}: rebase (pick): first attempt at multijet with sin
+[33me476dff[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/Multivariate[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{16}: rebase (start): checkout master
+[33mda1f8e7[m HEAD@{17}: checkout: moving from master to SpellingMistakes
+[33me476dff[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/Multivariate[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{18}: checkout: moving from SpellingMistakes to master
+[33mda1f8e7[m HEAD@{19}: commit: Added first testing files for multijet
+[33m63e15ce[m HEAD@{20}: commit: Fixed minor mistakes with multijet
+[33m6a07b26[m[33m ([m[1;31morigin/SpellingMistakes[m[33m)[m HEAD@{21}: commit: Removed repeats from jet and added explanations to utils
+[33me618809[m HEAD@{22}: commit: fixed set_to_idx to create multi-index with correct length
+[33m2dfd5cd[m HEAD@{23}: commit: Technical change to __init__.py for producing inserted nodes
+[33m4714093[m HEAD@{24}: commit: fixed path error in developing_multijet.py
+[33m9fafe3f[m HEAD@{25}: commit: Fixed _multivariate_faa_di_bruno_ and added other operations
+[33m30951c3[m HEAD@{26}: commit: forgot to track some files
+[33mbc1e3f3[m HEAD@{27}: commit: For tests and explanations
+[33mbc2a8d4[m HEAD@{28}: commit (initial): first attempt at multijet with sin
