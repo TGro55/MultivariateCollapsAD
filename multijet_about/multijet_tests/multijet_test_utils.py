@@ -17,10 +17,31 @@ from multijet.utils import (
 
 def test_multi_partitions():
 
+    # def assert_loop(to_test, multi_idx):
+    #     partitions = multi_partitions(multi_idx)
+    #     for elem in to_test:
+    #         assert elem in partitions
     def assert_loop(to_test, multi_idx):
         partitions = multi_partitions(multi_idx)
-        for elem in to_test:
-            assert elem in partitions
+        to_be_compared_1 = []
+        for part in to_test:
+            ordered_partition = []
+            for elem in part:
+                ordered_partition.append(tuple(elem))
+            ordered_partition = sorted(ordered_partition)
+            to_be_compared_1.append(tuple(ordered_partition))
+        to_be_compared_1 = sorted(to_be_compared_1)
+
+        to_be_compared_2 = []
+        for part in partitions:
+            ordered_partition = []
+            for elem in part:
+                ordered_partition.append(tuple(elem))
+            ordered_partition = sorted(ordered_partition)
+            to_be_compared_2.append(tuple(ordered_partition))
+        to_be_compared_2 = sorted(to_be_compared_1)
+
+        assert to_be_compared_1 == to_be_compared_2
 
     test1 = [[[1]]]
     assert_loop(test1, (1,))
