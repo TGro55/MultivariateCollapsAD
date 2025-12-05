@@ -30,7 +30,7 @@ If you find the `jet` package useful for your research, consider citing
 ```
 
 ## Multijet
-This branch contains the multijet package. A program to understand multijet better can be found under multijet_about/tests in the file `developing_multijet.py`
+This branch contains the multijet package. As demonstration to understand multijet better may serve `developing_multijet.py` found in `multijet_about/tests`.
 
 ## Experiments
 This branch contains experiments for multijet and are found under `jet/exp`.
